@@ -265,6 +265,22 @@ button {
   pointer-events: none;
 }
 
+#pause-card {
+  background: rgba(12, 8, 22, 0.5);
+}
+
+#pause-actions, #pause-confirm {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+#pause-confirm p {
+  margin: 0;
+  font: 700 16px/1.35 "Segoe UI", Arial, sans-serif;
+  color: var(--cream);
+}
+
 .sheet {
   pointer-events: auto;
   width: min(100%, 480px);
@@ -350,7 +366,7 @@ h2 {
   text-shadow: 0 3px 0 var(--ink);
 }
 
-#btn-start, #btn-resume, #btn-retry, #btn-next {
+#btn-start, #btn-resume, #btn-retry, #btn-next, #btn-restart, #btn-levels, #btn-menu, #btn-quit, #btn-cancel {
   width: 100%;
   min-height: 56px;
   border-radius: 16px;
@@ -359,10 +375,16 @@ h2 {
   letter-spacing: 0.03em;
 }
 
-#btn-start, #btn-resume, #btn-retry {
+#btn-start, #btn-resume, #btn-retry, #btn-quit {
   background: linear-gradient(#ffe98a, var(--yellow) 42%, #e0a800);
   color: var(--ink);
   box-shadow: 0 5px 0 #8a6a10;
+}
+
+#btn-restart, #btn-levels, #btn-menu, #btn-cancel {
+  background: #2a2148;
+  color: var(--cream);
+  box-shadow: 0 4px 0 #1e1410;
 }
 
 #btn-start:disabled {

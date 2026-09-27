@@ -1,11 +1,11 @@
 import * as THREE from "three";
-import { BUILD, highestPlayable, isUnlockedLevel } from "./rules.js?v=br3b";
-import { createWorld } from "./world.js?v=br3b";
-import { createPlay } from "./play.js?v=br3b";
-import { createAudio } from "./audio.js?v=br3b";
-import { loadSave, rememberWin, rememberGun, writeSave } from "./save.js?v=br3b";
-import { drawWeaponIcon, setTime } from "./mats.js?v=br3b";
-import { loadGame, CREDIT_LINES } from "./assets.js?v=br3b";
+import { BUILD, highestPlayable, isUnlockedLevel } from "./rules.js?v=br3c";
+import { createWorld } from "./world.js?v=br3c";
+import { createPlay } from "./play.js?v=br3c";
+import { createAudio } from "./audio.js?v=br3c";
+import { loadSave, rememberWin, rememberGun, writeSave } from "./save.js?v=br3c";
+import { drawWeaponIcon, setTime } from "./mats.js?v=br3c";
+import { loadGame, CREDIT_LINES } from "./assets.js?v=br3c";
 
 const save = loadSave();
 const canvas = document.getElementById("c");
@@ -77,6 +77,8 @@ let lastWeapon = "";
 let lastTier = 0;
 let introLeft = 0;
 let queuedLevel = "";
+let resumeMode = "run";
+let quitTarget = "";
 let pointerId = null;
 let lastPX = 0;
 const taps = [];
@@ -456,6 +458,20 @@ window.addEventListener("pointerup", onPointerUp);
 window.addEventListener("pointercancel", onPointerUp);
 
 window.addEventListener("keydown", (e) => {
+  if (e.code === "Escape" || e.code === "KeyP") {
+    if (e.repeat) return;
+    if (mode === "pause" && pauseConfirm && !pauseConfirm.classList.contains("hidden")) {
+      e.preventDefault();
+      cancelQuit();
+      return;
+    }
+    if (mode === "run" || mode === "intro" || mode === "pause") {
+      e.preventDefault();
+      if (mode === "pause") resumeRun();
+      else openPause();
+    }
+    return;
+  }
   if (e.code === "KeyF") toggleDbg();
   if (showDbg && mode === "run" && e.code === "KeyG") play.cycleGun();
   if (showDbg && mode === "run" && e.code === "KeyT") play.bumpTier();
@@ -480,16 +496,87 @@ document.getElementById("level-row").addEventListener("click", (e) => {
   if (!btn || btn.disabled) return;
   startRun(btn.dataset.level);
 });
-document.getElementById("btn-resume").addEventListener("click", () => {
-  pauseCard.classList.add("hidden");
-  hud.classList.remove("hidden");
-  mode = "run";
-});
-document.getElementById("btn-pause").addEventListener("click", () => {
-  if (mode !== "run") return;
+const pauseActions = document.getElementById("pause-actions");
+const pauseConfirm = document.getElementById("pause-confirm");
+
+function showPauseMenu() {
+  quitTarget = "";
+  if (pauseConfirm) pauseConfirm.classList.add("hidden");
+  if (pauseActions) pauseActions.classList.remove("hidden");
+}
+
+function openPause() {
+  if (mode !== "run" && mode !== "intro") return;
+  if (play.view.ended) return;
+  resumeMode = mode;
   mode = "pause";
   audio.endFire();
+  audio.hold(true);
+  showPauseMenu();
   pauseCard.classList.remove("hidden");
+}
+
+function resumeRun() {
+  if (mode !== "pause") return;
+  pauseCard.classList.add("hidden");
+  showPauseMenu();
+  audio.hold(false);
+  mode = resumeMode === "intro" ? "intro" : "run";
+}
+
+function askQuit(target) {
+  if (mode !== "pause") return;
+  quitTarget = target;
+  if (pauseActions) pauseActions.classList.add("hidden");
+  if (pauseConfirm) pauseConfirm.classList.remove("hidden");
+}
+
+function cancelQuit() {
+  showPauseMenu();
+}
+
+function leaveRun() {
+  const where = quitTarget;
+  mode = "title";
+  audio.hold(false);
+  play.reset();
+  pauseCard.classList.add("hidden");
+  showPauseMenu();
+  hud.classList.add("hidden");
+  chip.classList.add("hidden");
+  tip.classList.add("hidden");
+  introEl.classList.add("hidden");
+  toastEl.classList.add("hidden");
+  barkEl.classList.add("hidden");
+  result.classList.add("hidden");
+  flash.classList.add("hidden");
+  banner.classList.add("hidden");
+  title.classList.remove("hidden");
+  const focus = where === "levels" ? document.getElementById("level-row") : document.querySelector("#title h1");
+  if (focus && focus.scrollIntoView) focus.scrollIntoView({ block: "center" });
+}
+
+function restartLevel() {
+  const id = play.view.levelId || "1-1";
+  const gun = play.view.weaponId;
+  const tier = play.view.tier;
+  pauseCard.classList.add("hidden");
+  showPauseMenu();
+  audio.hold(false);
+  startRun(id);
+  play.equipGun(gun, tier);
+  paintHud();
+}
+
+document.getElementById("btn-resume").addEventListener("click", resumeRun);
+document.getElementById("btn-restart").addEventListener("click", restartLevel);
+document.getElementById("btn-levels").addEventListener("click", () => askQuit("levels"));
+document.getElementById("btn-menu").addEventListener("click", () => askQuit("title"));
+document.getElementById("btn-cancel").addEventListener("click", cancelQuit);
+document.getElementById("btn-quit").addEventListener("click", leaveRun);
+document.getElementById("btn-pause").addEventListener("click", () => {
+  if (mode === "pause") resumeRun();
+  else openPause();
 });
 muteBtn.addEventListener("click", () => {
   save.settings.mute = !save.settings.mute;
@@ -509,6 +596,12 @@ document.getElementById("dbg-hot").addEventListener("pointerdown", (e) => {
   }
 });
 
+function autoPause() {
+  if (document.hidden || document.visibilityState === "hidden") openPause();
+}
+
+document.addEventListener("visibilitychange", autoPause);
+window.addEventListener("blur", () => openPause());
 window.addEventListener("resize", resize);
 if (window.visualViewport) window.visualViewport.addEventListener("resize", resize);
 

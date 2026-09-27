@@ -37,7 +37,7 @@ import {
   BOSS_TALL,
   TIER_TTK,
   TUNED,
-} from "./rules.js?v=br3b";
+} from "./rules.js?v=br3c";
 import {
   animToon,
   attachOutline,
@@ -54,7 +54,7 @@ import {
   writeLog,
   writeQuat,
   writeTRS,
-} from "./mats.js?v=br3b";
+} from "./mats.js?v=br3c";
 import {
   arrowGeo,
   buildBaron,
@@ -79,7 +79,7 @@ import {
   quadGeo,
   rocketGeo,
   streamGeo,
-} from "./build.js?v=br3b";
+} from "./build.js?v=br3c";
 
 const STRIDE = 320;
 const CAPS = [320, 320, 320, 120, 120, 120, 120];
@@ -142,13 +142,15 @@ export function createPlay(scene, camera, audio) {
   soldierBuilt.geo.setAttribute("aPhase", new THREE.InstancedBufferAttribute(soldierPhase, 1));
   soldierBuilt.geo.setAttribute("aHit", new THREE.InstancedBufferAttribute(soldierHit, 1));
   const animShell = outlineAnim(0.035);
-  const soldiers = new THREE.InstancedMesh(soldierBuilt.geo, animToon(), RENDER_CAP);
+  const beaverMat = animToon(0.5);
+  const beaverShell = outlineAnim(0.035, 0.5);
+  const soldiers = new THREE.InstancedMesh(soldierBuilt.geo, beaverMat, RENDER_CAP);
   soldiers.frustumCulled = false;
   soldiers.count = 0;
   soldiers.instanceMatrix.setUsage(THREE.DynamicDrawUsage);
   soldiers.castShadow = true;
   scene.add(soldiers);
-  const soldierShell = new THREE.InstancedMesh(soldierBuilt.geo, animShell, RENDER_CAP);
+  const soldierShell = new THREE.InstancedMesh(soldierBuilt.geo, beaverShell, RENDER_CAP);
   soldierShell.frustumCulled = false;
   soldierShell.count = 0;
   soldierShell.instanceMatrix.setUsage(THREE.DynamicDrawUsage);
@@ -157,11 +159,11 @@ export function createPlay(scene, camera, audio) {
   const boberN = boberBuilt.geo.getAttribute("position").count;
   boberBuilt.geo.setAttribute("aPhase", new THREE.BufferAttribute(new Float32Array(boberN), 1));
   boberBuilt.geo.setAttribute("aHit", new THREE.BufferAttribute(new Float32Array(boberN), 1));
-  const bober = new THREE.Mesh(boberBuilt.geo, animToon());
+  const bober = new THREE.Mesh(boberBuilt.geo, beaverMat);
   bober.frustumCulled = false;
   bober.castShadow = true;
   attachOutline(bober, 0.04);
-  bober.children[0].material = animShell;
+  bober.children[0].material = beaverShell;
   scene.add(bober);
 
   const pillarMat = new THREE.ShaderMaterial({

@@ -6,7 +6,7 @@
   <meta name="theme-color" content="#3A2A6A" />
   <meta name="description" content="Bober Bridge Rush. Hold the pine bridge. Fan game. Unofficial." />
   <title>Bober Bridge Rush</title>
-  <link rel="stylesheet" href="css/game.css?v=br3b" />
+  <link rel="stylesheet" href="css/game.css?v=br3c" />
 </head>
 <body>
   <canvas id="c"></canvas>
@@ -89,14 +89,25 @@
       <button id="btn-credits" type="button">3D models: Quaternius, Kenney, CreativeTrio, Armory_3D via poly.pizza. Textures and HDRI: Poly Haven. All CC0.</button>
       <div id="credits" class="hidden"></div>
       <a id="btn-home" href="https://ccosma1.github.io/green-home-games/">Back to Green Home Games</a>
-      <span id="build-tag">br3b</span>
+      <span id="build-tag">br3c</span>
     </div>
   </section>
 
   <section id="pause-card" class="hidden">
     <div class="sheet">
-      <h2>Paused</h2>
-      <button id="btn-resume" type="button">RESUME</button>
+      <div id="pause-actions">
+        <h2>Paused</h2>
+        <button id="btn-resume" type="button">RESUME</button>
+        <button id="btn-restart" type="button">RESTART LEVEL</button>
+        <button id="btn-levels" type="button">LEVEL SELECT</button>
+        <button id="btn-menu" type="button">MAIN MENU</button>
+      </div>
+      <div id="pause-confirm" class="hidden">
+        <h2>Quit this run?</h2>
+        <p>Progress in this level is lost.</p>
+        <button id="btn-quit" type="button">QUIT</button>
+        <button id="btn-cancel" type="button">CANCEL</button>
+      </div>
     </div>
   </section>
 
@@ -122,6 +133,6 @@
     }
   }
   </script>
-  <script type="module" src="js/main.js?v=br3b"></script>
+  <script type="module" src="js/main.js?v=br3c"></script>
 </body>
 </html>

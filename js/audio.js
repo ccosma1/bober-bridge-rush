@@ -148,6 +148,13 @@ export function createAudio() {
         if (current && loops[current] && ctx) loops[current].gain.setTargetAtTime(0, ctx.currentTime, 0.05);
       } catch (err) { /* ignore */ }
     },
+    hold(v) {
+      try {
+        if (!ctx) return;
+        if (v) ctx.suspend();
+        else if (ctx.state === "suspended") ctx.resume();
+      } catch (err) { /* ignore */ }
+    },
     gate() {
       try { blip(520, 0.12, "square", 0.16, 1.6); } catch (err) { /* ignore */ }
     },

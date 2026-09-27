@@ -55,14 +55,19 @@ attribute float aHit;
 uniform float uTime;
 `;
 
-const ANIM_BEGIN = `
+function animBegin(amp) {
+  const a = amp == null ? 1 : amp;
+  const wag = (0.7 * a).toFixed(4);
+  const bob = (0.08 * a).toFixed(4);
+  const sway = (0.035 * a).toFixed(4);
+  return `
 vec3 transformed = position;
 float tt = uTime * 50.26548 + aPhase;
 float sw = sin(tt);
 vec3 p = transformed - aPivot;
 float pid = aPart;
 if (pid > 4.5 && pid < 5.5) {
-  float wag = sw * 0.7;
+  float wag = sw * ${wag};
   float cs = cos(wag);
   float sn = sin(wag);
   float x = p.x * cs - p.z * sn;
@@ -71,25 +76,28 @@ if (pid > 4.5 && pid < 5.5) {
   p.z = z;
 }
 transformed = p + aPivot;
-transformed.y += abs(sw) * 0.08;
-transformed.x += sw * 0.035;
+transformed.y += abs(sw) * ${bob};
+transformed.x += sw * ${sway};
 vFlash = clamp(aHit, 0.0, 1.0);
 `;
+}
 
-let animMat = null;
+const toonByAmp = {};
 
-export function animToon() {
-  if (animMat) return animMat;
-  animMat = new THREE.MeshToonMaterial({
+export function animToon(amp) {
+  const key = String(amp == null ? 1 : amp);
+  if (toonByAmp[key]) return toonByAmp[key];
+  const begin = animBegin(amp);
+  const mat = new THREE.MeshToonMaterial({
     color: 0xffffff,
     vertexColors: true,
     gradientMap: gradient(),
   });
-  animMat.onBeforeCompile = (shader) => {
+  mat.onBeforeCompile = (shader) => {
     shader.uniforms.uTime = timeU;
     shader.vertexShader = shader.vertexShader
       .replace("#include <common>", "varying float vFlash;\n" + ANIM_ATTRS + "\n#include <common>")
-      .replace("#include <begin_vertex>", ANIM_BEGIN);
+      .replace("#include <begin_vertex>", begin);
     shader.fragmentShader = shader.fragmentShader
       .replace("#include <common>", "varying float vFlash;\n#include <common>")
       .replace(
@@ -97,8 +105,9 @@ export function animToon() {
         "outgoingLight = mix(outgoingLight, vec3(1.0), vFlash);\n#include <opaque_fragment>"
       );
   };
-  animMat.customProgramCacheKey = () => "bbr-anim-toon-2";
-  return animMat;
+  mat.customProgramCacheKey = () => "bbr-anim-toon-" + key;
+  toonByAmp[key] = mat;
+  return mat;
 }
 
 export function outlineMaterial(push) {
@@ -135,7 +144,7 @@ export function attachOutline(mesh, push) {
   return shell;
 }
 
-export function outlineAnim(push) {
+export function outlineAnim(push, amp) {
   return new THREE.ShaderMaterial({
     side: THREE.BackSide,
     uniforms: { uPush: { value: push == null ? 0.035 : push }, uTime: timeU },
@@ -148,7 +157,7 @@ export function outlineAnim(push) {
       uniform float uPush;
       void main() {
         float vFlash;
-        ${ANIM_BEGIN}
+        ${animBegin(amp)}
         vec3 p2 = transformed + normal * uPush;
         vec4 mv = vec4(p2, 1.0);
         #ifdef USE_INSTANCING

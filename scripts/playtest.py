@@ -1,4 +1,4 @@
-"""Phone and desktop acceptance for Bober Bridge Rush br3b."""
+"""Phone and desktop acceptance for Bober Bridge Rush br3c."""
 import json
 import pathlib
 import sys
@@ -6,7 +6,7 @@ import time
 
 from playwright.sync_api import sync_playwright
 
-URL = "http://127.0.0.1:8792/?v=br3b"
+URL = "http://127.0.0.1:8792/?v=br3c"
 OUT = pathlib.Path(r"C:\Users\calle\AppData\Local\Temp")
 fails = []
 GUNS = ["bow", "long", "smg", "shot", "gerald", "log", "rocket", "flame", "party", "sap"]
@@ -103,7 +103,7 @@ def main():
         page.wait_for_function("window.__bridge && window.__bridge.ready")
         page.locator("#build-tag").wait_for()
         page.screenshot(path=str(OUT / "bbr-phone-title.png"))
-        check(page.locator("#build-tag").inner_text().strip() == "br3b", "build tag br3b")
+        check(page.locator("#build-tag").inner_text().strip() == "br3c", "build tag br3c")
         check(page.locator("#tagline").inner_text().strip() == "Plug the Drain.", "tagline")
         check("THE DAM RUNS DRY" in page.locator(".eyebrow").inner_text(), "chapter")
         check("Fan game. Unofficial." in page.locator("#fan-line").inner_text(), "fan line")
