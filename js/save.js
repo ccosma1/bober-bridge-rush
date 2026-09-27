@@ -1,6 +1,6 @@
 // Versioned save. Key stays bober_bridge_v1. v1 migrates; anything else starts clean.
 
-import { STARTERS, UNLOCKS } from "./rules.js?v=br1";
+import { STARTERS, UNLOCKS } from "./rules.js?v=br2";
 
 const KEY = "bober_bridge_v1";
 

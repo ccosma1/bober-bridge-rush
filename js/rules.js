@@ -1,6 +1,6 @@
 // Dam Run rules. No rendering. World forward is -Z.
 
-export const BUILD = "br1";
+export const BUILD = "br2";
 export const SIM_CAP = 300;
 export const RENDER_CAP = 60;
 export const LIVE_CAP = 320;
@@ -56,7 +56,7 @@ export const LEVELS = {
     hpMul: 1,
     baseHp: 480,
     vol: 8,
-    starN: 25,
+    starN: 30,
     starSec: 20,
     boss: "baron",
     bossHp: 3000,
@@ -198,7 +198,14 @@ export function crateHp(base, type, explicit) {
 }
 
 export function formationRadius(n, half) {
-  const r = 0.45 * Math.sqrt(Math.max(1, n));
+  const shown = Math.max(1, Math.min(60, n | 0));
+  const spacing = 0.75;
+  const rowH = spacing * 0.8660254;
+  const cols = Math.max(1, Math.ceil(Math.sqrt(shown)));
+  const rows = Math.max(1, Math.ceil(shown / cols));
+  const w = Math.max(0, cols - 1) * spacing + spacing * 0.5;
+  const h = Math.max(0, rows - 1) * rowH;
+  const r = Math.max(0.4, Math.hypot(w * 0.5, h * 0.5) + 0.05);
   return Math.min(r, Math.max(0.45, half - 0.7));
 }
 
@@ -409,15 +416,29 @@ export function mysteryPick(unlocked, rnd) {
   return bucket[Math.min(bucket.length - 1, (rnd() * bucket.length) | 0)];
 }
 
-const GA = Math.PI * (3 - Math.sqrt(5));
-
 export function formationOffsets(n, radius, outX, outZ) {
   const shown = shownCount(n);
-  for (let i = 0; i < shown; i++) {
-    const r = radius * Math.sqrt((i + 0.5) / shown);
-    const a = i * GA;
-    outX[i] = Math.cos(a) * r;
-    outZ[i] = Math.sin(a) * r;
+  if (!shown) return 0;
+  const spacing = 0.75;
+  const rowH = spacing * 0.8660254;
+  let cols = Math.max(1, Math.ceil(Math.sqrt(shown)));
+  let rows = Math.ceil(shown / cols);
+  const w = Math.max(0, cols - 1) * spacing + spacing * 0.5;
+  const h = Math.max(0, rows - 1) * rowH;
+  const fit = Math.max(0.2, Math.hypot(w * 0.5, h * 0.5) + 0.05);
+  const scale = radius > 0 && fit > radius ? radius / fit : 1;
+  const sx = spacing * scale;
+  const sy = rowH * scale;
+  let i = 0;
+  for (let r = 0; r < rows && i < shown; r++) {
+    const rowCols = Math.min(cols, shown - i);
+    const ox = ((r & 1) ? sx * 0.5 : 0) - (rowCols - 1) * sx * 0.5;
+    const z = (r - (rows - 1) * 0.5) * sy;
+    for (let c = 0; c < rowCols; c++) {
+      outX[i] = ox + c * sx;
+      outZ[i] = z;
+      i++;
+    }
   }
   return shown;
 }

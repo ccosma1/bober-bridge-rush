@@ -1,4 +1,4 @@
-"""Phone and desktop acceptance for Bober Bridge Rush br1."""
+"""Phone and desktop acceptance for Bober Bridge Rush br2."""
 import json
 import pathlib
 import sys
@@ -6,7 +6,7 @@ import time
 
 from playwright.sync_api import sync_playwright
 
-URL = "http://127.0.0.1:8792/?v=br1"
+URL = "http://127.0.0.1:8792/?v=br2"
 OUT = pathlib.Path(r"C:\Users\calle\AppData\Local\Temp")
 fails = []
 GUNS = ["bow", "long", "smg", "shot", "gerald", "log", "rocket", "flame", "party", "sap"]
@@ -103,7 +103,7 @@ def main():
         page.wait_for_function("window.__bridge && window.__bridge.ready")
         page.locator("#build-tag").wait_for()
         page.screenshot(path=str(OUT / "bbr-phone-title.png"))
-        check(page.locator("#build-tag").inner_text().strip() == "br1", "build tag br1")
+        check(page.locator("#build-tag").inner_text().strip() == "br2", "build tag br2")
         check(page.locator("#tagline").inner_text().strip() == "Plug the Drain.", "tagline")
         check("THE DAM RUNS DRY" in page.locator(".eyebrow").inner_text(), "chapter")
         check("Fan game. Unofficial." in page.locator("#fan-line").inner_text(), "fan line")
@@ -152,7 +152,7 @@ def main():
         report = page.evaluate("() => __bridge.selfTest()")
         print("selfTest", json.dumps(report))
         check(report["fails"] == [], "selfTest " + "; ".join(report["fails"]))
-        check(report["soldier"] <= 350, "soldier tris")
+        check(report["soldier"] <= 600, "soldier tris")
         check(report["bober"] <= 5000, "bober tris")
         check(report["boss"] <= 6000, "boss tris")
 
@@ -258,7 +258,7 @@ def main():
         print("bench", bench)
         check(bench["enemies"] >= 190, "200 live before clear")
         check(bench["fps"] >= 50, "fps " + str(round(bench["fps"])))
-        check(bench["calls"] <= 60, "draws " + str(bench["calls"]))
+        check(bench["calls"] <= 70, "draws " + str(bench["calls"]))
         check(bench["hitch"] < 40, "mass death hitch " + str(round(bench["hitch"])))
         check(bench["left"] == 0, "killall cleared")
 
@@ -285,7 +285,7 @@ def main():
         print("peak", peak)
         check(peak["enemies"] >= 250, "260 live")
         check(peak["fps"] >= 45, "peak fps " + str(round(peak["fps"])))
-        check(peak["calls"] <= 60, "peak draws " + str(peak["calls"]))
+        check(peak["calls"] <= 70, "peak draws " + str(peak["calls"]))
 
         lost = page.evaluate(
             """() => {
@@ -498,6 +498,26 @@ def main():
             )
             page.evaluate("() => new Promise(r => requestAnimationFrame(() => requestAnimationFrame(r)))")
             page.screenshot(path=str(OUT / shot))
+
+        still = page.evaluate(
+            """() => {
+              __bridge.hold(true);
+              __bridge.start('1-1');
+              __bridge.skipIntro();
+              const log = [];
+              for (let s = 0; s < 14; s++) {
+                __bridge.rush(8);
+                const sn = __bridge.snapshot();
+                log.push({ t: (s + 1) * 8, n: sn.n, dist: Math.round(sn.dist), end: sn.ended, w: sn.weapon });
+                if (sn.ended) break;
+              }
+              return log;
+            }"""
+        )
+        print("still")
+        for row in still:
+            print(" ", row)
+        check(still[-1]["end"] == "lose", "standing still loses 1-1")
 
         bot = page.evaluate(
             """() => {

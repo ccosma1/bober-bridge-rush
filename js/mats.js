@@ -57,26 +57,23 @@ uniform float uTime;
 
 const ANIM_BEGIN = `
 vec3 transformed = position;
-float tt = uTime * 12.0 + aPhase;
+float tt = uTime * 50.26548 + aPhase;
 float sw = sin(tt);
 vec3 p = transformed - aPivot;
 float pid = aPart;
-if (pid > 0.5 && pid < 4.5) {
-  float dir = (pid < 1.5 || (pid > 2.5 && pid < 3.5)) ? 1.0 : -1.0;
-  float ang = sw * dir * (pid < 2.5 ? 0.7 : 0.5);
-  float cs = cos(ang);
-  float sn = sin(ang);
-  float y = p.y * cs - p.z * sn;
-  float z = p.y * sn + p.z * cs;
-  p.y = y;
+if (pid > 4.5 && pid < 5.5) {
+  float wag = sw * 0.7;
+  float cs = cos(wag);
+  float sn = sin(wag);
+  float x = p.x * cs - p.z * sn;
+  float z = p.x * sn + p.z * cs;
+  p.x = x;
   p.z = z;
-} else if (pid > 4.5 && pid < 5.5) {
-  p.z += sw * 0.07;
 }
-float squash = 1.0 - clamp(aHit, 0.0, 1.0) * 0.3;
-p.y *= squash;
 transformed = p + aPivot;
-transformed.y += abs(sw) * 0.05;
+transformed.y += abs(sw) * 0.08;
+transformed.x += sw * 0.035;
+vFlash = clamp(aHit, 0.0, 1.0);
 `;
 
 let animMat = null;
@@ -91,10 +88,16 @@ export function animToon() {
   animMat.onBeforeCompile = (shader) => {
     shader.uniforms.uTime = timeU;
     shader.vertexShader = shader.vertexShader
-      .replace("#include <common>", ANIM_ATTRS + "\n#include <common>")
+      .replace("#include <common>", "varying float vFlash;\n" + ANIM_ATTRS + "\n#include <common>")
       .replace("#include <begin_vertex>", ANIM_BEGIN);
+    shader.fragmentShader = shader.fragmentShader
+      .replace("#include <common>", "varying float vFlash;\n#include <common>")
+      .replace(
+        "#include <opaque_fragment>",
+        "outgoingLight = mix(outgoingLight, vec3(1.0), vFlash);\n#include <opaque_fragment>"
+      );
   };
-  animMat.customProgramCacheKey = () => "bbr-anim-toon-1";
+  animMat.customProgramCacheKey = () => "bbr-anim-toon-2";
   return animMat;
 }
 
@@ -130,6 +133,32 @@ export function attachOutline(mesh, push) {
   shell.renderOrder = mesh.renderOrder;
   mesh.add(shell);
   return shell;
+}
+
+export function outlineAnim(push) {
+  return new THREE.ShaderMaterial({
+    side: THREE.BackSide,
+    uniforms: { uPush: { value: push == null ? 0.035 : push }, uTime: timeU },
+    vertexShader: `
+      attribute float aPart;
+      attribute vec3 aPivot;
+      attribute float aPhase;
+      attribute float aHit;
+      uniform float uTime;
+      uniform float uPush;
+      void main() {
+        float vFlash;
+        ${ANIM_BEGIN}
+        vec3 p2 = transformed + normal * uPush;
+        vec4 mv = vec4(p2, 1.0);
+        #ifdef USE_INSTANCING
+          mv = instanceMatrix * mv;
+        #endif
+        gl_Position = projectionMatrix * modelViewMatrix * mv;
+      }
+    `,
+    fragmentShader: "void main(){ gl_FragColor = vec4(0.118, 0.078, 0.063, 1.0); }",
+  });
 }
 
 export function writeTRS(el, i, x, y, z, yaw, sx, sy, sz) {
@@ -539,14 +568,6 @@ export function paintCrateFace(ctx, canvas, kind, id, hp, extra) {
     if (id) drawWeaponIcon(ctx, id, w * 0.5, h * 0.3, w * 0.36);
     if (kind === "forged") sealIcon(ctx, w * 0.82, h * 0.18, w * 0.28);
   }
-  roundRect(ctx, w * 0.1, h * 0.58, w * 0.8, h * 0.32, 18);
-  ctx.fillStyle = "#3A2A6A";
-  ctx.fill();
-  ctx.font = "900 72px Arial Black, Arial, sans-serif";
-  ctx.textAlign = "center";
-  ctx.textBaseline = "middle";
-  ctx.fillStyle = "#F4E6C3";
-  ctx.fillText(String(Math.max(0, hp | 0)), w * 0.5, h * 0.74);
 }
 
 function roundRect(ctx, x, y, w, h, r) {
@@ -560,18 +581,38 @@ function roundRect(ctx, x, y, w, h, r) {
   ctx.closePath();
 }
 
+export function paintCrateHp(ctx, canvas, hp) {
+  const w = canvas.width;
+  const h = canvas.height;
+  ctx.clearRect(0, 0, w, h);
+  const text = String(Math.max(0, hp | 0));
+  let size = 220;
+  ctx.textAlign = "center";
+  ctx.textBaseline = "middle";
+  ctx.lineJoin = "round";
+  ctx.font = "900 " + size + "px Arial Black, Arial, sans-serif";
+  while (size > 96 && ctx.measureText(text).width > w * 0.92) {
+    size -= 10;
+    ctx.font = "900 " + size + "px Arial Black, Arial, sans-serif";
+  }
+  ctx.lineWidth = Math.max(18, size * 0.16);
+  ctx.strokeStyle = "#1E1410";
+  ctx.strokeText(text, w / 2, h * 0.52);
+  ctx.fillStyle = "#FFFFFF";
+  ctx.fillText(text, w / 2, h * 0.52);
+}
+
 export function skyTexture() {
   const c = document.createElement("canvas");
   c.width = 4;
   c.height = 256;
   const g = c.getContext("2d");
   const grd = g.createLinearGradient(0, 0, 0, 256);
-  grd.addColorStop(0, "#3A2A6A");
-  grd.addColorStop(0.22, "#5A4588");
-  grd.addColorStop(0.42, "#C8B4D8");
-  grd.addColorStop(0.52, "#F4E6C3");
-  grd.addColorStop(0.68, "#E7F4F6");
-  grd.addColorStop(1, "#2E8FA3");
+  grd.addColorStop(0, "#8ECAEF");
+  grd.addColorStop(0.28, "#C5DFF3");
+  grd.addColorStop(0.52, "#F6E7D0");
+  grd.addColorStop(0.68, "#F3D2AE");
+  grd.addColorStop(1, "#E7C49A");
   g.fillStyle = grd;
   g.fillRect(0, 0, 4, 256);
   const tex = new THREE.CanvasTexture(c);

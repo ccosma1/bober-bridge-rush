@@ -1,10 +1,10 @@
 import * as THREE from "three";
-import { BUILD, highestPlayable, isUnlockedLevel } from "./rules.js?v=br1";
-import { createWorld } from "./world.js?v=br1";
-import { createPlay } from "./play.js?v=br1";
-import { createAudio } from "./audio.js?v=br1";
-import { loadSave, rememberWin, rememberGun, writeSave } from "./save.js?v=br1";
-import { drawWeaponIcon, setTime } from "./mats.js?v=br1";
+import { BUILD, highestPlayable, isUnlockedLevel } from "./rules.js?v=br2";
+import { createWorld } from "./world.js?v=br2";
+import { createPlay } from "./play.js?v=br2";
+import { createAudio } from "./audio.js?v=br2";
+import { loadSave, rememberWin, rememberGun, writeSave } from "./save.js?v=br2";
+import { drawWeaponIcon, setTime } from "./mats.js?v=br2";
 
 const save = loadSave();
 const canvas = document.getElementById("c");
@@ -16,8 +16,9 @@ const renderer = new THREE.WebGLRenderer({
   stencil: false,
 });
 renderer.outputColorSpace = THREE.SRGBColorSpace;
-renderer.toneMapping = THREE.NoToneMapping;
-renderer.setClearColor(0xe4d4ee, 1);
+renderer.toneMapping = THREE.ACESFilmicToneMapping;
+renderer.toneMappingExposure = 1.05;
+renderer.setClearColor(0xd7e4ee, 1);
 
 const scene = new THREE.Scene();
 const camera = new THREE.PerspectiveCamera(58, 1, 0.2, 360);
@@ -107,6 +108,7 @@ function showResult(won, info) {
   chip.classList.add("hidden");
   tip.classList.add("hidden");
   banner.classList.add("hidden");
+  flash.classList.add("hidden");
   pauseCard.classList.add("hidden");
   introEl.classList.add("hidden");
   toastEl.classList.add("hidden");
@@ -208,7 +210,7 @@ function resize() {
   renderer.setPixelRatio(dpr);
   renderer.setSize(w, h, false);
   camera.aspect = w / Math.max(1, h);
-  camera.fov = h >= w ? 58 : 50;
+  camera.fov = h >= w ? 46 : 42;
   camera.updateProjectionMatrix();
 }
 
@@ -299,6 +301,7 @@ function placeWords() {
     }
     el.classList.remove("hidden");
     el.textContent = item.text;
+    el.classList.toggle("bad", !!item.bad);
     el.style.left = (bannerV.x * 0.5 + 0.5) * w + "px";
     el.style.top = (-bannerV.y * 0.5 + 0.5) * h + "px";
     el.style.opacity = String(Math.max(0.15, Math.min(1, item.life)));
@@ -346,9 +349,22 @@ function frame(now) {
     }
   }
   const v = play.view;
-  const camX = v.squadX * 0.4;
-  camera.position.set(camX, 9, v.squadZ + 11);
-  camera.lookAt(camX, 1.15, v.squadZ - 14);
+  const portrait = (camera.userData.viewH || 1) >= (camera.userData.viewW || 1);
+  const camX = v.squadX * 0.25;
+  const lift = portrait ? 11 : 11.5;
+  const back = portrait ? 13 : 16;
+  const ahead = portrait ? 11 : 12;
+  const lookY = portrait ? 0.3 : 0.35;
+  let jx = 0;
+  let jy = 0;
+  const sh = v.shake || 0;
+  if (sh > 0) {
+    const mag = (sh / 0.15) * 0.22;
+    jx = Math.sin(play.time * 74) * mag;
+    jy = Math.cos(play.time * 57) * mag * 0.65;
+  }
+  camera.position.set(camX + jx, lift + jy, v.squadZ + back);
+  camera.lookAt(camX, lookY, v.squadZ - ahead);
   camera.updateMatrixWorld();
   world.follow(v.squadX, v.squadZ, v.half, play.time, v.river, v.dam, v.theme);
   setTime(play.time);
