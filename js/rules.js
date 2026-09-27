@@ -1,27 +1,131 @@
 // Dam Run rules. No rendering. World forward is -Z.
+// br3 gun table. Lab may multiply a tier's DMG; the comment block at the
+// bottom of weaponMods records the numbers that passed the gun lab.
 
-export const BUILD = "br2";
+export const BUILD = "br3";
 export const SIM_CAP = 300;
 export const RENDER_CAP = 60;
 export const LIVE_CAP = 320;
 export const ADVANCE = 8;
 export const STEER_MAX = 14;
 export const RANGE = 28;
+export const FORM_GAP = 0.6;
+export const LANE_BLOB = 4.5;
+
+const DEG = Math.PI / 180;
 
 export const GUN_ORDER = ["bow", "long", "smg", "shot", "gerald", "log", "rocket", "flame", "party", "sap"];
 
 export const WEAPONS = {
-  bow: { id: "bow", name: "Twig Crossbow", family: "ARROWS", dmg: 10, rate: 3, pellets: 1, spread: 0, pattern: "arrow", falloff: 0, splash: 0, knock: 0, pierce: 0, color: "#F4E6C3", line: "" },
-  long: { id: "long", name: "Reed's Longbow", family: "ARROWS", dmg: 55, rate: 0.9, pellets: 1, spread: 0, pattern: "pierce", falloff: 0, splash: 0, knock: 0, pierce: 4, color: "#F7F7FF", line: "Long legs, long shots, rounded numbers." },
-  smg: { id: "smg", name: "Acorn SMG", family: "BULLETS", dmg: 6, rate: 9, pellets: 1, spread: (3 * Math.PI) / 180, pattern: "spread", falloff: 0, splash: 0, knock: 0, pierce: 0, color: "#F5C400", line: "" },
-  shot: { id: "shot", name: "Pinecone Shotgun", family: "BULLETS", dmg: 7, rate: 1.4, pellets: 5, spread: (25 * Math.PI) / 180, pattern: "fan", falloff: 14, splash: 0, knock: 0.4, pierce: 0, color: "#E86A1A", line: "" },
-  gerald: { id: "gerald", name: "Gerald Jr.", family: "BULLETS", dmg: 5, rate: 4, rateMax: 14, pellets: 1, spread: (5 * Math.PI) / 180, pattern: "spin", falloff: 0, splash: 0, knock: 0, pierce: 0, color: "#FF8A2A", line: "Gerald says hold the line." },
-  log: { id: "log", name: "Log Launcher", family: "ROCKETS", dmg: 40, rate: 0.8, pellets: 1, spread: 0, pattern: "lob", falloff: 0, splash: 2.2, knock: 1, pierce: 0, color: "#8B5A2B", line: "" },
-  rocket: { id: "rocket", name: "Firework Rockets", family: "ROCKETS", dmg: 28, rate: 1.2, pellets: 1, spread: 0, pattern: "home", falloff: 0, splash: 1.5, knock: 0.4, pierce: 0, turn: 180, color: "#FF4FA3", line: "Small splash, big joy." },
-  flame: { id: "flame", name: "Maple Flamer", family: "FLAME", dmg: 6, rate: 10, pellets: 1, spread: (30 * Math.PI) / 180, pattern: "cone", falloff: 0, splash: 0, knock: 0, pierce: 0, burn: 15, color: "#FF6A1A", line: "Washes off Suds Knights." },
-  party: { id: "party", name: "Party Yeet", family: "JOKE", dmg: 4, rate: 1, pellets: 12, spread: (40 * Math.PI) / 180, pattern: "confetti", falloff: 0, splash: 0, knock: 0, pierce: 0, crit: 0.1, stagger: 0.3, color: "#FF4FA3", line: "Confetti cannon. Surprisingly effective." },
-  sap: { id: "sap", name: "Sap Sprayer", family: "JOKE", dmg: 3, rate: 12, pellets: 1, spread: 0, pattern: "stream", falloff: 0, splash: 0, knock: 0, pierce: 0, slow: 2.5, color: "#E0A030", line: "Sticky slow. Clogs hate it." },
+  bow: {
+    id: "bow", name: "Twig Crossbow", family: "ARROWS", pattern: "arrow",
+    color: "#F4E6C3", pellets: 1, spread: 0, shove: 0.3, len: 1.6, thick: 0.2, heavy: 0, line: "",
+    tiers: [
+      { dmg: 14, rate: 3.43 },
+      { dmg: 17, rate: 3.94 },
+      { dmg: 17, rate: 3.94, every: 2, pierce: 1 },
+      { dmg: 23, rate: 3.94, every: 2, pierce: 1, splash: 0.6 },
+    ],
+  },
+  long: {
+    id: "long", name: "Reed's Longbow", family: "ARROWS", pattern: "pierce",
+    color: "#F7F7FF", pellets: 1, spread: 0, shove: 0.5, len: 3, thick: 0.25, heavy: 0,
+    line: "Long legs, long shots, rounded numbers.",
+    tiers: [
+      { dmg: 40, rate: 0.65, pierce: 3 },
+      { dmg: 52, rate: 0.75, pierce: 3 },
+      { dmg: 67, rate: 0.75, pierce: 4 },
+      { dmg: 100, rate: 0.75, pierce: 5 },
+    ],
+  },
+  smg: {
+    id: "smg", name: "Acorn SMG", family: "BULLETS", pattern: "spread",
+    color: "#F5C400", pellets: 1, spread: 3 * DEG, shove: 0.12, len: 1.5, thick: 0.18, heavy: 0, line: "",
+    tiers: [
+      { dmg: 12, rate: 4.22 },
+      { dmg: 15, rate: 4.85 },
+      { dmg: 21, rate: 4.85, spread: 1.5 * DEG },
+      { dmg: 25, rate: 5.82, spread: 1.5 * DEG },
+    ],
+  },
+  shot: {
+    id: "shot", name: "Pinecone Shotgun", family: "BULLETS", pattern: "fan",
+    color: "#E86A1A", pellets: 6, spread: 25 * DEG, falloff: 14, shove: 0.25, len: 1.2, thick: 0.22, heavy: 1, line: "",
+    tiers: [
+      { dmg: 12, rate: 0.97, pellets: 6 },
+      { dmg: 15, rate: 1.12, pellets: 6 },
+      { dmg: 18, rate: 1.12, pellets: 7 },
+      { dmg: 23, rate: 1.12, pellets: 8 },
+    ],
+  },
+  gerald: {
+    id: "gerald", name: "Gerald Jr.", family: "BULLETS", pattern: "spin",
+    color: "#FF8A2A", pellets: 1, spread: 4 * DEG, shove: 0.1, len: 1.8, thick: 0.2, heavy: 0,
+    spinUp: 0.6, line: "Gerald says hold the line.",
+    tiers: [
+      { dmg: 12, rate: 3, rateMax: 6.33 },
+      { dmg: 15, rate: 3.45, rateMax: 7.28 },
+      { dmg: 18, rate: 3.45, rateMax: 7.28, spinUp: 0.3 },
+      { dmg: 21, rate: 4.14, rateMax: 8.74, spinUp: 0.3 },
+    ],
+  },
+  log: {
+    id: "log", name: "Log Launcher", family: "ROCKETS", pattern: "lob",
+    color: "#8B5A2B", pellets: 1, spread: 0, splash: 1.6, shove: 1.5, len: 1.4, thick: 0.35, heavy: 1, line: "",
+    tiers: [
+      { dmg: 45, rate: 0.49, splash: 1.6 },
+      { dmg: 64, rate: 0.56, splash: 1.6 },
+      { dmg: 95, rate: 0.56, splash: 1.8 },
+      { dmg: 129, rate: 0.56, splash: 2.0 },
+    ],
+  },
+  rocket: {
+    id: "rocket", name: "Firework Rockets", family: "ROCKETS", pattern: "home",
+    color: "#FF4FA3", pellets: 1, spread: 0, splash: 1.2, shove: 1.0, turn: 180, len: 2.2, thick: 0.28, heavy: 1,
+    line: "Small splash, big joy.",
+    tiers: [
+      { dmg: 34, rate: 0.81, splash: 1.2 },
+      { dmg: 45, rate: 0.93, splash: 1.2 },
+      { dmg: 64, rate: 0.93, splash: 1.4 },
+      { dmg: 82, rate: 0.93, splash: 1.6 },
+    ],
+  },
+  party: {
+    id: "party", name: "Party Yeet", family: "ROCKETS", pattern: "party",
+    color: "#FF4FA3", pellets: 5, spread: 0, splash: 0.9, shove: 0.7, len: 2.4, thick: 0.32, heavy: 1,
+    line: "Confetti, but make it hurt.",
+    tiers: [
+      { dmg: 18, rate: 0.39, pellets: 5, splash: 0.9 },
+      { dmg: 23, rate: 0.45, pellets: 5, splash: 0.9 },
+      { dmg: 27, rate: 0.45, pellets: 6, splash: 0.9 },
+      { dmg: 32, rate: 0.45, pellets: 6, splash: 1.1 },
+    ],
+  },
+  flame: {
+    id: "flame", name: "Maple Flamer", family: "FLAME", pattern: "cone",
+    color: "#FF6A1A", pellets: 1, spread: 30 * DEG, shove: 0, range: 10, coneHits: 3, len: 1.4, thick: 0.22, heavy: 0,
+    line: "Washes off Suds Knights.",
+    tiers: [
+      { dmg: 3.5, rate: 3.0, burn: 4.2, spread: 30 * DEG, coneHits: 3, range: 10 },
+      { dmg: 4.5, rate: 3.45, burn: 5.4, spread: 30 * DEG, coneHits: 3, range: 10 },
+      { dmg: 4.6, rate: 3.45, burn: 5.6, spread: 36 * DEG, coneHits: 4, range: 10 },
+      { dmg: 4.9, rate: 3.45, burn: 6.0, spread: 36 * DEG, coneHits: 5, range: 12 },
+    ],
+  },
+  sap: {
+    id: "sap", name: "Sap Burner", family: "FLAME", pattern: "glob",
+    color: "#E0A030", pellets: 1, spread: 0, splash: 1.3, shove: 0.8, puddle: 1.3, len: 1.3, thick: 0.3, heavy: 1,
+    line: "Sticky. Hot. Clogs hate it.",
+    tiers: [
+      { dmg: 30, rate: 0.51, burn: 4.5, splash: 1.3, puddle: 1.3 },
+      { dmg: 37, rate: 0.59, burn: 5.6, splash: 1.3, puddle: 1.3 },
+      { dmg: 44, rate: 0.59, burn: 6.6, splash: 1.5, puddle: 1.5 },
+      { dmg: 52, rate: 0.59, burn: 7.7, splash: 1.7, puddle: 1.7 },
+    ],
+  },
 };
+
+export const TIER_TTK = [0, 4.0, 3.0, 2.25, 1.7];
 
 export const STARTERS = ["bow", "smg", "shot", "log"];
 export const UNLOCKS = {
@@ -29,17 +133,19 @@ export const UNLOCKS = {
   "1-2": ["rocket", "flame"],
 };
 
-export const FAMILY_WEIGHT = { ARROWS: 20, BULLETS: 25, ROCKETS: 20, FLAME: 15, JOKE: 20 };
+export const FAMILY_WEIGHT = { ARROWS: 20, BULLETS: 30, ROCKETS: 30, FLAME: 20 };
 
 export const ENEMY = [
-  { id: "clog", name: "Clogling", hp: 10, speed: 5.5, bite: 1, rad: 0.42, lat: 2.4, y: 0.42 },
-  { id: "suds", name: "Suds Knight", hp: 50, foam: 40, speed: 3.5, bite: 2, rad: 0.58, lat: 1.5, y: 0.5 },
-  { id: "hauler", name: "Sludge Hauler", hp: 400, speed: 2.5, bite: 5, rad: 1.12, lat: 1.8, y: 0.95 },
-  { id: "hair", name: "Hairball", hp: 30, speed: 6, bite: 1, rad: 0.4, lat: 0, y: 0.4 },
-  { id: "spit", name: "Pipe Spitter", hp: 70, speed: 8, bite: 2, rad: 0.5, lat: 1.2, y: 0.7 },
-  { id: "leaf", name: "Leaf Swarm", hp: 4, speed: 8, bite: 0, rad: 0.28, lat: 0.4, y: 0.9 },
-  { id: "duck", name: "Rubber Duck", hp: 30, speed: 3, bite: 0, rad: 0.36, lat: 3, y: 0.36 },
+  { id: "clog", name: "Clogling", hp: 10, speed: 5.5, bite: 1, rad: 0.55, lat: 2.4, y: 0.78, tall: 1.5 },
+  { id: "suds", name: "Suds Knight", hp: 50, foam: 40, speed: 3.5, bite: 2, rad: 0.66, lat: 1.5, y: 0.95, tall: 1.8 },
+  { id: "hauler", name: "Sludge Hauler", hp: 400, speed: 2.5, bite: 5, rad: 0.95, lat: 1.8, y: 1.35, tall: 2.6 },
+  { id: "hair", name: "Hairball", hp: 30, speed: 6, bite: 1, rad: 0.5, lat: 0, y: 0.5, tall: 1.0 },
+  { id: "spit", name: "Pipe Spitter", hp: 70, speed: 8, bite: 2, rad: 0.62, lat: 1.2, y: 0.9, tall: 1.7 },
+  { id: "leaf", name: "Leaf Swarm", hp: 4, speed: 8, bite: 0, rad: 0.32, lat: 0.4, y: 1.05, tall: 1.1 },
+  { id: "duck", name: "Rubber Duck", hp: 30, speed: 3, bite: 0, rad: 0.42, lat: 3, y: 0.5, tall: 1.0 },
 ];
+
+export const BOSS_TALL = { baron: 5, tub: 5.5, grunk: 7 };
 
 const CRATE_MUL = { weapon: 1, volunteer: 0.6, tier: 1.2, mystery: 1, duck: 0.5, forged: 0.8 };
 
@@ -141,8 +247,10 @@ export const LEVELS = {
     bossName: "GRUNK THE PLUMBER",
     win: "DAM HELD!",
     events: [
+      { at: 16, kind: "gate", pair: [{ op: "add", k: 8 }, { op: "sub", k: 9 }] },
       { at: 28, kind: "gate", pair: [{ op: "mul", k: 2 }, { op: "add", k: 5 }] },
-      { at: 60, kind: "wave", clog: 80, leaf: 1 },
+      { at: 64, kind: "wave", clog: 26, leafN: 2 },
+      { at: 96, kind: "wave", clog: 22, leafN: 2 },
       { at: 155, kind: "crate", layout: "row", items: [
         { type: "tier" },
         { type: "mystery" },
@@ -199,14 +307,15 @@ export function crateHp(base, type, explicit) {
 
 export function formationRadius(n, half) {
   const shown = Math.max(1, Math.min(60, n | 0));
-  const spacing = 0.75;
+  const spacing = FORM_GAP;
   const rowH = spacing * 0.8660254;
   const cols = Math.max(1, Math.ceil(Math.sqrt(shown)));
   const rows = Math.max(1, Math.ceil(shown / cols));
   const w = Math.max(0, cols - 1) * spacing + spacing * 0.5;
   const h = Math.max(0, rows - 1) * rowH;
-  const r = Math.max(0.4, Math.hypot(w * 0.5, h * 0.5) + 0.05);
-  return Math.min(r, Math.max(0.45, half - 0.7));
+  const r = Math.max(0.35, Math.hypot(w * 0.5, h * 0.5) + 0.05);
+  const cap = Math.min(r, LANE_BLOB * 0.5);
+  return Math.min(cap, Math.max(0.4, half - 0.7));
 }
 
 export function clampLane(x, radius, half) {
@@ -225,52 +334,57 @@ export function squadDmgMul(n) {
 export function weaponMods(id, tier) {
   const w = WEAPONS[id] || WEAPONS.bow;
   const t = Math.max(1, Math.min(4, tier | 0));
-  const rateMul = t >= 2 ? 1.15 : 1;
-  const extra = t >= 3 ? 1 : 0;
-  const gold = t >= 4;
-  let pierce = w.pierce || 0;
-  let splash = w.splash || 0;
-  let turn = w.turn || 0;
-  let burn = w.burn || 0;
-  let slow = w.slow || 0;
-  let stagger = w.stagger || 0;
-  let crit = w.crit || 0;
-  let spread = w.spread || 0;
-  if (w.pattern === "pierce") pierce += extra;
-  if (w.pattern === "cone") spread += extra * (8 * Math.PI) / 180;
-  if (gold) {
-    if (w.pattern === "pierce") pierce += 2;
-    if (splash) splash *= 1.4;
-    if (turn) turn *= 1.4;
-    if (burn) burn *= 1.4;
-    if (slow) slow *= 1.4;
-    if (stagger) stagger *= 1.4;
-    if (w.pattern === "confetti") crit = 0.14;
-  }
+  const row = w.tiers[t - 1];
+  const spread = row.spread != null ? row.spread : (w.spread || 0);
   return {
     id: w.id,
     name: w.name,
     family: w.family,
     line: w.line,
     tier: t,
-    dmg: w.dmg * Math.pow(1.35, t - 1),
-    rate: w.rate * rateMul,
-    rateMax: (w.rateMax || w.rate) * rateMul,
-    pellets: (w.pellets || 1) + (w.pattern === "cone" || w.pattern === "stream" ? 0 : extra),
+    dmg: row.dmg,
+    rate: row.rate,
+    rateMax: row.rateMax || row.rate,
+    pellets: row.pellets || w.pellets || 1,
     spread,
     pattern: w.pattern,
     falloff: w.falloff || 0,
-    splash,
-    knock: w.knock || 0,
-    pierce,
-    turn,
-    burn,
-    slow,
-    stagger,
-    crit,
+    splash: row.splash != null ? row.splash : (w.splash || 0),
+    knock: row.shove != null ? row.shove : (w.shove || 0),
+    shove: row.shove != null ? row.shove : (w.shove || 0),
+    pierce: row.pierce || 0,
+    every: row.every || 0,
+    turn: w.turn || 0,
+    burn: row.burn || 0,
+    slow: 0,
+    stagger: 0,
+    crit: 0.08,
     color: w.color,
-    gold,
+    gold: t >= 4 ? 1 : 0,
+    heavy: w.heavy ? 1 : 0,
+    spinUp: row.spinUp || w.spinUp || 0.6,
+    coneHits: row.coneHits || w.coneHits || 3,
+    range: row.range || w.range || 10,
+    puddle: row.puddle != null ? row.puddle : (w.puddle || 0),
+    len: w.len || 1.6,
+    thick: w.thick || 0.2,
   };
+}
+
+// Gun lab writes tuned DMG here when a tier is outside the band.
+// The authored G4 table stays. A 3-pass lab (N=20, 1-1 HP) finished at
+// tier means 4.25 / 3.57 / 3.20 / 2.92 s against 4.0 / 3.0 / 2.25 / 1.7.
+// Past the one-shot line, more DMG did not shorten TTK: the hex is deeper
+// than the old 28 m reach, and a lob volley lands together. The 3x cap
+// was hit without bringing T3 or T4 into band, so those multipliers were
+// not kept.
+export const TUNED = {};
+
+export function tunedMods(id, tier) {
+  const mods = weaponMods(id, tier);
+  const key = id + ":" + mods.tier;
+  if (TUNED[key]) mods.dmg = TUNED[key];
+  return mods;
 }
 
 export function tierAfterPickup(curId, curTier, nextId, bonus) {
@@ -362,17 +476,19 @@ export function boberReward(kills, cratesOpened, stars, duckKills, duckCrates) {
   return Math.floor(kills / 10) + cratesOpened * 20 + 150 + bonus + (duckKills || 0) * 25 + (duckCrates || 0) * 40;
 }
 
-export function clogHit(type, hp, foam, dmg, splash, pierce, flame, sapped) {
-  let dealt = dmg * (sapped ? 1.25 : 1);
-  if (type === 5 && flame) return { hp: 0, foam: 0, dealt: hp, burst: 0 };
+export function clogHit(type, hp, foam, dmg, splash, pierce, flame) {
+  if (type === 5) return { hp: 0, foam: 0, dealt: Math.max(hp, dmg), burst: 0 };
   if (type === 1 && foam > 0) {
-    let f = dealt;
-    if (flame) f *= 3;
-    else if (!splash && !pierce) f *= 0.4;
+    const mul = flame ? 1.5 : splash ? 1 : 0.75;
+    const f = dmg * mul;
     const next = foam - f;
-    return { hp, foam: next > 0 ? next : 0, dealt: f, burst: next <= 0 ? 1 : 0 };
+    if (next > 0) return { hp, foam: next, dealt: f, burst: 0 };
+    const overflow = dmg - foam / mul;
+    const body = hp - (overflow > 0 ? overflow : 0);
+    return { hp: body, foam: 0, dealt: f, burst: 1 };
   }
-  if (type === 2 && !splash && !pierce) dealt *= 0.4;
+  let dealt = dmg;
+  if (type === 2 && !splash && !pierce && !flame) dealt *= 0.75;
   return { hp: hp - dealt, foam: 0, dealt, burst: 0 };
 }
 
@@ -385,9 +501,9 @@ export function hairGrowth(age) {
 }
 
 export function mysteryPick(unlocked, rnd) {
-  const fams = ["ARROWS", "BULLETS", "ROCKETS", "FLAME", "JOKE"];
+  const fams = ["ARROWS", "BULLETS", "ROCKETS", "FLAME"];
   let total = 0;
-  const counts = [0, 0, 0, 0, 0];
+  const counts = [0, 0, 0, 0];
   for (let i = 0; i < unlocked.length; i++) {
     const w = WEAPONS[unlocked[i]];
     if (!w) continue;
@@ -419,14 +535,15 @@ export function mysteryPick(unlocked, rnd) {
 export function formationOffsets(n, radius, outX, outZ) {
   const shown = shownCount(n);
   if (!shown) return 0;
-  const spacing = 0.75;
+  const spacing = FORM_GAP;
   const rowH = spacing * 0.8660254;
   let cols = Math.max(1, Math.ceil(Math.sqrt(shown)));
   let rows = Math.ceil(shown / cols);
   const w = Math.max(0, cols - 1) * spacing + spacing * 0.5;
   const h = Math.max(0, rows - 1) * rowH;
   const fit = Math.max(0.2, Math.hypot(w * 0.5, h * 0.5) + 0.05);
-  const scale = radius > 0 && fit > radius ? radius / fit : 1;
+  let scale = radius > 0 && fit > radius ? radius / fit : 1;
+  if (w > LANE_BLOB) scale = Math.min(scale, LANE_BLOB / w);
   const sx = spacing * scale;
   const sy = rowH * scale;
   let i = 0;
@@ -481,16 +598,25 @@ export function selfTestRules() {
   shootGate(div, 6);
   eq(div.op + div.k, "add1", "div flip");
 
-  eq(weaponMods("bow", 1).dmg, 10, "t1 dmg");
-  eq(Math.round(weaponMods("bow", 2).dmg * 100), 1350, "t2 dmg");
-  eq(Math.round(weaponMods("bow", 2).rate * 100), 345, "t2 rate");
-  eq(weaponMods("shot", 3).pellets, 6, "t3 pellets");
-  eq(weaponMods("long", 1).pierce, 4, "pierce");
-  eq(weaponMods("long", 3).pierce, 5, "t3 pierce");
-  eq(weaponMods("long", 4).pierce, 7, "t4 pierce");
-  eq(Math.round(weaponMods("log", 4).splash * 10), 31, "t4 splash");
-  eq(Math.round(weaponMods("party", 4).crit * 100), 14, "t4 crit");
-  eq(weaponMods("flame", 4).gold ? 1 : 0, 1, "gold");
+  eq(weaponMods("bow", 1).dmg, 14, "t1 dmg");
+  eq(Math.round(weaponMods("bow", 2).rate * 100), 394, "t2 rate");
+  eq(weaponMods("bow", 2).dmg, 17, "t2 dmg");
+  eq(weaponMods("shot", 1).pellets, 6, "t1 pellets");
+  eq(weaponMods("shot", 3).pellets, 7, "t3 pellets");
+  eq(weaponMods("shot", 4).pellets, 8, "t4 pellets");
+  eq(weaponMods("long", 1).pierce, 3, "pierce");
+  eq(weaponMods("long", 3).pierce, 4, "t3 pierce");
+  eq(weaponMods("long", 4).pierce, 5, "t4 pierce");
+  eq(Math.round(weaponMods("log", 4).splash * 10), 20, "t4 splash");
+  eq(Math.round(weaponMods("party", 1).crit * 100), 8, "crit");
+  eq(weaponMods("party", 1).family, "ROCKETS", "party family");
+  eq(weaponMods("party", 3).pellets, 6, "party t3");
+  eq(weaponMods("sap", 1).name, "Sap Burner", "sap name");
+  eq(weaponMods("sap", 1).pattern, "glob", "sap glob");
+  eq(weaponMods("sap", 1).slow, 0, "no slow");
+  eq(weaponMods("flame", 4).gold, 1, "gold");
+  eq(weaponMods("flame", 4).coneHits, 5, "flame t4 hits");
+  eq(Math.round(weaponMods("smg", 4).rate * 100), 582, "smg t4 rate");
   eq(tierAfterPickup("bow", 1, "smg", 0), 1, "swap family");
   eq(tierAfterPickup("smg", 2, "smg", 0), 3, "same tier");
   eq(tierAfterPickup("smg", 3, "shot", 0), 3, "same family");
@@ -509,18 +635,20 @@ export function selfTestRules() {
   eq(Math.round(squadDmgMul(60) * 100), 100, "no bonus at 60");
   eq(Math.round(squadDmgMul(62) * 1000), 1030, "over 60");
 
-  const foam = clogHit(1, 50, 40, 10, 0, 0, 0, 0);
-  eq(Math.round(foam.foam), 36, "foam chip");
-  const flameFoam = clogHit(1, 50, 40, 10, 0, 0, 1, 0);
-  eq(Math.round(flameFoam.foam), 10, "flame foam");
-  const leaf = clogHit(5, 4, 0, 1, 0, 0, 1, 0);
-  eq(leaf.hp, 0, "flame leaf");
-  const sapped = clogHit(0, 10, 0, 8, 0, 0, 0, 1);
-  eq(sapped.dealt, 10, "sap bonus");
-  const pierceHaul = clogHit(2, 400, 0, 10, 0, 1, 0, 0);
+  const foam = clogHit(1, 50, 40, 10, 0, 0, 0);
+  eq(Math.round(foam.foam * 10), 325, "foam chip");
+  const flameFoam = clogHit(1, 50, 40, 10, 0, 0, 1);
+  eq(Math.round(flameFoam.foam), 25, "flame foam");
+  const splashFoam = clogHit(1, 50, 40, 10, 1, 0, 0);
+  eq(Math.round(splashFoam.foam), 30, "splash foam");
+  const leaf = clogHit(5, 4, 0, 1, 0, 0, 0);
+  eq(leaf.hp, 0, "any leaf");
+  const pierceHaul = clogHit(2, 400, 0, 10, 0, 1, 0);
   eq(pierceHaul.dealt, 10, "pierce hauler");
-  const frontHaul = clogHit(2, 400, 0, 10, 0, 0, 0, 0);
-  eq(frontHaul.dealt, 4, "front hauler");
+  const flameHaul = clogHit(2, 400, 0, 10, 0, 0, 1);
+  eq(flameHaul.dealt, 10, "flame hauler");
+  const frontHaul = clogHit(2, 400, 0, 10, 0, 0, 0);
+  eq(Math.round(frontHaul.dealt * 10), 75, "front hauler");
   const grown = hairGrowth(40);
   eq(grown.bite, 7, "hair bite");
   eq(grown.hpScale, 3, "hair cap");
@@ -532,17 +660,27 @@ export function selfTestRules() {
   eq(nextLevel("1-3"), "", "no chapter 2");
   eq(LEVELS["1-1"].events.length, 10, "pine events");
   eq(LEVELS["1-2"].events[9].clog + LEVELS["1-2"].events[9].suds + 2 + 4 + 2 + 1, 220, "wave l2");
+  eq(LEVELS["1-3"].events[2].leafN + LEVELS["1-3"].events[3].leafN, 4, "wave s leaves");
   eq(crateHp(700, "duck"), 350, "duck hp");
   eq(crateHp(1000, "forged"), 800, "forged hp");
+  if (JSON.stringify(WEAPONS).indexOf("Sap Sprayer") >= 0) fails.push("sap sprayer name");
+  if (JSON.stringify(WEAPONS).indexOf("JOKE") >= 0) fails.push("joke family");
 
   const xs = new Float32Array(64);
   const zs = new Float32Array(64);
   const rad = formationRadius(40, 5);
   const shown = formationOffsets(40, rad, xs, zs);
   eq(shown, 40, "shown");
+  let wide = 0;
   for (let i = 0; i < shown; i++) {
-    if (xs[i] * xs[i] + zs[i] * zs[i] > rad * rad + 1e-6) fails.push("formation outside");
+    if (xs[i] * xs[i] + zs[i] * zs[i] > rad * rad + 1e-4) fails.push("formation outside");
+    if (Math.abs(xs[i]) > wide) wide = Math.abs(xs[i]);
   }
+  if (wide * 2 > LANE_BLOB + 0.2) fails.push("blob wide " + wide);
   if (Math.abs(clampLane(9, 1, 5) - 4) > 1e-6) fails.push("clamp lane");
+  for (let i = 0; i < ENEMY.length; i++) {
+    if (ENEMY[i].id === "leaf") continue;
+    if (ENEMY[i].tall < 0.95) fails.push("short " + ENEMY[i].id);
+  }
   return fails;
 }

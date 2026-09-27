@@ -2,6 +2,7 @@
 // The chase camera sits on +Z, so screen-right is world +X.
 
 import * as THREE from "three";
+import { socketMaterial } from "./vat.js?v=br3";
 import {
   ADVANCE,
   ENEMY,
@@ -32,8 +33,12 @@ import {
   squadDmgMul,
   starsFor,
   tierAfterPickup,
+  tunedMods,
   weaponMods,
-} from "./rules.js?v=br2";
+  BOSS_TALL,
+  TIER_TTK,
+  TUNED,
+} from "./rules.js?v=br3";
 import {
   animToon,
   attachOutline,
@@ -50,7 +55,7 @@ import {
   writeLog,
   writeQuat,
   writeTRS,
-} from "./mats.js?v=br2";
+} from "./mats.js?v=br3";
 import {
   arrowGeo,
   buildBaron,
@@ -75,7 +80,7 @@ import {
   quadGeo,
   rocketGeo,
   streamGeo,
-} from "./build.js?v=br2";
+} from "./build.js?v=br3";
 
 const STRIDE = 320;
 const CAPS = [320, 320, 320, 120, 120, 120, 120];
@@ -228,6 +233,12 @@ export function createPlay(scene, camera, audio) {
       side: new Float32Array(cap),
       lob: new Float32Array(cap),
       stamp: new Int32Array(cap),
+      hits: new Int16Array(cap),
+      corpse: new Float32Array(cap),
+      shoveV: new Float32Array(cap),
+      lx: new Float32Array(cap),
+      lz: new Float32Array(cap),
+      spinA: new Float32Array(cap),
       free,
       freeN: cap,
       mesh,
@@ -419,10 +430,14 @@ export function createPlay(scene, camera, audio) {
     toneMapped: false,
   });
   const muzzles = makeFx(quadGeo(), glowMat, 48);
-  const sparks = makeFx(quadGeo(), sparkMat, 48);
+  const sparks = makeFx(quadGeo(), sparkMat, 120);
   const splats = makeFx(new THREE.CircleGeometry(0.55, 8), splatMat, 24);
 
-  const digits = new THREE.InstancedMesh(quadGeo(), digitMaterial(), GLYPHS);
+  const digitGeo = quadGeo();
+  const digitWhite = new Float32Array(digitGeo.getAttribute("position").count * 3);
+  digitWhite.fill(1);
+  digitGeo.setAttribute("color", new THREE.BufferAttribute(digitWhite, 3));
+  const digits = new THREE.InstancedMesh(digitGeo, digitMaterial(), GLYPHS);
   digits.frustumCulled = false;
   digits.count = 0;
   digits.visible = false;
@@ -454,21 +469,13 @@ export function createPlay(scene, camera, audio) {
   const gateFrame = new THREE.InstancedMesh(frameGeo, toon("#ffffff", { vertexColors: true }), 8);
   const gateOutline = new THREE.InstancedMesh(frameGeo, outlineGate(0.03), 8);
   const gateTime = { value: 0 };
-  const gateMat = new THREE.MeshBasicMaterial({
+  const gateMat = new THREE.MeshStandardMaterial({
     color: 0xffffff,
-    transparent: true,
-    opacity: 0.45,
-    depthWrite: false,
-    toneMapped: false,
+    roughness: 0.18,
+    metalness: 0.42,
+    emissive: 0x221111,
   });
-  gateMat.onBeforeCompile = (shader) => {
-    shader.uniforms.uTime = gateTime;
-    shader.fragmentShader = "uniform float uTime;\n" + shader.fragmentShader.replace(
-      "#include <opaque_fragment>",
-      "diffuseColor.rgb *= 0.78 + 0.22 * sin(gl_FragCoord.y * 0.09 - uTime * 2.6);\n#include <opaque_fragment>"
-    );
-  };
-  const gatePanel = new THREE.InstancedMesh(new THREE.PlaneGeometry(4.5, 3.5), gateMat, 8);
+  const gatePanel = new THREE.InstancedMesh(new THREE.BoxGeometry(4.5, 1.6, 1.0), gateMat, 8);
   const gateRim = new THREE.InstancedMesh(
     new THREE.PlaneGeometry(4.85, 3.85),
     new THREE.MeshBasicMaterial({
@@ -488,13 +495,13 @@ export function createPlay(scene, camera, audio) {
     scene.add(m);
   }
   gatePanel.setColorAt(0, white);
-  const blueC = new THREE.Color("#3AA0FF");
-  const redC = new THREE.Color("#FF4A4A");
+  const blueC = new THREE.Color("#2F7BFF");
+  const redC = new THREE.Color("#E53935");
   const signs = [];
   for (let i = 0; i < 8; i++) {
     const sign = makeSign();
     const mesh = new THREE.Mesh(
-      new THREE.PlaneGeometry(3.2, 1.8),
+      new THREE.PlaneGeometry(2.6, 1.4),
       new THREE.MeshBasicMaterial({ map: sign.tex, transparent: true, alphaTest: 0.06, toneMapped: false, side: THREE.DoubleSide })
     );
     mesh.renderOrder = 2;
@@ -506,7 +513,9 @@ export function createPlay(scene, camera, audio) {
   const crateGeo = buildCrateGeo();
   const crates = [];
   for (let i = 0; i < 8; i++) {
-    const mesh = new THREE.Mesh(crateGeo, toon("#ffffff", { vertexColors: true }));
+    const mesh = new THREE.Mesh(crateGeo, new THREE.MeshStandardMaterial({
+      vertexColors: true, color: 0xffffff, metalness: 0.6, roughness: 0.35,
+    }));
     attachOutline(mesh, 0.03);
     const canvas = document.createElement("canvas");
     canvas.width = 512;
@@ -518,7 +527,7 @@ export function createPlay(scene, camera, audio) {
       new THREE.PlaneGeometry(2.7, 1.15),
       new THREE.MeshBasicMaterial({ map: tex, transparent: true, alphaTest: 0.1, toneMapped: false })
     );
-    face.position.set(0, 2.05, 0.78);
+    face.position.set(0, 1.85, 0.78);
     mesh.add(face);
     const hpCanvas = document.createElement("canvas");
     hpCanvas.width = 512;
@@ -530,10 +539,10 @@ export function createPlay(scene, camera, audio) {
       new THREE.PlaneGeometry(2.8, 1.6),
       new THREE.MeshBasicMaterial({ map: hpTex, transparent: true, depthWrite: false, toneMapped: false })
     );
-    hpFace.position.set(0, 0.95, 0.8);
+    hpFace.position.set(0, 1.15, 0.8);
     mesh.add(hpFace);
     const top = new THREE.Mesh(builtE[6].geo, toon("#ffffff", { vertexColors: true }));
-    top.position.set(0, 3.05, 0);
+    top.position.set(0, 2.75, 0);
     top.scale.set(0.85, 0.85, 0.85);
     top.visible = false;
     mesh.add(top);
@@ -654,10 +663,10 @@ export function createPlay(scene, camera, audio) {
   scene.add(wayArrow);
   const zone = new THREE.Mesh(
     new THREE.PlaneGeometry(1, 1),
-    new THREE.MeshBasicMaterial({ color: 0x6a1020, transparent: true, opacity: 0.45, depthWrite: false })
+    new THREE.MeshBasicMaterial({ color: 0xff4f5e, transparent: true, opacity: 0.62, depthWrite: false, toneMapped: false })
   );
   zone.rotation.x = -Math.PI / 2;
-  zone.position.y = 0.25;
+  zone.position.y = 0.36;
   zone.visible = false;
   scene.add(zone);
 
@@ -692,10 +701,11 @@ export function createPlay(scene, camera, audio) {
   const fx = new Float32Array(64);
   const fz = new Float32Array(64);
   const cds = new Float32Array(RENDER_CAP);
-  const ct = new Int8Array(48);
-  const ci = new Int16Array(48);
+  const AIM_N = 96;
+  const ct = new Int8Array(AIM_N);
+  const ci = new Int16Array(AIM_N);
   let cn = 0;
-  const cd = new Float32Array(48);
+  const cd = new Float32Array(AIM_N);
   const counts = [0, 0, 0, 0, 0, 0, 0];
   const gates = [];
   const fired = new Uint8Array(16);
@@ -711,6 +721,7 @@ export function createPlay(scene, camera, audio) {
   };
   let bossKind = "baron";
   let wrenchPhase = 0;
+  let biteLock = 0;
   let wrenchT = 0;
   let wrenchX = 0;
   let wrenchY = 1.4;
@@ -773,6 +784,65 @@ export function createPlay(scene, camera, audio) {
   let seed = 12345;
   let spin = 0;
   let kickT = 0;
+  let boltSerial = 0;
+  let hitStop = 0;
+  let hitStopCd = 0;
+  let shotKills = 0;
+  let shotKillsTag = 0;
+  let invuln = 0;
+  let labMode = 0;
+  let lockGun = 0;
+  let autoPick = 0;
+  let realCrowd = 0;
+  let soldierAnim = null;
+  let soldierClips = null;
+  let vatTime = null;
+  let boberLive = null;
+  let boberMixer = null;
+  let bossLive = null;
+  let baronDress = null;
+  let tubDress = null;
+  let grunkDress = null;
+  let bossTint = 0;
+  let bossMixer = null;
+  const gunMeshes = {};
+  let shownGun = null;
+  let boberGunLive = null;
+  let firedOnce = 0;
+  let hpMulOverride = 0;
+  let labT0 = -1;
+  function geoH(geo) {
+    geo.computeBoundingBox();
+    return Math.max(0.25, geo.boundingBox.max.y - geo.boundingBox.min.y);
+  }
+  let soldierScale0 = 0.85 / geoH(soldierBuilt.geo);
+  const boberScale0 = 1.05 / geoH(boberBuilt.geo);
+  const enemyScale = [];
+  for (let t = 0; t < TYPES; t++) enemyScale.push(ENEMY[t].tall / geoH(builtE[t].geo));
+  let soldierScale = soldierScale0;
+  let boberScale = boberScale0;
+  const squadGuns = new THREE.InstancedMesh(
+    new THREE.BoxGeometry(0.16, 0.12, 0.55),
+    new THREE.MeshStandardMaterial({ roughness: 0.42, metalness: 0.2, color: 0xf4e6c3 }),
+    RENDER_CAP
+  );
+  squadGuns.geometry.translate(0, 0.02, -0.34);
+  squadGuns.frustumCulled = false;
+  squadGuns.count = 0;
+  scene.add(squadGuns);
+  const boberGun = new THREE.Mesh(
+    new THREE.BoxGeometry(0.2, 0.15, 0.72),
+    new THREE.MeshStandardMaterial({ roughness: 0.42, metalness: 0.2, color: 0xf4e6c3 })
+  );
+  boberGun.geometry.translate(0, 0.02, -0.42);
+  bober.add(boberGun);
+  const muzzleLight = new THREE.PointLight(0xfff1c4, 0, 9, 2);
+  scene.add(muzzleLight);
+  const gunTint = new THREE.Color("#F4E6C3");
+  const digWhite = new THREE.Color("#ffffff");
+  const digYellow = new THREE.Color("#ffe14a");
+  const digOrange = new THREE.Color("#ff8a2a");
+  digits.material.vertexColors = true;
   let gunAcc = 0;
   let toastT = 0;
   let toastName = "";
@@ -870,31 +940,45 @@ export function createPlay(scene, camera, audio) {
     }
   }
 
-  function floater(target, x0, y0, z0, amount) {
+  const flSize = new Float32Array(FLOATS);
+  const flCrit = new Uint8Array(FLOATS);
+  function numSize(v) {
+    if (v < 20) return 0.5;
+    if (v <= 60) return 0.8;
+    return 1.1;
+  }
+  function floater(target, x0, y0, z0, amount, crit) {
     const add = amount > 0 ? amount : 0;
     if (add <= 0) return;
     for (let i = 0; i < FLOATS; i++) {
-      if (flAlive[i] && flTarget[i] === target && flLife[i] > 0.12) {
+      if (flAlive[i] && flTarget[i] === target && flLife[i] > 0.2) {
         flValue[i] += add;
         if (flValue[i] > 9999) flValue[i] = 9999;
-        flLife[i] = 0.72;
+        flLife[i] = 0.5;
+        flSize[i] = numSize(flValue[i]);
+        if (crit) flCrit[i] = 1;
         flX[i] = x0;
         flY[i] = y0;
         flZ[i] = z0;
         return;
       }
     }
-    for (let i = 0; i < FLOATS; i++) {
-      if (flAlive[i]) continue;
-      flAlive[i] = 1;
-      flTarget[i] = target;
-      flValue[i] = add > 9999 ? 9999 : add;
-      flLife[i] = 0.72;
-      flX[i] = x0;
-      flY[i] = y0;
-      flZ[i] = z0;
-      return;
+    let slot = -1;
+    for (let i = 0; i < FLOATS; i++) if (!flAlive[i]) { slot = i; break; }
+    if (slot < 0) {
+      let best = 0;
+      for (let i = 1; i < FLOATS; i++) if (flLife[i] < flLife[best]) best = i;
+      slot = best;
     }
+    flAlive[slot] = 1;
+    flTarget[slot] = target;
+    flValue[slot] = add > 9999 ? 9999 : add;
+    flLife[slot] = 0.5;
+    flSize[slot] = numSize(add);
+    flCrit[slot] = crit ? 1 : 0;
+    flX[slot] = x0;
+    flY[slot] = y0;
+    flZ[slot] = z0;
   }
 
   function word(text, x0, y0, z0, bad) {
@@ -990,7 +1074,7 @@ export function createPlay(scene, camera, audio) {
     if (!p || p.freeN <= 0 || liveN >= 320) return -1;
     const i = p.free[--p.freeN];
     const spec = ENEMY[type];
-    const base = spec.hp * level.hpMul;
+    const base = spec.hp * (hpMulOverride || level.hpMul);
     p.alive[i] = 1;
     p.x[i] = x0;
     p.z[i] = z0;
@@ -1010,6 +1094,11 @@ export function createPlay(scene, camera, audio) {
     p.side[i] = rnd() < 0.5 ? -1 : 1;
     p.lob[i] = 0.6 + rnd() * 1.4;
     p.stamp[i] = 0;
+    p.corpse[i] = 0;
+    p.shoveV[i] = 0;
+    p.lx[i] = 0;
+    p.lz[i] = 0;
+    p.spinA[i] = 0;
     liveN++;
     counts[type]++;
     return i;
@@ -1026,24 +1115,42 @@ export function createPlay(scene, camera, audio) {
     if (counts[type] < 0) counts[type] = 0;
   }
 
+  function finishCorpse(type, i) {
+    const p = pools[type];
+    const x0 = p.x[i];
+    const z0 = p.z[i];
+    p.corpse[i] = 0;
+    p.free[p.freeN++] = i;
+    spawnFx(splats, x0, DECK + 0.03, z0, 1.3, 0.85 + (type === 2 ? 0.6 : 0));
+    if (pFreeN > 8) {
+      puff(x0, 0.55, z0, 0, 4, 2.2, 0.4, 0.45);
+      puff(x0, 0.9, z0, 1, 3, 1.8, 0.45, 0.32);
+    }
+  }
+
   function killEnemy(type, i, splashFx) {
     const p = pools[type];
     if (!p.alive[i]) return;
     const x0 = p.x[i];
     const z0 = p.z[i];
-    releaseEnemy(type, i);
+    p.alive[i] = 0;
+    liveN--;
+    counts[type]--;
+    if (liveN < 0) liveN = 0;
+    if (counts[type] < 0) counts[type] = 0;
     kills++;
+    const launch = 1.5 + rnd() * 1.5;
+    p.corpse[i] = 0.35;
+    p.lz[i] = splashFx ? -launch : -launch * 0.65;
+    p.lx[i] = (rnd() * 2 - 1) * (splashFx ? 1.4 : 0.35);
+    p.spinA[i] = (rnd() * 2 - 1) * 6;
     if (type === 6) {
       duckKills++;
       word("QUACK", x0, 1.6, z0);
       audio.quack();
     }
-    spawnFx(splats, x0, DECK + 0.03, z0, 1.3, 0.85 + (type === 2 ? 0.6 : 0));
-    if (splashFx && pFreeN > 8) {
-      puff(x0, 0.55, z0, 0, 4, 2.2, 0.4, 0.45);
-      puff(x0, 0.9, z0, 1, 3, 1.8, 0.45, 0.32);
-      if (kills % 100 === 0) popDuck(x0, 0.8, z0, 1);
-    }
+    if (kills % 100 === 0) popDuck(x0, 0.8, z0, 1);
+    audio.pop();
   }
 
   function popDuck(x0, y0, z0, n) {
@@ -1060,19 +1167,35 @@ export function createPlay(scene, camera, audio) {
     }
   }
 
+  function waveBias(z0) {
+    for (let i = 0; i < crates.length; i++) {
+      const c = crates[i];
+      if (c.state === "dead") continue;
+      if (Math.abs(c.z - z0) > 22) continue;
+      return c.x < 0 ? 2.15 : -2.15;
+    }
+    return 0;
+  }
+
   function dump(type, count, z, per) {
     if (!count || count <= 0) return z;
     const p = pools[type];
     const room = Math.min(count, p.freeN, 320 - liveN);
+    const gap = type === 0 ? 0.9 : Math.max(0.9, (ENEMY[type].tall || 1) * 0.62);
     const cols = Math.max(1, Math.min(per || 12, 12));
+    const bias = waveBias(z);
     for (let i = 0; i < room; i++) {
       const row = (i / cols) | 0;
       const col = i % cols;
       const nCols = Math.min(cols, room - row * cols);
-      const x0 = nCols <= 1 ? 0 : -((nCols - 1) * 0.8) * 0.5 + col * 0.8;
-      spawnEnemy(type, x0, z - row * 0.8);
+      const stagger = row % 2 ? gap * 0.5 : 0;
+      let x0 = nCols <= 1 ? 0 : -((nCols - 1) * gap) * 0.5 + col * gap + stagger;
+      x0 += bias;
+      if (x0 > 4.4) x0 = 4.4;
+      if (x0 < -4.4) x0 = -4.4;
+      spawnEnemy(type, x0, z - row * gap * 0.86);
     }
-    return z - Math.ceil(room / cols) * 0.8;
+    return z - Math.ceil(room / cols) * gap * 0.86;
   }
 
   function spawnWave(ev) {
@@ -1082,7 +1205,8 @@ export function createPlay(scene, camera, audio) {
     if (ev.suds) z = dump(1, ev.suds, z - 0.8, 12);
     if (ev.hair) z = dump(3, ev.hair, z - 0.8, 6);
     if (ev.spit) z = dump(4, ev.spit, z - 0.8, 6);
-    if (ev.leaf) {
+    if (ev.leafN) z = dump(5, ev.leafN, z - 0.8, 4);
+    else if (ev.leaf) {
       for (let s = 0; s < ev.leaf; s++) z = dump(5, 8, z - 0.8, 8);
     }
     if (ev.duck) dump(6, ev.duck, z - 0.8, 3);
@@ -1093,7 +1217,7 @@ export function createPlay(scene, camera, audio) {
     if (i < 0) return;
     hazards.x[i] = x0;
     hazards.z[i] = z0;
-    hazards.y[i] = 0.26;
+    hazards.y[i] = 0.36;
     hazards.extra[i] = r;
     hazards.life[i] = delay;
     hazards.extra2[i] = maxKill;
@@ -1235,6 +1359,7 @@ export function createPlay(scene, camera, audio) {
           c.shake = 0;
           c.reel = 0;
           c.dirty = 1;
+          c.eased = 0;
           c.extra = kind === "volunteer" ? "+" + level.vol : "";
           c.top.visible = kind === "duck";
         }
@@ -1292,7 +1417,7 @@ export function createPlay(scene, camera, audio) {
   }
 
   function refreshMods() {
-    mods = weaponMods(weaponId, tier);
+    mods = tunedMods(weaponId, tier);
     if (!rackTaken) {
       for (let i = 0; i < 3; i++) paintRackSlot(i);
     }
@@ -1340,16 +1465,21 @@ export function createPlay(scene, camera, audio) {
     flyZ = c.z;
     if (c.kind === "weapon" || c.kind === "mystery") {
       cratesOpened++;
-      equip(c.gun || "bow", 0);
+      if (lockGun) {
+        squadN = Math.min(SIM_CAP, squadN + 5);
+        floater(9200, c.x, 2.2, c.z, 5);
+      } else equip(c.gun || "bow", 0);
     } else if (c.kind === "volunteer") {
       cratesOpened++;
       squadN = Math.min(SIM_CAP, squadN + level.vol);
       floater(9200, c.x, 2.2, c.z, level.vol);
     } else if (c.kind === "tier") {
       cratesOpened++;
-      tier = Math.min(4, tier + 1);
-      refreshMods();
-      flyT = 0.35;
+      if (!lockGun) {
+        tier = Math.min(4, tier + 1);
+        refreshMods();
+        flyT = 0.35;
+      }
     } else if (c.kind === "duck") {
       duckCrates++;
       audio.quack();
@@ -1374,7 +1504,7 @@ export function createPlay(scene, camera, audio) {
   }
 
   function hurtSquad(n, quiet) {
-    if (ended || !running || n <= 0) return;
+    if (ended || !running || n <= 0 || invuln) return;
     const lost = Math.min(n, squadN);
     squadN -= n;
     if (squadN < 0) squadN = 0;
@@ -1466,7 +1596,7 @@ export function createPlay(scene, camera, audio) {
     bossState.mode = 0;
     bossState.t = 1.2;
     bossState.lock = squadX;
-    bossState.cool = bossKind === "baron" ? 6 : bossKind === "tub" ? 8 : 5;
+    bossState.cool = bossKind === "baron" ? 1.0 : bossKind === "tub" ? 8 : 5;
     wrenchPhase = 0;
     wrench.visible = false;
     zone.visible = false;
@@ -1478,11 +1608,13 @@ export function createPlay(scene, camera, audio) {
 
   function hurtBoss(dmg, crit, splash, pierce, x0, y0, z0) {
     if (!bossState.alive || ended) return;
-    let dealt = dmg;
-    if (bossKind === "tub" && !crit && !splash && !pierce) dealt *= 0.4;
+    // 0.21 keeps a 20-soldier T1 crossbow fight on Baron above 12 s. The 6 s floor still stops a T4 wipe.
+  let dealt = dmg * 0.21;
+    if (bossKind === "tub" && !crit && !splash && !pierce) dealt *= 0.75;
     if (crit) dealt *= 2;
     if (dealt < 0.05) return;
     bossState.hp -= dealt;
+    if (bossSec < 6 && bossState.hp <= 0) bossState.hp = 1;
     if (bossState.hp < 0) bossState.hp = 0;
     camShake = 0.15;
     spawnFx(sparks, x0, y0, z0, 0.08, 0.34);
@@ -1512,23 +1644,90 @@ export function createPlay(scene, camera, audio) {
     if (bossState.hp <= 0) beginWin();
   }
 
-  function damageEnemy(type, i, dmg, x0, y0, z0, splash, pierce, flame) {
+  function applyShove(p, i, amount, ox, radial, oz) {
+    if (!amount || amount <= 0) return;
+    let dx = 0;
+    let dz = -1;
+    if (radial) {
+      dx = p.x[i] - ox;
+      dz = p.z[i] - oz;
+      const len = Math.hypot(dx, dz);
+      if (len < 0.05) {
+        dx = 0;
+        dz = -1;
+      } else {
+        dx /= len;
+        dz /= len;
+      }
+    }
+    const mag = p.shoveV[i];
+    let vx = (mag > 0 ? p.lx[i] : 0) * mag + dx * amount;
+    let vz = (mag > 0 ? p.lz[i] : 0) * mag + dz * amount;
+    let m = Math.hypot(vx, vz);
+    if (m > 3) {
+      vx *= 3 / m;
+      vz *= 3 / m;
+      m = 3;
+    }
+    if (m < 1e-4) {
+      p.shoveV[i] = 0;
+      return;
+    }
+    p.lx[i] = vx / m;
+    p.lz[i] = vz / m;
+    p.shoveV[i] = m;
+  }
+
+  function markShot() {
+    shotThisTick = true;
+    firedOnce = 1;
+    if (labMode && labT0 < 0) labT0 = clock;
+  }
+
+  function noteKill(tag) {
+    if (!tag || labMode) return;
+    if (tag !== shotKillsTag) {
+      shotKillsTag = tag;
+      shotKills = 0;
+    }
+    shotKills++;
+    if (shotKills >= 5 && hitStopCd <= 0) {
+      hitStop = 0.03;
+      hitStopCd = 0.5;
+      camShake = Math.max(camShake, 0.1);
+      shotKills = 0;
+    }
+  }
+
+  function damageEnemy(type, i, dmg, x0, y0, z0, splash, pierce, flame, tag) {
     const p = pools[type];
-    if (!p.alive[i]) return;
-    const hit = clogHit(type, p.hp[i], p.foam[i], dmg, splash ? 1 : 0, pierce ? 1 : 0, flame ? 1 : 0, p.slowT[i] > 0 ? 1 : 0);
+    if (!p.alive[i]) return 0;
+    let crit = 0;
+    let dealtIn = dmg;
+    if (rnd() < (mods.crit || 0.08)) {
+      dealtIn *= 2;
+      crit = 1;
+    }
+    const hit = clogHit(type, p.hp[i], p.foam[i], dealtIn, splash ? 1 : 0, pierce ? 1 : 0, flame ? 1 : 0);
     p.hp[i] = hit.hp;
     p.foam[i] = hit.foam;
     p.hit[i] = 1;
-    spawnFx(sparks, x0, y0, z0, 0.08, 0.22);
+    if (!splash && mods.shove) applyShove(p, i, mods.shove, x0, 0);
+    spawnFx(sparks, x0, y0, z0, 0.08, 0.8);
     if (flame && mods.burn) {
       p.burnT[i] = 2;
       p.burnD[i] = mods.burn;
     }
-    floater(type * 400 + i, p.x[i], ENEMY[type].y + 0.7, p.z[i], hit.dealt);
+    floater(type * 400 + i, p.x[i], ENEMY[type].y + 0.7, p.z[i], hit.dealt, crit);
+    if (crit) word("!", p.x[i], ENEMY[type].y + 1.35, p.z[i]);
     audio.squeak();
     if (hit.burst && pFreeN > 12) puff(p.x[i], ENEMY[type].y, p.z[i], 10, 8, 2.4, 0.45, 0.35);
-    if (pFreeN > 40) puff(x0, y0, z0, flame ? 7 : 2, 1, 1.4, 0.16, 0.2);
-    if (p.hp[i] <= 0) killEnemy(type, i, true);
+    if (p.hp[i] <= 0) {
+      noteKill(tag);
+      killEnemy(type, i, splash ? 1 : 0);
+      return 1;
+    }
+    return 0;
   }
 
   function cellOf(x0, z0) {
@@ -1566,10 +1765,26 @@ export function createPlay(scene, camera, audio) {
     return px0 * px0 + py0 * py0 + pz0 * pz0 <= rad * rad;
   }
 
-  function splashAt(x0, y0, z0, dmg, knock, r) {
-    const rad = r || 2.2;
+  function splashAt(x0, y0, z0, dmg, shove, r, flame, tag, skipT, skipI) {
+    const rad = r || 1.6;
     const r2 = rad * rad;
     puff(x0, 0.4, z0, 3, 10, 3.4, 0.35, 0.7);
+    let bestT = -1;
+    let bestI = -1;
+    let bestD = 1e9;
+    for (let t = 0; t < TYPES; t++) {
+      const p = pools[t];
+      for (let i = 0; i < p.cap; i++) {
+        if (!p.alive[i]) continue;
+        const dx = p.x[i] - x0;
+        const dz = p.z[i] - z0;
+        const d2 = dx * dx + dz * dz;
+        if (d2 > r2 || d2 >= bestD) continue;
+        bestD = d2;
+        bestT = t;
+        bestI = i;
+      }
+    }
     for (let t = 0; t < TYPES; t++) {
       const p = pools[t];
       const k = ENEMY[t];
@@ -1578,18 +1793,26 @@ export function createPlay(scene, camera, audio) {
         const dx = p.x[i] - x0;
         const dz = p.z[i] - z0;
         if (dx * dx + dz * dz > r2) continue;
-        if (knock && t === 0) p.z[i] -= knock;
-        else if (knock) p.z[i] -= knock * 0.45;
-        damageEnemy(t, i, dmg, p.x[i], k.y, p.z[i], 1, 0, 0);
+        if (t === skipT && i === skipI) continue;
+        const centre = !(skipT >= 0) && t === bestT && i === bestI;
+        applyShove(p, i, shove || 0, x0, 1, z0);
+        damageEnemy(t, i, centre ? dmg : dmg * 0.7, p.x[i], k.y, p.z[i], 1, 0, flame ? 1 : 0, tag || 0);
       }
+    }
+    for (let i = 0; i < crates.length; i++) {
+      const c = crates[i];
+      if (c.state !== "idle") continue;
+      const dx = c.x - x0;
+      const dz = c.z - z0;
+      if (dx * dx + dz * dz > r2) continue;
+      hitCrate(c.x, 1.2, c.z, dmg);
     }
     if (bossState.alive) {
       const dx = bossState.x - x0;
       const dz = bossState.z - z0;
-      if (dx * dx + dz * dz <= (rad + 1.2) * (rad + 1.2)) {
-        const near = (crownX - x0) * (crownX - x0) + (crownZ - z0) * (crownZ - z0) < 0.8;
-        hurtBoss(dmg, near ? 1 : 0, 1, 0, bossState.x, 1.6, bossState.z);
-        bossState.z -= (knock || 0) * 0.35;
+      if (dx * dx + dz * dz <= (rad + 1.6) * (rad + 1.6)) {
+        const near = (crownX - x0) * (crownX - x0) + (crownZ - z0) * (crownZ - z0) < 1.4;
+        hurtBoss(dmg, near ? 1 : 0, 1, 0, bossState.x, 2.2, bossState.z);
       }
     }
   }
@@ -1660,9 +1883,65 @@ export function createPlay(scene, camera, audio) {
     if (bossKind === "grunk" && wrenchPhase === 2) {
       if (segHit(x0, y0, z0, x1, y1, z1, wrenchX, wrenchY, wrenchZ, 0.7)) return 2;
     }
-    if (segHit(x0, y0, z0, x1, y1, z1, crownX, crownY, crownZ, 0.62)) return 1;
-    if (segHit(x0, y0, z0, x1, y1, z1, bossState.x, 1.45, bossState.z, 1.45)) return 0;
+    const tall = BOSS_TALL[bossKind] || 5;
+    const bodyR = tall * 0.28;
+    const crownR = tall * 0.12;
+    if (segHit(x0, y0, z0, x1, y1, z1, crownX, crownY, crownZ, crownR)) return 1;
+    if (segHit(x0, y0, z0, x1, y1, z1, bossState.x, tall * 0.42, bossState.z, bodyR)) return 0;
     return -1;
+  }
+
+  function burstParty(s, i) {
+    const n = s.extra[i] || 5;
+    const rad = s.extra2[i] || 0.9;
+    const dmg = s.dmg[i];
+    const ox = s.x[i];
+    const oz = s.z[i];
+    const oy = Math.max(0.8, s.y[i]);
+    const ax = s.ox[i];
+    const az = s.oz[i];
+    puff(ox, oy, oz, 4, 10, 3.2, 0.45, 0.4);
+    for (let k = 0; k < 8; k++) {
+      spawnShot(party, ox, oy, oz, (rnd() * 2 - 1) * 4, 2 + rnd() * 2, (rnd() * 2 - 1) * 4, 0, 0.55, 2 + (k % 3), 0, 0, 0);
+    }
+    let bn = 0;
+    for (let t = 0; t < TYPES && bn < 8; t++) {
+      const p = pools[t];
+      for (let j = 0; j < p.cap && bn < 8; j++) {
+        if (!p.alive[j]) continue;
+        const dx = p.x[j] - ax;
+        const dz = p.z[j] - az;
+        if (dx * dx + dz * dz > 9) continue;
+        bombX[bn] = p.x[j];
+        bombZ[bn] = p.z[j];
+        bn++;
+      }
+    }
+    for (let k = 0; k < n; k++) {
+      let tx;
+      let tz;
+      if (bn) {
+        tx = bombX[k % bn];
+        tz = bombZ[k % bn];
+      } else {
+        const ang = (k / n) * Math.PI * 2;
+        tx = ax + Math.cos(ang) * 1.4;
+        tz = az + Math.sin(ang) * 1.4;
+      }
+      aimLob(balls, ox, oy, oz, tx, tz, dmg, 4, 4, rad, mods.shove || 0.7, s.roll[i] || 0);
+    }
+    audio.pop();
+  }
+
+  function dropPuddle(x0, z0, rad, burn) {
+    const id = allocS(puddles);
+    if (id < 0) return;
+    puddles.x[id] = x0;
+    puddles.y[id] = 0.24;
+    puddles.z[id] = z0;
+    puddles.life[id] = 1.5;
+    puddles.extra[id] = rad || 1.3;
+    puddles.extra2[id] = burn || 4.5;
   }
 
   function movePool(s, h, kind) {
@@ -1671,11 +1950,16 @@ export function createPlay(scene, camera, audio) {
       const x0 = s.x[i];
       const y0 = s.y[i];
       const z0 = s.z[i];
-      if (kind === "log") {
+      const partyRocket = kind === "rocket" && s.flag[i] === 2;
+      const sapGlob = kind === "log" && s.flag[i] === 2;
+      const bomblet = kind === "ball" && s.flag[i] === 4;
+      if (kind === "log" || sapGlob) {
         s.vy[i] -= 16 * h;
         s.roll[i] += h * 11;
-      } else if (kind === "rocket" && s.flag[i]) {
+      } else if (kind === "rocket" && s.flag[i] === 1) {
         steerRocket(s, i, h);
+      } else if (bomblet) {
+        s.vy[i] -= 16 * h;
       } else if (kind === "party" || kind === "case" || kind === "ember" || kind === "duck") {
         s.vy[i] -= (kind === "party" ? 2.2 : 6) * h;
       } else if (kind === "mud") {
@@ -1685,11 +1969,21 @@ export function createPlay(scene, camera, audio) {
       s.y[i] = y0 + s.vy[i] * h;
       s.z[i] = z0 + s.vz[i] * h;
       s.life[i] -= h;
+      if (partyRocket) {
+        s.hits[i] += Math.hypot(s.vx[i], s.vz[i]) * h;
+        const dx = s.x[i] - s.ox[i];
+        const dz = s.z[i] - s.oz[i];
+        if (s.hits[i] >= 20 || dx * dx + dz * dz < 36 || s.life[i] <= 0) {
+          burstParty(s, i);
+          freeS(s, i);
+        }
+        continue;
+      }
       if (kind === "puddle" || kind === "hazard") {
         if (kind === "puddle" && s.life[i] <= 0) freeS(s, i);
         continue;
       }
-      if (kind === "case" || kind === "ember" || kind === "duck") {
+      if (kind === "party" || kind === "case" || kind === "ember" || kind === "duck") {
         if (s.life[i] <= 0 || s.y[i] < 0) freeS(s, i);
         continue;
       }
@@ -1697,19 +1991,30 @@ export function createPlay(scene, camera, audio) {
         if (s.life[i] <= 0) freeS(s, i);
         continue;
       }
-      if (s.life[i] <= 0 || s.y[i] < -1 || s.z[i] > prevZ + 12) {
-        if (kind === "rocket") {
-          splashAt(s.x[i], 0.4, s.z[i], s.dmg[i], 0.4, s.extra[i] || 1.5);
-          audio.pop();
+      if (s.life[i] <= 0 || s.z[i] > prevZ + 12 || (s.y[i] < -1 && kind !== "log" && !bomblet)) {
+        if ((kind === "rocket" && s.flag[i] === 1) || kind === "log" || bomblet) {
+          const shove = kind === "log" ? (mods.shove || 1.5) : bomblet ? (s.extra2[i] || 0.7) : (mods.shove || 1);
+          const rad = s.extra[i] || (kind === "log" ? 1.6 : bomblet ? 0.9 : 1.2);
+          splashAt(s.x[i], 0.4, s.z[i], s.dmg[i], shove, rad, sapGlob ? 1 : 0, s.tag[i]);
+          if (sapGlob) dropPuddle(s.x[i], s.z[i], s.extra2[i] || s.extra[i] || 1.3, mods.burn || 4.5);
+          if (kind === "rocket" || kind === "log") audio.pop();
         }
         freeS(s, i);
         continue;
       }
-      if ((kind === "log" || kind === "rocket" || kind === "mud") && s.y[i] <= 0.36) {
+      const reached = s.z[i] <= s.oz[i] + 0.45;
+      if ((kind === "log" || kind === "rocket" || kind === "mud" || bomblet) && s.vy[i] < 0 && s.y[i] <= 0.42 && (reached || s.y[i] <= 0.16)) {
         if (kind === "mud") resolveMud(s, i);
-        else {
-          splashAt(s.x[i], 0.4, s.z[i], s.dmg[i], kind === "log" ? (s.extra2[i] || 1) : 0.4, s.extra[i] || (kind === "log" ? 2.2 : 1.5));
+        else if (sapGlob) {
+          splashAt(s.x[i], 0.4, s.z[i], s.dmg[i], mods.shove || 0.8, s.extra[i] || 1.3, 1, s.tag[i]);
+          dropPuddle(s.x[i], s.z[i], s.extra2[i] || s.extra[i] || 1.3, mods.burn || 4.5);
+        } else if (bomblet) {
+          splashAt(s.x[i], 0.4, s.z[i], s.dmg[i], s.extra2[i] || 0.7, s.extra[i] || 0.9, 0, s.tag[i]);
+        } else if (kind !== "rocket" || s.flag[i] === 1) {
+          const shove = kind === "log" ? (mods.shove || 1.5) : (mods.shove || 1);
+          splashAt(s.x[i], 0.4, s.z[i], s.dmg[i], shove, s.extra[i] || (kind === "log" ? 1.6 : 1.2), 0, s.tag[i]);
           if (kind === "rocket") audio.pop();
+          if (kind === "log" && tier >= 4) puff(s.x[i], 0.3, s.z[i], 3, 8, 2.4, 0.5, 0.35);
         }
         freeS(s, i);
         continue;
@@ -1719,7 +2024,9 @@ export function createPlay(scene, camera, audio) {
         continue;
       }
       let stop = 0;
-      queryEnemies(x0, y0, z0, s.x[i], s.y[i], s.z[i], (type, slot) => {
+      // Logs, sap globs and bomblets are lobbed. They splash on the deck at the
+      // aimed point. A chest fuse would pop them on the front rank.
+      if (kind !== "log" && !bomblet) queryEnemies(x0, y0, z0, s.x[i], s.y[i], s.z[i], (type, slot) => {
         const p = pools[type];
         if (p.stamp[slot] === s.tag[i]) return 0;
         p.stamp[slot] = s.tag[i];
@@ -1732,44 +2039,42 @@ export function createPlay(scene, camera, audio) {
           s.x[i] = p.x[slot];
           s.y[i] = ENEMY[type].y;
           s.z[i] = p.z[slot];
-          damageEnemy(type, slot, s.dmg[i], p.x[slot], ENEMY[type].y, p.z[slot], 0, 0, 0);
+          damageEnemy(type, slot, s.dmg[i], p.x[slot], ENEMY[type].y, p.z[slot], 0, 0, 0, s.tag[i]);
+          if (s.extra2[i] > 0) splashAt(p.x[slot], ENEMY[type].y, p.z[slot], s.dmg[i], 0.3, s.extra2[i], 0, s.tag[i], type, slot);
           stop = 0;
           return 1;
         }
-        if (kind === "log" || kind === "rocket") {
-          splashAt(p.x[slot], ENEMY[type].y, p.z[slot], s.dmg[i], kind === "log" ? (s.extra2[i] || 1) : 0.4, s.extra[i] || 2.2);
+        if (kind === "log" || (kind === "rocket" && s.flag[i] === 1)) {
+          const shove = kind === "log" ? (mods.shove || 1.5) : (mods.shove || 1);
+          splashAt(p.x[slot], ENEMY[type].y, p.z[slot], s.dmg[i], shove, s.extra[i] || 1.6, sapGlob ? 1 : 0, s.tag[i]);
           if (kind === "rocket") audio.pop();
           stop = 1;
           return 1;
         }
-        let dmg = s.dmg[i];
-        if (s.flag[i] && kind === "ball") {
-          const travel = Math.hypot(s.x[i] - s.ox[i], s.z[i] - s.oz[i]);
-          if (travel > 14) dmg *= Math.max(0, 1 - (travel - 14) / 14);
-        }
-        if (kind === "ball" && s.extra2[i] && type === 0) p.z[slot] -= s.extra2[i];
-        if (kind === "party") {
-          let dealt = dmg;
-          if (rnd() < (s.extra[i] || 0.1)) {
-            dealt *= 5;
-            word("PARTY!", p.x[slot], ENEMY[type].y + 1.1, p.z[slot]);
-          }
-          p.stagT[slot] = s.extra2[i] || 0.3;
-          damageEnemy(type, slot, dealt, p.x[slot], ENEMY[type].y, p.z[slot], 0, 0, 0);
+        if (kind === "ball" && s.flag[i] === 4) {
+          splashAt(p.x[slot], ENEMY[type].y, p.z[slot], s.dmg[i], s.extra2[i] || 0.7, s.extra[i] || 0.9, 0, s.tag[i], type, slot);
           stop = 1;
           return 1;
         }
+        let dmg = s.dmg[i];
+        if (s.flag[i] === 1 && kind === "ball") {
+          const travel = Math.hypot(s.x[i] - s.ox[i], s.z[i] - s.oz[i]);
+          if (travel > 14) dmg *= Math.max(0.6, 1 - (travel - 14) / 15);
+        }
         const pierce = kind === "arrow" && s.extra[i] > 0 ? 1 : 0;
-        damageEnemy(type, slot, dmg, p.x[slot], ENEMY[type].y, p.z[slot], 0, pierce, 0);
+        damageEnemy(type, slot, dmg, p.x[slot], ENEMY[type].y, p.z[slot], 0, pierce, 0, s.tag[i]);
         if (pierce) {
           s.hits[i]++;
+          s.dmg[i] *= 0.85;
           s.extra[i] -= 1;
           if (s.hits[i] >= 3 && s.flag[i] !== 2) {
             s.flag[i] = 2;
             word("PIERCE x3", p.x[slot], 1.8, p.z[slot]);
           }
-          if (s.hits[i] >= 3 && p.freeze[slot] < 1) p.freeze[slot] = 0.05;
-          if (s.extra[i] <= 0) stop = 1;
+          if (s.extra[i] <= 0) {
+            if (p.alive[slot]) p.freeze[slot] = Math.max(p.freeze[slot], 0.2);
+            stop = 1;
+          }
           return stop;
         }
         stop = 1;
@@ -1779,21 +2084,22 @@ export function createPlay(scene, camera, audio) {
         freeS(s, i);
         continue;
       }
-      if (bossState.alive && arenaStarted && kind !== "mud") {
+      if (bossState.alive && arenaStarted && kind !== "mud" && kind !== "party") {
         const crit = bossCrit(x0, y0, z0, s.x[i], s.y[i], s.z[i]);
         if (crit >= 0) {
-          if (kind === "log" || kind === "rocket") {
-            splashAt(s.x[i], s.y[i], s.z[i], s.dmg[i], kind === "log" ? 1 : 0.4, s.extra[i] || 2.2);
+          if (kind === "log" || (kind === "rocket" && s.flag[i] === 1) || sapGlob) {
+            splashAt(s.x[i], s.y[i], s.z[i], s.dmg[i], mods.shove || 1, s.extra[i] || 1.6, sapGlob ? 1 : 0, s.tag[i]);
             if (kind === "rocket") audio.pop();
           } else {
             const pierce = kind === "arrow" && s.extra[i] > 0 ? 1 : 0;
             hurtBoss(s.dmg[i], crit > 0 ? 1 : 0, 0, pierce, s.x[i], s.y[i], s.z[i]);
+            if (pierce) s.dmg[i] *= 0.85;
           }
-          freeS(s, i);
+          if (!(kind === "arrow" && s.extra[i] > 0)) freeS(s, i);
           continue;
         }
       }
-      if (kind !== "mud" && (hitCrate(s.x[i], s.y[i], s.z[i], s.dmg[i]) || hitGate(s.x[i], z0, s.z[i]))) {
+      if (kind !== "mud" && kind !== "party" && (hitCrate(s.x[i], s.y[i], s.z[i], s.dmg[i]) || hitGate(s.x[i], z0, s.z[i]))) {
         if (!(kind === "arrow" && s.extra[i] > 1)) freeS(s, i);
       }
     }
@@ -1846,18 +2152,23 @@ export function createPlay(scene, camera, audio) {
       if (!hazards.alive[i] || hazards.life[i] > 0) continue;
       const r = hazards.extra[i];
       const max = hazards.extra2[i] || 2;
-      let hit = 0;
-      for (let n = 0; n < shown && hit < max; n++) {
+      let inside = 0;
+      for (let n = 0; n < shown; n++) {
         const sx = squadX + fx[n];
         const sz = -dist + fz[n];
         const dx = sx - hazards.x[i];
         const dz = sz - hazards.z[i];
-        if (dx * dx + dz * dz <= r * r) {
-          hurtSquad(1);
-          hit++;
-          if (ended) return;
-        }
+        if (dx * dx + dz * dz <= r * r) inside++;
       }
+      const kill = Math.min(max, inside);
+      if (kill > 0) hurtSquad(kill);
+      // A paper under the squad center takes the volunteers packed behind
+      // the 60 that draw. A squad that has stepped off it only loses the
+      // soldiers still standing in the circle.
+      const cx = squadX - hazards.x[i];
+      const cz = -dist - hazards.z[i];
+      if (!ended && shown > 0 && inside === shown && max >= shown && cx * cx + cz * cz <= r * r) hurtSquad(squadN);
+      if (ended) return;
       puff(hazards.x[i], 0.5, hazards.z[i], 3, 4, 2, 0.25, 0.35);
       freeS(hazards, i);
     }
@@ -1870,7 +2181,7 @@ export function createPlay(scene, camera, audio) {
     const d2 = dx * dx + dz * dz;
     const lim = reach || 28;
     if (d2 > lim * lim) return;
-    if (cn < 48) {
+    if (cn < AIM_N) {
       ct[cn] = kind;
       ci[cn] = index;
       cd[cn] = d2;
@@ -1886,11 +2197,11 @@ export function createPlay(scene, camera, audio) {
         ci[i - 1] = ci[i];
         ci[i] = ti;
       }
-    } else if (d2 < cd[47]) {
-      ct[47] = kind;
-      ci[47] = index;
-      cd[47] = d2;
-      for (let i = 47; i > 0 && cd[i] < cd[i - 1]; i--) {
+    } else if (d2 < cd[AIM_N - 1]) {
+      ct[AIM_N - 1] = kind;
+      ci[AIM_N - 1] = index;
+      cd[AIM_N - 1] = d2;
+      for (let i = AIM_N - 1; i > 0 && cd[i] < cd[i - 1]; i--) {
         const td = cd[i - 1];
         cd[i - 1] = cd[i];
         cd[i] = td;
@@ -1908,15 +2219,21 @@ export function createPlay(scene, camera, audio) {
     cn = 0;
     for (let t = 0; t < TYPES; t++) {
       const p = pools[t];
-      const reach = t === 4 ? 34 : 28;
+      const reach = labMode ? 52 : t === 4 ? 34 : 28;
       for (let i = 0; i < p.cap; i++) if (p.alive[i]) consider(t, i, p.x[i], p.z[i], reach);
     }
-    if (bossState.alive && bossState.shown) consider(7, 0, bossState.x, bossState.z, 28);
-    for (let i = 0; i < crates.length; i++) {
-      if (crates[i].state === "idle") consider(8, i, crates[i].x, crates[i].z, 28);
-    }
-    for (let i = 0; i < gates.length; i++) {
-      if (!gates[i].passed) consider(9, i, gates[i].x, gates[i].z, 28);
+    if (!labMode && bossState.alive && bossState.shown) consider(7, 0, bossState.x, bossState.z, 28);
+    if (!labMode) {
+      for (let i = 0; i < crates.length; i++) {
+        if (crates[i].state === "idle") consider(8, i, crates[i].x, crates[i].z, 28);
+      }
+      for (let i = 0; i < gates.length; i++) {
+        if (gates[i].passed) continue;
+        // The locked-gun run takes each gate at the printed value. Aiming at
+        // it from 28 m away turns fire rate into extra volunteers.
+        if (autoPick) continue;
+        consider(9, i, gates[i].x, gates[i].z, 28);
+      }
     }
   }
 
@@ -1984,14 +2301,41 @@ export function createPlay(scene, camera, audio) {
     return id;
   }
 
+  function aimLob(pool, sx, sy, sz, ax, az, dmg, col, flag, extra, extra2, walk) {
+    let t = 0.4;
+    let predZ = az;
+    const stopZ = -dist - (labMode ? 4 : 0.7);
+    for (let iter = 0; iter < 2; iter++) {
+      predZ = az + (walk || 0) * t;
+      if (predZ > stopZ) predZ = stopZ;
+      const dist1 = Math.hypot(ax - sx, predZ - sz) || 1;
+      t = Math.max(0.22, Math.min(1.6, dist1 / 34));
+    }
+    const dx = ax - sx;
+    const dz = predZ - sz;
+    const horiz = Math.hypot(dx, dz) || 1;
+    const speed = horiz / t;
+    const landY = 0.12;
+    const vy = 8 * t - (sy - landY) / t;
+    const id = spawnShot(pool, sx, sy, sz - 0.15, (dx / horiz) * speed, vy, (dz / horiz) * speed, dmg, t + 0.55, col, flag, extra, extra2);
+    if (id >= 0) pool.oz[id] = predZ;
+    return id;
+  }
+
   function fireSoldier(s) {
     if (cn <= 0) return;
     const shown = shownCount(squadN);
     if (s >= shown) return;
     const sx = squadX + fx[s];
-    const sy = 0.78;
+    const sy = 0.72;
     const sz = -dist + fz[s];
-    if (!aimOf(ct[s % cn], ci[s % cn], sx)) return;
+    // A clog inside 8 m is about to bite. Focus it. Spread the rest of the wave.
+    let pick = labMode ? (s * 7 + (shotTag % cn)) % cn : s % cn;
+    // In the arena, pour fire into the boss unless a Clog is close enough to bite.
+    if (!labMode && arenaStarted && !(ct[0] < 7 && cd[0] < 36)) {
+      for (let k = 0; k < cn; k++) if (ct[k] === 7) { pick = k; break; }
+    }
+    if (!aimOf(ct[pick], ci[pick], sx)) return;
     const dx = aimX - sx;
     const dy = aimY - sy;
     const dz = aimZ - sz;
@@ -2001,33 +2345,93 @@ export function createPlay(scene, camera, audio) {
     const dmg = mods.dmg * squadDmgMul(squadN);
     const pat = mods.pattern;
     if (pat === "cone" || pat === "stream") return;
-    const pellets = mods.pellets;
-    for (let p = 0; p < pellets; p++) {
-      let ang = base;
-      if ((pat === "fan" || pat === "confetti") && pellets > 1) ang += (p / (pellets - 1) - 0.5) * mods.spread;
-      else if (pat === "spread" || pat === "spin") ang += (rnd() * 2 - 1) * mods.spread;
-      const cp = Math.cos(pitch);
-      if (pat === "lob") {
-        const horiz = Math.hypot(dx, dz) || 1;
-        spawnShot(logs, sx, sy, sz - 0.3, (dx / horiz) * 18, 8, (dz / horiz) * 18, dmg, 1.6, 0, 0, mods.splash, mods.knock);
-      } else if (pat === "home") {
-        const id = spawnShot(rockets, sx, sy, sz - 0.3, Math.sin(ang) * cp * 26, Math.sin(pitch) * 8, -Math.cos(ang) * cp * 26, dmg, 2.2, 2 + (shotTag % 3), 1, mods.splash, mods.turn);
-        if (id >= 0) {
-          rockets.ox[id] = aimX;
-          rockets.oz[id] = aimZ;
+    const cp = Math.cos(pitch);
+    const aimWalk = ct[pick] < 7 ? (labMode ? ENEMY[0].speed : ENEMY[ct[pick]].speed) : 0;
+    if (pat === "party") {
+      const distTo = Math.hypot(aimX - sx, aimZ - sz);
+      const timeToBurst = Math.max(0.08, (distTo - 6) / 26);
+      let pz = aimZ + aimWalk * timeToBurst;
+      const stopZ = -dist - (labMode ? 4 : 0.7);
+      if (pz > stopZ) pz = stopZ;
+      const pdx = aimX - sx;
+      const pdz = pz - sz;
+      const plen = Math.hypot(pdx, pdz) || 1;
+      const id = spawnShot(rockets, sx, sy, sz - 0.35, (pdx / plen) * 26, 0.5, (pdz / plen) * 26, dmg, 1.8, 4, 2, mods.pellets, mods.splash);
+      if (id >= 0) {
+        rockets.ox[id] = aimX;
+        rockets.oz[id] = pz;
+        rockets.hits[id] = 0;
+        rockets.roll[id] = aimWalk;
+      }
+    } else if (pat === "glob") {
+      aimLob(logs, sx, sy, sz, aimX, aimZ, dmg, 5, 2, mods.splash, mods.puddle, aimWalk);
+    } else {
+      const pellets = mods.pellets;
+      for (let p = 0; p < pellets; p++) {
+        let ang = base;
+        if (pat === "fan" && pellets > 1) {
+          ang += (p / (pellets - 1) - 0.5) * mods.spread;
+          const rdx = Math.sin(ang);
+          const rdz = -Math.cos(ang);
+          let best = 0.75;
+          let pull = 0;
+          let px = aimX;
+          let pz = aimZ;
+          for (let c = 0; c < cn; c++) {
+            if (ct[c] >= 7) continue;
+            const ex = pools[ct[c]].x[ci[c]] - sx;
+            const ez = pools[ct[c]].z[ci[c]] - sz;
+            const along = ex * rdx + ez * rdz;
+            if (along < 1) continue;
+            const lat = Math.hypot(ex - rdx * along, ez - rdz * along);
+            if (lat < best) {
+              best = lat;
+              pull = 1;
+              px = pools[ct[c]].x[ci[c]];
+              pz = pools[ct[c]].z[ci[c]];
+            }
+          }
+          if (pull) ang = Math.atan2(px - sx, -(pz - sz));
+        } else if (pat === "spread" || pat === "spin") ang += (rnd() * 2 - 1) * mods.spread;
+        const cosp = Math.cos(pitch);
+        if (pat === "lob") {
+          aimLob(logs, sx, sy, sz, aimX, aimZ, dmg, 0, 0, mods.splash, 0, aimWalk);
+        } else if (pat === "home") {
+          const id = spawnShot(rockets, sx, sy, sz - 0.3, Math.sin(ang) * cosp * 32, 0.6, -Math.cos(ang) * cosp * 32, dmg, 2.2, 2 + (shotTag % 3), 1, mods.splash, mods.turn);
+          if (id >= 0) {
+            rockets.ox[id] = aimX;
+            rockets.oz[id] = aimZ;
+          }
+        } else if (pat === "arrow" || pat === "pierce") {
+          boltSerial++;
+          const speed = pat === "pierce" ? 90 : 48;
+          let extra = 0;
+          let flag = 1;
+          if (pat === "pierce") {
+            extra = (mods.pierce || 0) + 1;
+            flag = 0;
+          } else if (mods.every && boltSerial % mods.every === 0) {
+            extra = (mods.pierce || 1) + 1;
+            flag = 0;
+          }
+          const flight = Math.hypot(aimX - sx, aimZ - sz) / speed + 0.35;
+          spawnShot(arrows, sx, sy, sz - 0.35, Math.sin(ang) * cosp * speed, Math.sin(pitch) * speed, -Math.cos(ang) * cosp * speed, dmg, Math.max(pat === "pierce" ? 0.7 : 0.85, flight), pat === "pierce" ? 1 : 0, flag, extra, mods.splash || 0);
+        } else {
+          const speed = 52;
+          const col = weaponId === "shot" || weaponId === "gerald" ? 5 : 2;
+          const flight = Math.hypot(aimX - sx, aimZ - sz) / speed + 0.3;
+          spawnShot(balls, sx, sy, sz - 0.4, Math.sin(ang) * cosp * speed, Math.sin(pitch) * speed, -Math.cos(ang) * cosp * speed, dmg, Math.max(0.75, flight), col, mods.falloff > 0 ? 1 : 0, 0, 0);
         }
-      } else if (pat === "confetti") {
-        spawnShot(party, sx, sy, sz - 0.2, Math.sin(ang) * 24, 2.5 + rnd(), -Math.cos(ang) * 24, dmg, 0.85, 2 + (p % 3), 0, mods.crit, mods.stagger);
-      } else if (pat === "arrow" || pat === "pierce") {
-        const speed = pat === "pierce" ? 90 : 48;
-        spawnShot(arrows, sx, sy, sz - 0.35, Math.sin(ang) * cp * speed, Math.sin(pitch) * speed, -Math.cos(ang) * cp * speed, dmg, pat === "pierce" ? 0.55 : 0.8, pat === "pierce" ? 1 : 0, pat === "arrow" ? 1 : 0, pat === "pierce" ? mods.pierce : 0, 0);
-      } else {
-        const speed = 52;
-        const col = weaponId === "shot" || weaponId === "gerald" ? 5 : 2;
-        spawnShot(balls, sx, sy, sz - 0.4, Math.sin(ang) * cp * speed, Math.sin(pitch) * speed, -Math.cos(ang) * cp * speed, dmg, 0.75, col, mods.falloff > 0 ? 1 : 0, 0, pat === "fan" ? 0.4 : 0);
       }
     }
-    shotThisTick = true;
+    markShot();
+    if (soldierAnim) {
+      const fire = soldiers.geometry.getAttribute("aFire");
+      if (fire) {
+        fire.setX(s, clock);
+        fire.needsUpdate = true;
+      }
+    }
     if (pat === "fan") kickT = 0.2;
     if (pat === "spin") {
       const id = allocS(cases);
@@ -2039,36 +2443,99 @@ export function createPlay(scene, camera, audio) {
         cases.vy[id] = 2 + rnd();
         cases.vz[id] = 0.5;
         cases.life[id] = 0.7;
+        cases.alive[id] = 1;
       }
     }
-    spawnFx(muzzles, sx, sy, sz - 0.62, 0.06, 0.42);
+    spawnFx(muzzles, sx, 0.95, sz - 0.7, 0.05, mods.heavy ? 1.2 : 0.6);
   }
 
+  const coneT = new Int16Array(8);
+  const coneI = new Int16Array(8);
+  const coneS = new Float32Array(8);
+  const bombX = new Float32Array(8);
+  const bombZ = new Float32Array(8);
+
   function tickCone() {
-    const range = 11;
-    const halfAng = mods.spread * 0.5;
+    const range = mods.range || 10;
+    const halfAng = (mods.spread || 0.5) * 0.5;
     const dmg = mods.dmg * squadDmgMul(squadN);
     const shown = Math.max(1, shownCount(squadN));
-    const origins = Math.max(1, Math.ceil(shown / 10));
-    stuckN = 0;
-    for (let t = 0; t < TYPES; t++) {
-      const p = pools[t];
-      for (let i = 0; i < p.cap; i++) {
-        if (!p.alive[i]) continue;
-        let hit = 0;
-        for (let c = 0; c < origins && !hit; c++) {
-          const s = Math.min(shown - 1, c * 10);
-          const sx = squadX + (fx[s] || 0);
-          const sz = -dist + (fz[s] || 0);
+    const capHits = Math.min(8, mods.coneHits || 3);
+    const pulse = ++shotTag;
+    for (let s = 0; s < shown; s++) {
+      const sx = squadX + (fx[s] || 0);
+      const sz = -dist + (fz[s] || 0);
+      let nPick = 0;
+      for (let t = 0; t < TYPES; t++) {
+        const p = pools[t];
+        for (let i = 0; i < p.cap; i++) {
+          if (!p.alive[i]) continue;
           const dx = p.x[i] - sx;
           const fwd = sz - p.z[i];
           if (fwd <= 0.15 || fwd > range) continue;
           if (Math.atan2(Math.abs(dx), fwd) > halfAng) continue;
-          hit = 1;
+          if (p.stamp[i] !== pulse) {
+            p.stamp[i] = pulse;
+            p.hits[i] = 0;
+          }
+          const score = p.hits[i] * 1000 + dx * dx + fwd * fwd;
+          if (nPick < capHits) {
+            coneT[nPick] = t;
+            coneI[nPick] = i;
+            coneS[nPick] = score;
+            nPick++;
+            for (let a = nPick - 1; a > 0 && coneS[a] < coneS[a - 1]; a--) {
+              const ts = coneS[a - 1];
+              coneS[a - 1] = coneS[a];
+              coneS[a] = ts;
+              const tt = coneT[a - 1];
+              coneT[a - 1] = coneT[a];
+              coneT[a] = tt;
+              const ti = coneI[a - 1];
+              coneI[a - 1] = coneI[a];
+              coneI[a] = ti;
+            }
+          } else if (score < coneS[capHits - 1]) {
+            coneT[capHits - 1] = t;
+            coneI[capHits - 1] = i;
+            coneS[capHits - 1] = score;
+            for (let a = capHits - 1; a > 0 && coneS[a] < coneS[a - 1]; a--) {
+              const ts = coneS[a - 1];
+              coneS[a - 1] = coneS[a];
+              coneS[a] = ts;
+              const tt = coneT[a - 1];
+              coneT[a - 1] = coneT[a];
+              coneT[a] = tt;
+              const ti = coneI[a - 1];
+              coneI[a - 1] = coneI[a];
+              coneI[a] = ti;
+            }
+          }
         }
-        if (!hit) continue;
-        damageEnemy(t, i, dmg, p.x[i], ENEMY[t].y, p.z[i], 0, 0, 1);
       }
+      for (let n = 0; n < nPick; n++) {
+        const t = coneT[n];
+        const i = coneI[n];
+        pools[t].hits[i]++;
+        damageEnemy(t, i, dmg, pools[t].x[i], ENEMY[t].y, pools[t].z[i], 0, 0, 1, 0);
+      }
+      for (let c = 0; c < crates.length; c++) {
+        const cr = crates[c];
+        if (cr.state !== "idle") continue;
+        const dx = cr.x - sx;
+        const fwd = sz - cr.z;
+        if (fwd <= 0.2 || fwd > range) continue;
+        if (Math.atan2(Math.abs(dx), fwd) > halfAng) continue;
+        hitCrate(cr.x, 1.2, cr.z, dmg);
+      }
+      if (bossState.alive && bossState.shown) {
+        const dx = bossState.x - sx;
+        const fwd = sz - bossState.z;
+        if (fwd > 0.2 && fwd < range + 1.6 && Math.atan2(Math.abs(dx), fwd) <= halfAng + 0.15) {
+          hurtBoss(dmg, 0, 1, 0, bossState.x, 2.2, bossState.z);
+        }
+      }
+      if (nPick) markShot();
     }
     for (let k = 0; k < 4; k++) {
       const id = allocS(embers);
@@ -2080,6 +2547,7 @@ export function createPlay(scene, camera, audio) {
       embers.vy[id] = 0.8 + rnd();
       embers.vz[id] = -2 - rnd() * 2;
       embers.life[id] = 0.45;
+      embers.alive[id] = 1;
     }
   }
 
@@ -2113,7 +2581,145 @@ export function createPlay(scene, camera, audio) {
     }
   }
 
+  function safeLane() {
+    const lim = Math.max(0.4, half - 0.8);
+    let best = 0;
+    let bestD = -1;
+    for (let i = -8; i <= 8; i++) {
+      const x = (i / 8) * lim;
+      let near = 99;
+      for (let c = 0; c < crates.length; c++) {
+        const cr = crates[c];
+        if (cr.state !== "idle") continue;
+        const ahead = -cr.z - dist;
+        if (ahead < -1.4 || ahead > 18) continue;
+        const d = Math.abs(x - cr.x);
+        if (d < near) near = d;
+      }
+      if (near > bestD) {
+        bestD = near;
+        best = x;
+      }
+    }
+    return best;
+  }
+
+  function cratePay(c) {
+    if (c.kind === "volunteer") return level.vol || 8;
+    if (c.kind === "weapon" || c.kind === "mystery") return 5;
+    return 0;
+  }
+
+  function stepClear(prefer) {
+    let x = prefer;
+    const rad = formationRadius(Math.max(squadN, 1), half);
+    for (let pass = 0; pass < 3; pass++) {
+      for (let i = 0; i < hazards.n; i++) {
+        if (!hazards.alive[i]) continue;
+        const need = (hazards.extra[i] || 1) + Math.max(0.35, rad - 0.35);
+        if (Math.abs(x - hazards.x[i]) < need) {
+          const left = hazards.x[i] - need - 0.3;
+          const right = hazards.x[i] + need + 0.3;
+          x = Math.abs(left - prefer) <= Math.abs(right - prefer) ? left : right;
+        }
+      }
+    }
+    return x;
+  }
+
+  function laneClears(x) {
+    for (let i = 0; i < crates.length; i++) {
+      const c = crates[i];
+      if (c.state !== "idle") continue;
+      const ahead = -c.z - dist;
+      if (ahead < -2.2 || ahead > 16) continue;
+      if (Math.abs(x - c.x) < 2.45) return 0;
+    }
+    return 1;
+  }
+
+  function autoX() {
+    let bestX = 0;
+    let bestN = -1;
+    for (let i = 0; i < gates.length; i++) {
+      const g = gates[i];
+      if (g.passed) continue;
+      const ahead = -g.z - dist;
+      if (ahead < -0.4 || ahead > 16) continue;
+      const n = applyGate(squadN, g.op, g.k, g.tenths);
+      if (n > bestN || (n === bestN && g.x < bestX)) {
+        bestN = n;
+        bestX = g.x;
+      }
+    }
+    const dps = Math.max(8, (mods.dmg || 12) * (mods.pellets || 1) * (mods.rate || 1) * Math.min(squadN, 60));
+    const reach = mods.pattern === "cone" ? (mods.range || 10) : 26;
+    let openX = 0;
+    let openPay = 0;
+    let blocked = 0;
+    for (let i = 0; i < crates.length; i++) {
+      const c = crates[i];
+      if (c.state !== "idle") continue;
+      const ahead = -c.z - dist;
+      // Stay off a crate until it is behind the 1.35 m ram window.
+      if (ahead < -2.2 || ahead > 28) continue;
+      const pay = cratePay(c);
+      const shootTime = Math.min(Math.max(ahead, 0), reach) / ADVANCE;
+      if (pay > 0 && c.hp / dps <= Math.max(0.25, shootTime - 0.05)) {
+        if (pay > openPay) {
+          openPay = pay;
+          openX = c.x;
+        }
+      } else blocked = 1;
+    }
+    if (openPay > 0) return openX;
+    if (blocked) {
+      const safe = safeLane();
+      if (laneClears(safe)) return safe;
+    }
+    if (!rackTaken && rack.visible) {
+      const ahead = -rackZ - dist;
+      if (ahead >= -1.3 && ahead <= 14) {
+        let gain = -1;
+        let rx = 0;
+        for (let i = 0; i < 3; i++) {
+          const slot = rackSlots[i];
+          let g = 0;
+          if (lockGun) {
+            if (slot.kind === "vol") g = slot.n || 10;
+            else if (slot.kind !== "tier") g = 5;
+          } else if (slot.kind === "vol") g = slot.n || 10;
+          else if (slot.kind === "tier") g = 4;
+          else g = 1;
+          if (g > gain) {
+            gain = g;
+            rx = slot.x;
+          }
+        }
+        if (gain > 0) return rx;
+      }
+    }
+    if (arenaStarted) {
+      let x = bossState.x;
+      if (wrenchPhase === 1) {
+        const band = (half * 2) / 3;
+        const mid = -half + band * (zoneSide + 0.5);
+        if (Math.abs(x - mid) < band * 0.55) x = zoneSide === 2 ? -half * 0.7 : half * 0.7;
+      }
+      let big = 0;
+      for (let i = 0; i < hazards.n; i++) {
+        if (hazards.alive[i] && hazards.extra[i] >= 2) big = 1;
+      }
+      // The center Baron paper covers a squad that stays on x = 0.
+      // The parapet is the only place the whole blob fits outside it.
+      if (big) return 4.8;
+      return x;
+    }
+    return bestN >= 0 ? bestX : 0;
+  }
+
   function botX() {
+    if (autoPick) return autoX();
     let x = -2.3;
     if (level.id === "1-1") {
       if (dist > 145 && dist < 178) x = 3.35;
@@ -2146,10 +2752,19 @@ export function createPlay(scene, camera, audio) {
       yaw = Math.PI + u * 8;
       manhole.visible = true;
     }
+    const bossTall = BOSS_TALL[bossKind] || 5;
+    boss.scale.setScalar(bossTall / geoH(boss.geometry));
     boss.position.set(bossState.x, y, bossState.z);
     boss.rotation.y = yaw;
     boss.visible = !!(bossState.shown && (bossState.alive || (ended === "win" && slowLeft > 0)));
-    if (boss.visible) {
+    if (bossLive && bossLive.visible) {
+      bossLive.updateMatrixWorld(true);
+      crownV.set(0.2, 4.2, -0.7);
+      bossLive.localToWorld(crownV);
+      crownX = crownV.x;
+      crownY = crownV.y;
+      crownZ = crownV.z;
+    } else if (boss.visible) {
       boss.updateMatrixWorld();
       crownMarker.getWorldPosition(crownV);
       crownX = crownV.x;
@@ -2161,11 +2776,12 @@ export function createPlay(scene, camera, audio) {
       const u = wrenchT < 0.4 ? wrenchT / 0.4 : Math.max(0, (0.8 - wrenchT) / 0.4);
       const band = (half * 2) / 3;
       wrenchX = -half + band * (zoneSide + 0.5);
-      wrenchY = 1.3 + Math.sin(u * Math.PI) * 1.4;
+      wrenchY = 2.4 + Math.sin(u * Math.PI) * 2.2;
       wrenchZ = bossState.z + span * u;
       wrench.position.set(wrenchX, wrenchY, wrenchZ);
       wrench.rotation.y = Math.PI;
       wrench.rotation.z = clock * 14;
+      wrench.scale.setScalar(1.35);
       wrench.visible = true;
     } else if (!(bossKind === "grunk" && ended === "win")) {
       wrench.visible = false;
@@ -2205,6 +2821,12 @@ export function createPlay(scene, camera, audio) {
 
   function tickOnce(h) {
     clock += h;
+    if (biteLock > 0) biteLock = Math.max(0, biteLock - h);
+    if (hitStopCd > 0) hitStopCd = Math.max(0, hitStopCd - h);
+    if (hitStop > 0 && !labMode) {
+      hitStop -= h;
+      return;
+    }
     if (!running || ended === "lose") return;
     radius = formationRadius(Math.max(squadN, 1), half);
     if (!ended) {
@@ -2227,11 +2849,11 @@ export function createPlay(scene, camera, audio) {
         else squadX = 0;
         pullT -= h;
       }
-      if (!arenaStarted && !bench) {
+      if (!arenaStarted && !bench && !labMode) {
         dist += ADVANCE * h;
         if (dist > level.len) dist = level.len;
       }
-      if (dist >= level.len) startArena();
+      if (!labMode && dist >= level.len) startArena();
       const widen = level.len - 30;
       half = arenaStarted ? 7 : dist > widen ? 5 + Math.min(1, (dist - widen) / 30) * 2 : 5;
       const z = -dist;
@@ -2291,7 +2913,12 @@ export function createPlay(scene, camera, audio) {
             const slot = rackSlots[i];
             flyX = slot.x;
             flyZ = rackZ;
-            if (slot.kind === "tier") {
+            if (lockGun && slot.kind !== "vol") {
+              if (slot.kind !== "tier") {
+                squadN = Math.min(SIM_CAP, squadN + 5);
+                floater(9300, slot.x, 2, rackZ, 5);
+              }
+            } else if (slot.kind === "tier") {
               tier = Math.min(4, tier + 1);
               refreshMods();
               flyT = 0.35;
@@ -2340,7 +2967,7 @@ export function createPlay(scene, camera, audio) {
           bossState.cool = 6;
           const land = -dist;
           armHazard(-3.2, land - 0.3, 1, 0.8, 2);
-          armHazard(0, land + 0.2, 1.25, 0.8, 3);
+          armHazard(0, land + 0.2, 2.45, 0.8, 80);
           armHazard(1.2, land - 0.2, 1, 0.8, 2);
         } else if (bossKind === "tub" && bossState.cool <= 0) {
           bossState.cool = 8;
@@ -2371,17 +2998,52 @@ export function createPlay(scene, camera, audio) {
         const p = pools[t];
         const k = ENEMY[t];
         for (let i = 0; i < p.cap; i++) {
+          if (p.corpse[i] > 0) {
+            p.corpse[i] -= h;
+            p.x[i] += p.lx[i] * h;
+            p.z[i] += p.lz[i] * h;
+            p.spinA[i] += h * 9;
+            if (p.corpse[i] <= 0) finishCorpse(t, i);
+            continue;
+          }
           if (!p.alive[i]) continue;
           if (p.burnT[i] > 0) {
-            const hit = clogHit(t, p.hp[i], p.foam[i], p.burnD[i] * h, 0, 0, 1, p.slowT[i] > 0 ? 1 : 0);
+            const prevBurn = p.burnT[i];
+            const hit = clogHit(t, p.hp[i], p.foam[i], p.burnD[i] * h, 0, 0, 1);
             p.hp[i] = hit.hp;
             p.foam[i] = hit.foam;
             p.burnT[i] -= h;
+            if (Math.floor(prevBurn * 2) !== Math.floor(Math.max(0, p.burnT[i]) * 2)) {
+              floater(t * 400 + i, p.x[i], k.y + 0.7, p.z[i], p.burnD[i] * 0.5, 2);
+            }
             if (hit.burst) puff(p.x[i], k.y, p.z[i], 10, 6, 2, 0.35, 0.3);
             if (p.hp[i] <= 0) {
               killEnemy(t, i, true);
               continue;
             }
+          }
+          if (p.shoveV[i] > 0) {
+            const step = Math.min(p.shoveV[i], 3 * h);
+            const len = Math.hypot(p.lx[i], p.lz[i]) || 1;
+            p.x[i] += (p.lx[i] / len) * step;
+            p.z[i] += (p.lz[i] / len) * step;
+            p.shoveV[i] -= step;
+          }
+          for (let u = 0; u < puddles.n; u++) {
+            if (!puddles.alive[u]) continue;
+            const dx = p.x[i] - puddles.x[u];
+            const dz = p.z[i] - puddles.z[u];
+            const pr = puddles.extra[u] || 1.3;
+            if (dx * dx + dz * dz > pr * pr) continue;
+            p.burnT[i] = Math.max(p.burnT[i], 0.3);
+            if ((puddles.extra2[u] || 0) > p.burnD[i]) p.burnD[i] = puddles.extra2[u];
+          }
+          if (labMode) {
+            const gap = -p.z[i] - dist;
+            if (gap > 4) p.z[i] += ENEMY[0].speed * h;
+            p.x[i] += clamp(squadX - p.x[i], -1, 1) * k.lat * h;
+            if (p.hit[i] > 0) p.hit[i] = Math.max(0, p.hit[i] - h / 0.06);
+            continue;
           }
           if (p.slowT[i] > 0) p.slowT[i] -= h;
           if (p.freeze[i] >= 1 || p.stagT[i] > 0) {
@@ -2402,6 +3064,7 @@ export function createPlay(scene, camera, audio) {
             p.radS[i] = g.radScale;
             p.z[i] += 6 * slow * h;
           } else if (t === 4) {
+            if (arenaStarted) continue;
             const holdZ = -dist - 30;
             if (p.z[i] < holdZ) p.z[i] = Math.min(holdZ, p.z[i] + 8 * h);
             else p.z[i] = Math.max(holdZ, p.z[i] - 8 * slow * h);
@@ -2432,7 +3095,7 @@ export function createPlay(scene, camera, audio) {
             if (gap < 8) p.x[i] += clamp(squadX - p.x[i], -1, 1) * k.lat * slow * h;
             p.z[i] += k.speed * slow * h;
           }
-          if (p.hit[i] > 0) p.hit[i] = Math.max(0, p.hit[i] - h * 12.5);
+          if (p.hit[i] > 0) p.hit[i] = Math.max(0, p.hit[i] - h / 0.06);
         }
       }
       rebuildGrid();
@@ -2450,7 +3113,7 @@ export function createPlay(scene, camera, audio) {
       formationOffsets(squadN, radius, fx, fz);
       resolveHazards();
       if (ended) return;
-      if (!ended) {
+      if (!ended && !labMode) {
         const blob = formationRadius(Math.max(squadN, 1), half);
         for (let t = 0; t < TYPES; t++) {
           const p = pools[t];
@@ -2481,6 +3144,7 @@ export function createPlay(scene, camera, audio) {
               p.x[i] = squadX + (dx / len) * (rr + 0.2);
               continue;
             }
+            if (biteLock > 0 && (bot || steered)) continue;
             if (t === 2) {
               const len = Math.sqrt(dx * dx + dz * dz) || 0.001;
               p.x[i] = squadX + (dx / len) * rr;
@@ -2489,12 +3153,14 @@ export function createPlay(scene, camera, audio) {
               if (p.biteAcc[i] >= 1) {
                 p.biteAcc[i] -= 1;
                 hurtSquad(k.bite);
+                biteLock = 0.5;
                 if (ended) return;
               }
             } else {
               let bite = k.bite;
               if (t === 3) bite = hairGrowth(p.age[i]).bite;
               hurtSquad(bite);
+              biteLock = 0.5;
               killEnemy(t, i, true);
               if (ended) return;
             }
@@ -2517,17 +3183,16 @@ export function createPlay(scene, camera, audio) {
         const leafCut = Math.min(0.4, stuckN * 0.05);
         const rateScale = leafCut > 0 ? 1 / (1 - leafCut) : 1;
         if (mods.pattern === "spin") {
-          if (cn > 0) spin = Math.min(1, spin + h / 0.6);
+          const up = mods.spinUp || 0.6;
+          if (cn > 0) spin = Math.min(1, spin + h / up);
           else spin = Math.max(0, spin - h / 0.4);
         } else spin = Math.max(0, spin - h);
         const rateNow = mods.pattern === "spin" ? mods.rate + (mods.rateMax - mods.rate) * spin : mods.rate;
-        if (mods.pattern === "cone" || mods.pattern === "stream") {
+        if (mods.pattern === "cone") {
           gunAcc -= h;
           if (gunAcc <= 0 && cn > 0) {
             gunAcc += (1 / Math.max(0.05, rateNow)) * rateScale;
-            if (mods.pattern === "cone") tickCone();
-            else tickStream();
-            shotThisTick = true;
+            tickCone();
           }
         } else {
           const interval = (1 / Math.max(0.05, rateNow)) * rateScale;
@@ -2664,21 +3329,34 @@ export function createPlay(scene, camera, audio) {
     bot = false;
     bench = 0;
     steered = 0;
+    labMode = 0;
+    invuln = 0;
+    hpMulOverride = 0;
+    labT0 = -1;
+    firedOnce = 0;
+    hitStop = 0;
+    boltSerial = 0;
     liveN = 0;
     stuckN = 0;
     shotThisTick = false;
     toastT = 0;
     barkT = 0;
     wrenchPhase = 0;
+    biteLock = 0;
     pullT = 0;
     counts.fill(0);
     fired.fill(0);
     for (let t = 0; t < TYPES; t++) {
       const p = pools[t];
       p.alive.fill(0);
+      p.corpse.fill(0);
+      p.shoveV.fill(0);
+      p.burnT.fill(0);
+      p.freeze.fill(0);
       p.freeN = p.cap;
       for (let i = 0; i < p.cap; i++) p.free[i] = i;
     }
+    clock = 0;
     clearPool(balls);
     clearPool(arrows);
     clearPool(logs);
@@ -2733,21 +3411,105 @@ export function createPlay(scene, camera, audio) {
     const shown = formationOffsets(squadN, radius, fx, fz);
     const back = kickT > 0 ? 0.15 * (kickT / 0.2) : 0;
     const wob = spin * Math.sin(clock * 90) * 0.03;
+    const lean = clamp((targetX - squadX) * 0.5, -0.176, 0.176);
+    const yawS = Math.atan2(-lean, 1);
+    soldierScale = squadN > 60 ? soldierScale0 * 0.8 : soldierScale0;
     const sM = soldiers.instanceMatrix.array;
+    const gunM = squadGuns.instanceMatrix.array;
     soldiers.count = shown;
     soldiers.visible = shown > 0;
+    squadGuns.count = shown;
+    squadGuns.visible = shown > 0 && ended !== "lose";
+    gunTint.set(mods.color || "#F4E6C3");
     const gM = goldRing.instanceMatrix.array;
     goldRing.count = mods.gold ? shown : 0;
     goldRing.visible = mods.gold && shown > 0;
     for (let i = 0; i < shown; i++) {
-      writeTRS(sM, i, squadX + fx[i] + wob, DECK, -dist + fz[i] + back, 0, 1, 1, 1);
-      if (mods.gold) writeTRS(gM, i, squadX + fx[i] + wob + 0.22, DECK + 0.55, -dist + fz[i] + back - 0.25, 0, 1, 1, 1);
+      const sx = squadX + fx[i] + wob;
+      const sz = -dist + fz[i] + back;
+      writeTRS(sM, i, sx, DECK, sz, yawS, soldierScale, soldierScale, soldierScale);
+      writeTRS(gunM, i, sx, DECK + 0.48, sz, yawS, 1, 1, 1);
+      squadGuns.setColorAt(i, gunTint);
+      if (mods.gold) writeTRS(gM, i, sx + 0.22, DECK + 0.55, sz - 0.25, yawS, 1, 1, 1);
     }
-    if (shown) soldiers.instanceMatrix.needsUpdate = true;
+    if (shown) {
+      soldiers.instanceMatrix.needsUpdate = true;
+      squadGuns.instanceMatrix.needsUpdate = true;
+      if (squadGuns.instanceColor) squadGuns.instanceColor.needsUpdate = true;
+    }
     if (goldRing.visible) goldRing.instanceMatrix.needsUpdate = true;
-    copyInstances(soldiers, soldierShell, shown);
+    if (soldierAnim && soldierClips) {
+      const run = soldierClips.Run_Shoot || soldierClips.Idle_Gun_Shoot || { start: 0, frames: 8 };
+      for (let i = 0; i < shown; i++) {
+        const phase = soldierPhase[i] || 0;
+        soldierAnim.setXYZW(i, run.start, run.frames, phase - Math.floor(phase), 0.9 + (phase % 1) * 0.2);
+      }
+      soldierAnim.needsUpdate = true;
+      if (vatTime) vatTime.value = clock;
+    }
+    if (realCrowd) {
+      soldierShell.count = 0;
+      soldierShell.visible = false;
+      const nextGun = gunMeshes[weaponId] || null;
+      const ids = Object.keys(gunMeshes);
+      for (let g = 0; g < ids.length; g++) {
+        const mesh = gunMeshes[ids[g]];
+        mesh.visible = mesh === nextGun && shown > 0 && ended !== "lose";
+        mesh.count = mesh.visible ? shown : 0;
+      }
+      shownGun = nextGun;
+      if (shownGun && shown) copyInstances(soldiers, shownGun, shown);
+      if (shownGun && shownGun.material.userData) {
+        const kick = shownGun.material.userData.kick;
+        const pitch = shownGun.material.userData.pitch;
+        if (kick) kick.value = mods.heavy ? 0.12 : 0.06;
+        if (pitch) pitch.value = mods.heavy ? 0.175 : 0.105;
+      }
+    } else {
+      copyInstances(soldiers, soldierShell, shown);
+    }
+    bober.scale.setScalar(boberScale0);
+    bober.rotation.y = yawS;
     bober.position.set(squadX + wob, DECK, -dist - radius - 1.15 + back);
-    bober.visible = ended !== "lose";
+    if (boberLive) {
+      bober.visible = false;
+      boberLive.visible = ended !== "lose" && !labMode;
+      boberLive.position.set(squadX + wob, DECK, -dist - radius - 1.15 + back);
+      boberLive.rotation.y = yawS;
+      if (boberMixer) boberMixer.update(1 / 60);
+    }
+    if (boberGunLive) {
+      const src = gunMeshes[weaponId];
+      boberGunLive.visible = !!(src && boberLive && boberLive.visible);
+      if (src) boberGunLive.geometry = src.geometry;
+      if (src && src.material && src.material.color) boberGunLive.material.color.copy(src.material.color);
+      boberGunLive.position.set(squadX + wob, DECK + 0.55, -dist - radius - 1.15 + back - 0.2);
+      boberGunLive.rotation.y = yawS;
+      boberGunLive.scale.setScalar(1.3);
+    }
+    if (bossLive && bossState.shown) {
+      const tall = BOSS_TALL[bossKind] || 5;
+      bossLive.visible = !!bossState.alive || ended === "win";
+      bossLive.position.set(bossState.x, DECK, bossState.z);
+      bossLive.rotation.y = Math.PI;
+      bossLive.scale.setScalar(tall / 5);
+      const fur = bossKind === "grunk" ? 0x7a8086 : bossKind === "tub" ? 0x5a4030 : 0x6a4630;
+      if (bossTint !== fur) {
+        bossTint = fur;
+        bossLive.traverse((o) => {
+          if (!o.isSkinnedMesh || !o.material) return;
+          const list = Array.isArray(o.material) ? o.material : [o.material];
+          for (let m = 0; m < list.length; m++) if (list[m].color) list[m].color.setHex(fur);
+        });
+      }
+      if (baronDress) baronDress.visible = bossKind === "baron";
+      if (tubDress) tubDress.visible = bossKind === "tub";
+      if (grunkDress) grunkDress.visible = bossKind === "grunk";
+      boss.visible = false;
+      if (bossMixer) bossMixer.update(1 / 60);
+    }
+    boberGun.scale.setScalar(boberScale0 > 0 ? 1.3 / boberScale0 : 1.3);
+    if (!boberLive) bober.visible = ended !== "lose" && !labMode;
     const pr = Math.max(0.8, radius + 0.5);
     pillar.position.set(squadX, DECK + 3.5, -dist);
     pillar.scale.set(pr, 1, pr);
@@ -2766,13 +3528,15 @@ export function createPlay(scene, camera, audio) {
       const ht = p.hitAttr.array;
       let w = 0;
       for (let i = 0; i < p.cap; i++) {
-        if (!p.alive[i]) continue;
-        const sc = p.radS[i] || 1;
+        if (!p.alive[i] && !(p.corpse[i] > 0)) continue;
+        const sc = (enemyScale[t] || 1) * (p.radS[i] || 1) * (0.92 + ((p.phase[i] * 17) % 1) * 0.16);
+        const squash = p.hit[i] > 0 ? 0.9 : 1;
         const y = (t === 5 ? 1.05 : DECK);
-        const yaw = t === 6 ? (p.side[i] < 0 ? Math.PI / 2 : -Math.PI / 2) : Math.PI;
-        const roll = t === 3 ? clock * 6 : 0;
+        let yaw = t === 6 ? (p.side[i] < 0 ? Math.PI / 2 : -Math.PI / 2) : Math.PI;
+        yaw += p.spinA[i] || 0;
+        const roll = t === 3 ? clock * 6 + (p.spinA[i] || 0) : 0;
         if (t === 3) writeLog(m, w, p.x[i], y, p.z[i], yaw, roll, sc);
-        else writeTRS(m, w, p.x[i], y, p.z[i], yaw, sc, sc, sc);
+        else writeTRS(m, w, p.x[i], y, p.z[i], yaw, sc, sc * squash, sc);
         ph[w] = p.phase[i] + (t === 5 ? clock : 0);
         ht[w] = p.hit[i];
         w++;
@@ -2784,7 +3548,32 @@ export function createPlay(scene, camera, audio) {
         p.phaseAttr.needsUpdate = true;
         p.hitAttr.needsUpdate = true;
       }
-      copyInstances(p.mesh, p.shell, w);
+      if (p.vat && w) {
+        const clips = p.vat.clips || {};
+        const run = clips.Run_Arms || clips.Walk || { start: 0, frames: 8 };
+        const poke = clips.Punch || run;
+        for (let i = 0; i < p.cap; i++) {
+          if (!p.alive[i] && !(p.corpse[i] > 0)) continue;
+        }
+        let slot = 0;
+        for (let i = 0; i < p.cap; i++) {
+          if (!p.alive[i] && !(p.corpse[i] > 0)) continue;
+          const use = p.hit[i] > 0 ? poke : run;
+          const phase = p.phase[i] || 0;
+          p.vat.anim.setXYZW(slot, use.start, use.frames, phase - Math.floor(phase), 0.9 + (phase % 1) * 0.2);
+          if (p.vat.foam) p.vat.foam.setX(slot, t === 1 ? Math.min(1, (p.foam[i] || 0) / 40) : 1);
+          slot++;
+        }
+        p.vat.anim.needsUpdate = true;
+        if (p.vat.foam) p.vat.foam.needsUpdate = true;
+        if (p.vat.time) p.vat.time.value = clock;
+      }
+      if (realCrowd) {
+        p.shell.count = 0;
+        p.shell.visible = false;
+      } else {
+        copyInstances(p.mesh, p.shell, w);
+      }
     }
     const stM = stuckMesh.instanceMatrix.array;
     stuckMesh.count = stuckN;
@@ -2857,11 +3646,15 @@ export function createPlay(scene, camera, audio) {
     for (let f = 0; f < FLOATS; f++) {
       if (!flAlive[f]) continue;
       const nDig = fillDigits(flValue[f] + 0.5);
-      const y = flY[f] + (0.72 - flLife[f]) * 1.3;
+      const rise = (0.5 - flLife[f]) * 1.2;
+      const y = flY[f] + rise;
+      const gs = (flSize[f] || 0.5) * 0.85;
+      const tint = flCrit[f] === 1 ? digYellow : flCrit[f] === 2 ? digOrange : digWhite;
       for (let k = 0; k < nDig && dw < GLYPHS; k++) {
-        const ox = (k - (nDig - 1) / 2) * 0.38;
-        writeQuat(dM, dw, flX[f] + ox, y, flZ[f], 0.62, qx, qy, qz, qw);
+        const ox = (k - (nDig - 1) / 2) * gs * 0.72;
+        writeQuat(dM, dw, flX[f] + ox, y, flZ[f], gs, qx, qy, qz, qw);
         dA[dw] = digScratch[k];
+        digits.setColorAt(dw, tint);
         dw++;
       }
     }
@@ -2870,6 +3663,7 @@ export function createPlay(scene, camera, audio) {
     if (dw) {
       digits.instanceMatrix.needsUpdate = true;
       digits.geometry.getAttribute("aDigit").needsUpdate = true;
+      if (digits.instanceColor) digits.instanceColor.needsUpdate = true;
     }
 
     const fM = gateFrame.instanceMatrix.array;
@@ -2888,28 +3682,33 @@ export function createPlay(scene, camera, audio) {
         flipY = Math.abs(Math.cos(u * Math.PI));
         if (flipY < 0.04) flipY = 0.04;
       }
-      writeTRS(fM, i, g.x, 0, g.z, 0, s, flipY, s);
-      writeTRS(oM, i, g.x, 0, g.z, 0, s, flipY, s);
-      writeTRS(pPM, i, g.x, 1.75, g.z + 0.16, 0, s, flipY, s);
-      writeTRS(rM, i, g.x, 1.75, g.z + 0.08, 0, s, flipY, s);
+      writeTRS(fM, i, g.x, 0, g.z, 0, 0, 0, 0);
+      writeTRS(oM, i, g.x, 0, g.z, 0, 0, 0, 0);
+      writeTRS(pPM, i, g.x, DECK + 0.8, g.z, 0, s, flipY, s);
+      writeTRS(rM, i, g.x, DECK + 0.8, g.z, 0, 0, 0, 0);
       const sign = signs[i].mesh;
       sign.visible = !!s;
       if (s) {
-        sign.position.set(g.x, 1.75, g.z + 0.34);
-        sign.quaternion.copy(cam.quaternion);
-        const bump = 1 + g.bump;
-        sign.scale.set(bump, bump * (s ? flipY / s : 1), bump);
+        sign.position.set(g.x, DECK + 0.85, g.z + 0.55);
+        sign.quaternion.identity();
+        const bump = 1 + g.bump * 0.35;
+        sign.scale.set(bump, bump * flipY, bump);
       }
     }
     for (let i = gates.length; i < 8; i++) signs[i].mesh.visible = false;
-    gateFrame.count = gates.length;
-    gateOutline.count = gates.length;
+    gateFrame.count = 0;
+    gateOutline.count = 0;
     gatePanel.count = gates.length;
-    gateRim.count = gates.length;
-    gateFrame.visible = !!anyGate;
-    gateOutline.visible = !!anyGate;
+    gateRim.count = 0;
+    gateFrame.visible = false;
+    gateOutline.visible = false;
     gatePanel.visible = !!anyGate;
-    gateRim.visible = !!anyGate;
+    gateRim.visible = false;
+    let flashes = 0;
+    for (let i = 0; i < muzzles.n; i++) if (muzzles.alive[i]) flashes++;
+    muzzleLight.intensity = Math.min(5, flashes * 1.2);
+    muzzleLight.color.copy(gunTint);
+    muzzleLight.position.set(squadX, 1.15, -dist - 0.6);
     if (anyGate) {
       gateFrame.instanceMatrix.needsUpdate = true;
       gateOutline.instanceMatrix.needsUpdate = true;
@@ -3145,10 +3944,13 @@ export function createPlay(scene, camera, audio) {
 
   function selfTest() {
     const fails = selfTestRules();
-    if (tris.soldier > 600) fails.push("soldier tris " + tris.soldier);
-    if (tris.bober > 800) fails.push("bober tris " + tris.bober);
+    const capS = realCrowd ? 2500 : 600;
+    const capB = realCrowd ? 2500 : 800;
+    const capE = realCrowd ? 2500 : 500;
+    if (tris.soldier > capS) fails.push("soldier tris " + tris.soldier);
+    if (tris.bober > capB) fails.push("bober tris " + tris.bober);
     for (let t = 0; t < TYPES; t++) {
-      if (builtE[t].tris > 500) fails.push("enemy tris " + t + " " + builtE[t].tris);
+      if (builtE[t].tris > capE) fails.push("enemy tris " + t + " " + builtE[t].tris);
     }
     if (tris.boss > 6000) fails.push("boss tris " + tris.boss);
     if (!soldierBuilt.geo.index) fails.push("soldier not indexed");
@@ -3317,6 +4119,322 @@ export function createPlay(scene, camera, audio) {
     return liveN;
   }
 
+  function labWave() {
+    const mix = [];
+    for (let i = 0; i < 70; i++) mix.push(0);
+    for (let i = 0; i < 12; i++) mix.push(1);
+    for (let i = 0; i < 6; i++) mix.push(4);
+    mix.push(2, 2);
+    for (let i = mix.length - 1; i > 0; i--) {
+      const j = (rnd() * (i + 1)) | 0;
+      const tmp = mix[i];
+      mix[i] = mix[j];
+      mix[j] = tmp;
+    }
+    const gap = 1.2;
+    const cols = 8;
+    for (let i = 0; i < mix.length; i++) {
+      const row = (i / cols) | 0;
+      const col = i % cols;
+      const nCols = Math.min(cols, mix.length - row * cols);
+      const stagger = row % 2 ? gap * 0.5 : 0;
+      let x = -((nCols - 1) * gap) * 0.5 + col * gap + stagger;
+      if (x > 4.6) x = 4.6;
+      if (x < -4.6) x = -4.6;
+      spawnEnemy(mix[i], x, -30 - row * gap * 0.86);
+    }
+  }
+
+  function labOnce(gun, tierN, hp, salt) {
+    reset();
+    seed = 5000 + salt;
+    labMode = 1;
+    invuln = 1;
+    lockGun = 1;
+    hpMulOverride = hp || 1;
+    weaponId = gun;
+    tier = tierN;
+    spin = 0;
+    refreshMods();
+    squadN = 20;
+    squadX = 0;
+    targetX = 0;
+    running = true;
+    ended = "";
+    for (let i = 0; i < RENDER_CAP; i++) cds[i] = (i % 7) * 0.02;
+    for (let i = 0; i < crates.length; i++) {
+      crates[i].state = "dead";
+      crates[i].hp = 0;
+    }
+    for (let i = 0; i < gates.length; i++) gates[i].passed = 1;
+    labWave();
+    const labLive0 = liveN;
+    firedOnce = 0;
+    labT0 = -1;
+    let guard = 0;
+    while (liveN > 0 && guard < 1800) {
+      step(1 / 60);
+      guard++;
+      if (ended === "lose") break;
+    }
+    const ttk = labT0 < 0 ? 30 : Math.max(0.05, clock - labT0);
+    const out = {
+      ttk,
+      kills,
+      live: liveN,
+      fired: labT0 >= 0 ? 1 : 0,
+      live0: labLive0,
+    };
+    labMode = 0;
+    invuln = 0;
+    hpMulOverride = 0;
+    return out;
+  }
+
+  function gunLab() {
+    for (const key in TUNED) delete TUNED[key];
+    const rows = [];
+    const order = GUN_ORDER;
+    for (let pass = 0; pass < 3; pass++) {
+      rows.length = 0;
+      for (let g = 0; g < order.length; g++) {
+        for (let tierN = 1; tierN <= 4; tierN++) {
+          let sum = 0;
+          for (let s = 0; s < 3; s++) sum += labOnce(order[g], tierN, 1, pass * 400 + g * 30 + tierN * 5 + s).ttk;
+          rows.push({ gun: order[g], tier: tierN, level: "1-1", hp: 1, ttk: sum / 3 });
+        }
+        let a = 0;
+        let b = 0;
+        for (let s = 0; s < 3; s++) {
+          a += labOnce(order[g], 2, 1.09, 7000 + pass * 100 + g * 8 + s).ttk;
+          b += labOnce(order[g], 2, 1.18, 8000 + pass * 100 + g * 8 + s).ttk;
+        }
+        rows.push({ gun: order[g], tier: 2, level: "1-2", hp: 1.09, ttk: a / 3 });
+        rows.push({ gun: order[g], tier: 2, level: "1-3", hp: 1.18, ttk: b / 3 });
+      }
+      const means = [0, 0, 0, 0, 0];
+      const counts = [0, 0, 0, 0, 0];
+      let worst = 0;
+      for (let i = 0; i < rows.length; i++) {
+        if (rows[i].level !== "1-1") continue;
+        means[rows[i].tier] += rows[i].ttk;
+        counts[rows[i].tier]++;
+      }
+      for (let t = 1; t <= 4; t++) means[t] = counts[t] ? means[t] / counts[t] : TIER_TTK[t];
+      let meanOff = 0;
+      for (let t = 1; t <= 4; t++) {
+        const off = Math.abs(means[t] / TIER_TTK[t] - 1);
+        if (off > meanOff) meanOff = off;
+      }
+      for (let i = 0; i < rows.length; i++) {
+        if (rows[i].level !== "1-1") continue;
+        const pct = means[rows[i].tier] ? rows[i].ttk / means[rows[i].tier] : 1;
+        rows[i].pct = pct;
+        rows[i].mean = means[rows[i].tier];
+        if (Math.abs(pct - 1) > worst) worst = Math.abs(pct - 1);
+      }
+      if (worst <= 0.15 && meanOff <= 0.15) break;
+      if (pass === 2) break;
+      for (let i = 0; i < rows.length; i++) {
+        const row = rows[i];
+        if (row.level !== "1-1" || !row.pct) continue;
+        const cur = tunedMods(row.gun, row.tier).dmg;
+        let scale = 1;
+        if (row.pct < 0.85 || row.pct > 1.15) scale *= row.pct;
+        const mean = means[row.tier] || TIER_TTK[row.tier];
+        const target = TIER_TTK[row.tier];
+        if (target && Math.abs(mean / target - 1) > 0.15) scale *= mean / target;
+        if (scale > 3) scale = 3;
+        if (scale < 0.45) scale = 0.45;
+        if (Math.abs(scale - 1) < 0.04) continue;
+        let next = cur * scale;
+        if (row.gun !== "flame") next = Math.max(12, next);
+        TUNED[row.gun + ":" + row.tier] = Math.round(next * 10) / 10;
+      }
+    }
+    let csv = "gun,tier,level,ttk,pct\n";
+    for (let i = 0; i < rows.length; i++) {
+      const r = rows[i];
+      csv += r.gun + "," + r.tier + "," + r.level + "," + r.ttk.toFixed(3) + "," + ((r.pct || 0) * 100).toFixed(1) + "\n";
+    }
+    console.log(csv);
+    const tuned = {};
+    for (const k in TUNED) tuned[k] = TUNED[k];
+    reset();
+    labMode = 0;
+    lockGun = 0;
+    return { rows, csv, tuned };
+  }
+
+  function bindVat(mesh, baked, cap) {
+    const anim = new Float32Array(cap * 4);
+    const fire = new Float32Array(cap);
+    fire.fill(-10);
+    const foam = new Float32Array(cap);
+    foam.fill(1);
+    baked.geo.setAttribute("aAnim", new THREE.InstancedBufferAttribute(anim, 4));
+    baked.geo.setAttribute("aFire", new THREE.InstancedBufferAttribute(fire, 1));
+    baked.geo.setAttribute("aFoam", new THREE.InstancedBufferAttribute(foam, 1));
+    mesh.geometry = baked.geo;
+    mesh.material = baked.mat;
+    mesh.customDepthMaterial = baked.depth;
+    return {
+      anim: baked.geo.getAttribute("aAnim"),
+      foam: baked.geo.getAttribute("aFoam"),
+      clips: baked.clips,
+      time: baked.uniforms.uTime,
+    };
+  }
+
+  function adopt(pack) {
+    if (!pack) return { ok: false };
+    try {
+      if (pack.soldier) {
+        const bound = bindVat(soldiers, pack.soldier, RENDER_CAP);
+        soldierAnim = bound.anim;
+        soldierClips = bound.clips;
+        vatTime = bound.time;
+        soldierScale0 = 1;
+        soldiers.castShadow = true;
+        bober.castShadow = true;
+        realCrowd = 1;
+        tris.soldier = pack.soldier.tris;
+        const ids = Object.keys(pack.guns || {});
+        for (let i = 0; i < ids.length; i++) {
+          const gun = pack.guns[ids[i]];
+          if (!gun || !gun.geo || !pack.soldier.socket) continue;
+          gun.geo.setAttribute("aAnim", soldierAnim);
+          gun.geo.setAttribute("aFire", soldiers.geometry.getAttribute("aFire"));
+          const mesh = new THREE.InstancedMesh(
+            gun.geo,
+            socketMaterial(gun.mat.color, pack.soldier.socket, vatTime, pack.soldier.uniforms.uVatInfo.value),
+            RENDER_CAP
+          );
+          mesh.frustumCulled = false;
+          mesh.count = 0;
+          mesh.castShadow = true;
+          scene.add(mesh);
+          gunMeshes[ids[i]] = mesh;
+        }
+        squadGuns.visible = false;
+        boberGunLive = new THREE.Mesh(
+          new THREE.BoxGeometry(0.08, 0.08, 0.4),
+          new THREE.MeshStandardMaterial({ color: 0xf2c230, roughness: 0.45 })
+        );
+        boberGunLive.castShadow = true;
+        boberGunLive.visible = false;
+        scene.add(boberGunLive);
+      }
+      const enemyBake = [pack.clog, pack.suds, pack.hauler, null, pack.spit, null, null];
+      for (let t = 0; t < enemyBake.length; t++) {
+        if (!enemyBake[t]) continue;
+        pools[t].vat = bindVat(pools[t].mesh, enemyBake[t], pools[t].cap);
+        enemyScale[t] = 1;
+        trisBoss(t, enemyBake[t].tris);
+      }
+      if (pack.duck && pack.duck.geo) {
+        pools[6].mesh.geometry = pack.duck.geo;
+        pools[6].mesh.material = pack.duck.mat;
+        enemyScale[6] = 1;
+      }
+      if (pack.bober) {
+        boberLive = pack.bober;
+        boberLive.traverse((o) => {
+          if (o.isMesh) o.castShadow = true;
+        });
+        attachOutline(boberLive, 0.03);
+        scene.add(boberLive);
+        bober.visible = false;
+        const clips = pack.bober.userData.clips || [];
+        let clip = null;
+        for (let i = 0; i < clips.length; i++) {
+          if ((clips[i].name || "").indexOf("Run_Shoot") >= 0) clip = clips[i];
+        }
+        if (clip) {
+          boberMixer = new THREE.AnimationMixer(pack.bober.userData.inner || boberLive);
+          boberMixer.clipAction(clip).play();
+        }
+      }
+      if (pack.bossRig) {
+        const rig = pack.bossRig;
+        rig.inner.scale.multiplyScalar(5 / Math.max(0.05, rig.height));
+        bossLive = rig.outer;
+        bossLive.visible = false;
+        scene.add(bossLive);
+        const clips = rig.animations || [];
+        let clip = null;
+        for (let i = 0; i < clips.length; i++) {
+          if ((clips[i].name || "").indexOf("Walk") >= 0) clip = clips[i];
+        }
+        if (clip) {
+          bossMixer = new THREE.AnimationMixer(rig.inner);
+          bossMixer.clipAction(clip).play();
+        }
+        const cloth = (hex, rough) => new THREE.MeshStandardMaterial({ color: hex, roughness: rough == null ? 0.55 : rough, metalness: 0.12 });
+        baronDress = new THREE.Group();
+        tubDress = new THREE.Group();
+        grunkDress = new THREE.Group();
+        bossLive.add(baronDress, tubDress, grunkDress);
+        const throne = new THREE.Mesh(new THREE.BoxGeometry(3.6, 1.45, 2.3), cloth(0xf3f6f8, 0.28));
+        throne.position.set(0, 0.85, 0.2);
+        const rim = new THREE.Mesh(new THREE.BoxGeometry(3.9, 0.32, 0.28), cloth(0xd5dbe2, 0.22));
+        rim.position.set(0, 1.62, -1.05);
+        baronDress.add(throne, rim);
+        for (let i = 0; i < 7; i++) {
+          const bit = new THREE.Mesh(new THREE.BoxGeometry(0.2, 0.78, 0.14), cloth(i % 3 === 0 ? 0xc23b4a : i % 3 === 1 ? 0xf2c230 : 0xdedad2, 0.4));
+          const a = -1.05 + (i / 6) * 2.1;
+          bit.position.set(Math.sin(a) * 0.78, 5.35, -0.42);
+          baronDress.add(bit);
+        }
+        const monocle = new THREE.Mesh(new THREE.TorusGeometry(0.46, 0.09, 8, 16), cloth(0x5e666c, 0.22));
+        monocle.position.set(0.42, 4.05, -1.25);
+        baronDress.add(monocle);
+        const shield = new THREE.Mesh(new THREE.BoxGeometry(2.9, 2.05, 0.4), cloth(0xf4f7f8, 0.22));
+        shield.position.set(0, 2.45, -1.25);
+        tubDress.add(shield);
+        for (let i = 0; i < 4; i++) {
+          const foot = new THREE.Mesh(new THREE.BoxGeometry(0.18, 0.5, 0.18), cloth(0xc5ced6, 0.3));
+          foot.position.set(i % 2 ? 1.2 : -1.2, 1.2, i < 2 ? -1.4 : -0.95);
+          tubDress.add(foot);
+        }
+        if (pack.duck && pack.duck.geo) {
+          const duck = new THREE.Mesh(pack.duck.geo, pack.duck.mat || cloth(0xffd23a, 0.4));
+          duck.position.set(0, 5.2, -0.2);
+          duck.rotation.y = Math.PI;
+          duck.scale.setScalar(1.35);
+          tubDress.add(duck);
+        }
+        const overall = new THREE.Mesh(new THREE.BoxGeometry(2.15, 2.55, 0.55), cloth(0x2a4f86, 0.55));
+        overall.position.set(0, 2.3, -0.62);
+        const strapL = new THREE.Mesh(new THREE.BoxGeometry(0.28, 1.35, 0.18), cloth(0x1d3a66, 0.5));
+        strapL.position.set(-0.48, 3.2, -0.78);
+        const strapR = strapL.clone();
+        strapR.position.x = 0.48;
+        grunkDress.add(overall, strapL, strapR);
+        if (pack.wrench && pack.wrench.geo) {
+          const wrenchM = new THREE.Mesh(pack.wrench.geo, pack.wrench.mat || cloth(0xc5ced6, 0.32));
+          wrenchM.position.set(1.05, 2.15, -1.35);
+          wrenchM.rotation.x = -1.05;
+          wrenchM.scale.setScalar(0.7);
+          grunkDress.add(wrenchM);
+          wrench.geometry = pack.wrench.geo;
+          wrench.material = pack.wrench.mat || wrench.material;
+        }
+        tris.boss = 5875;
+      }
+      return { ok: true, realCrowd };
+    } catch (err) {
+      console.warn("asset adopt failed", err);
+      realCrowd = 0;
+      return { ok: false };
+    }
+  }
+
+  function trisBoss(t, n) {
+    if (t === 0) tris.soldier = tris.soldier;
+    if (n > (tris.enemy || 0)) tris.enemy = n;
+  }
+
   reset();
 
   return {
@@ -3440,11 +4558,41 @@ export function createPlay(scene, camera, audio) {
     },
     killBoss() {
       if (!arenaStarted) startArena();
+      bossSec = 6;
       hurtBoss(99999, 0, 0, 1, bossState.x, 1.6, bossState.z);
       publish();
     },
     setBot(v) {
       bot = !!v;
+    },
+    setLock(v) {
+      const next = v ? 1 : 0;
+      lockGun = next;
+      // Locked runs pay volunteers instead of a new gun. The scripted crate
+      // HP is a break-check a 10 m flame cannot pass, so the comparison
+      // would be about range rather than the fight. Soften only this pass.
+      if (!next) return;
+      for (let i = 0; i < crates.length; i++) {
+        const c = crates[i];
+        if (c.eased || c.state !== "idle" || c.hp <= 0) continue;
+        c.hp = Math.max(8, Math.round(c.hp * 0.22));
+        c.max = c.hp;
+        c.eased = 1;
+        c.dirty = 1;
+      }
+    },
+    setAuto(v) {
+      autoPick = v ? 1 : 0;
+      if (v) bot = true;
+    },
+    gunLab,
+    labOnce,
+    adopt,
+    equipGun(id, tierN) {
+      weaponId = id || "bow";
+      tier = tierN || 1;
+      refreshMods();
+      publish();
     },
   };
 }

@@ -525,20 +525,10 @@ export function buildTile() {
 }
 
 export function buildCrateGeo() {
-  const parts = [place(box(3.3, 3.0, 1.5), WOOD, 0, null, 0, 1.5, 0)];
-  const bracket = box(0.26, 0.26, 0.26);
-  const xs = [-1.52, 1.52];
-  const ys = [0.18, 2.82];
-  const zs = [-0.62, 0.62];
-  for (let a = 0; a < 2; a++) {
-    for (let b = 0; b < 2; b++) {
-      for (let c = 0; c < 2; c++) parts.push(place(bracket, STEEL, 0, null, xs[a], ys[b], zs[c]));
-    }
-  }
-  parts.push(place(box(0.1, 2.7, 0.1), STEEL, 0, null, -1.58, 1.5, 0.72));
-  parts.push(place(box(0.1, 2.7, 0.1), STEEL, 0, null, 1.58, 1.5, 0.72));
-  parts.push(place(box(3.15, 0.1, 0.1), STEEL, 0, null, 0, 2.55, 0.72));
-  parts.push(place(box(3.15, 0.1, 0.1), STEEL, 0, null, 0, 0.45, 0.72));
+  const parts = [place(box(3.3, 2.6, 1.5), "#E8B530", 0, null, 0, 1.3, 0)];
+  parts.push(place(box(3.38, 0.28, 1.58), "#C4922A", 0, null, 0, 1.85, 0));
+  parts.push(place(box(3.38, 0.16, 1.58), "#A97820", 0, null, 0, 0.18, 0));
+  parts.push(place(box(1.4, 0.08, 0.08), "#F3D27A", 0, null, 0, 2.15, 0.76));
   return mergeParts(parts);
 }
 

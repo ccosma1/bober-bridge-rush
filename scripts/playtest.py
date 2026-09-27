@@ -1,4 +1,4 @@
-"""Phone and desktop acceptance for Bober Bridge Rush br2."""
+"""Phone and desktop acceptance for Bober Bridge Rush br3."""
 import json
 import pathlib
 import sys
@@ -6,7 +6,7 @@ import time
 
 from playwright.sync_api import sync_playwright
 
-URL = "http://127.0.0.1:8792/?v=br2"
+URL = "http://127.0.0.1:8792/?v=br3"
 OUT = pathlib.Path(r"C:\Users\calle\AppData\Local\Temp")
 fails = []
 GUNS = ["bow", "long", "smg", "shot", "gerald", "log", "rocket", "flame", "party", "sap"]
@@ -103,7 +103,7 @@ def main():
         page.wait_for_function("window.__bridge && window.__bridge.ready")
         page.locator("#build-tag").wait_for()
         page.screenshot(path=str(OUT / "bbr-phone-title.png"))
-        check(page.locator("#build-tag").inner_text().strip() == "br2", "build tag br2")
+        check(page.locator("#build-tag").inner_text().strip() == "br3", "build tag br3")
         check(page.locator("#tagline").inner_text().strip() == "Plug the Drain.", "tagline")
         check("THE DAM RUNS DRY" in page.locator(".eyebrow").inner_text(), "chapter")
         check("Fan game. Unofficial." in page.locator("#fan-line").inner_text(), "fan line")
@@ -152,7 +152,7 @@ def main():
         report = page.evaluate("() => __bridge.selfTest()")
         print("selfTest", json.dumps(report))
         check(report["fails"] == [], "selfTest " + "; ".join(report["fails"]))
-        check(report["soldier"] <= 600, "soldier tris")
+        check(report["soldier"] <= 2500, "soldier tris")
         check(report["bober"] <= 5000, "bober tris")
         check(report["boss"] <= 6000, "boss tris")
 

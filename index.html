@@ -6,7 +6,7 @@
   <meta name="theme-color" content="#3A2A6A" />
   <meta name="description" content="Bober Bridge Rush. Hold the pine bridge. Fan game. Unofficial." />
   <title>Bober Bridge Rush</title>
-  <link rel="stylesheet" href="css/game.css?v=br2" />
+  <link rel="stylesheet" href="css/game.css?v=br3" />
 </head>
 <body>
   <canvas id="c"></canvas>
@@ -26,6 +26,7 @@
 
   <div id="dbg-hot" aria-hidden="true"></div>
   <pre id="dbg" class="hidden"></pre>
+  <button id="btn-lab" type="button" class="hidden">GUN LAB</button>
   <div id="squad-banner" class="hidden">3</div>
   <div id="flash" class="hidden">BRIDGE HELD!</div>
 
@@ -79,13 +80,16 @@
         <button type="button" class="level-tile" data-level="1-3" id="lv-1-3"><b>1-3</b><span>DAM FACE</span><i class="lv-stars"></i></button>
       </div>
       <button id="btn-start" type="button" disabled>HOLD THE BRIDGE</button>
+      <div id="load-wrap" aria-hidden="true"><div id="load-bar"></div></div>
       <div class="meta">
         <span id="bober-total">$BOBER 0</span>
         <button id="btn-mute" type="button" aria-pressed="false">Sound</button>
       </div>
       <p id="fan-line">Fan game. Unofficial.</p>
+      <button id="btn-credits" type="button">3D models: Quaternius, Kenney, CreativeTrio, Armory_3D via poly.pizza. Textures and HDRI: Poly Haven. All CC0.</button>
+      <div id="credits" class="hidden"></div>
       <a id="btn-home" href="https://ccosma1.github.io/green-home-games/">Back to Green Home Games</a>
-      <span id="build-tag">br2</span>
+      <span id="build-tag">br3</span>
     </div>
   </section>
 
@@ -113,10 +117,11 @@
   <script type="importmap">
   {
     "imports": {
-      "three": "https://cdn.jsdelivr.net/npm/three@0.170.0/build/three.module.js"
+      "three": "https://cdn.jsdelivr.net/npm/three@0.170.0/build/three.module.js",
+      "three/addons/": "https://cdn.jsdelivr.net/npm/three@0.170.0/examples/jsm/"
     }
   }
   </script>
-  <script type="module" src="js/main.js?v=br2"></script>
+  <script type="module" src="js/main.js?v=br3"></script>
 </body>
 </html>

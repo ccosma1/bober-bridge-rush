@@ -297,7 +297,7 @@ export function digitAtlas() {
   g.font = "900 52px Arial Black, Arial, sans-serif";
   g.textAlign = "center";
   g.textBaseline = "middle";
-  g.lineWidth = 6;
+  g.lineWidth = 3;
   g.strokeStyle = "#1E1410";
   g.fillStyle = "#FFFFFF";
   for (let d = 0; d < 10; d++) {

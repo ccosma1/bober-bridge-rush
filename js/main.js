@@ -1,10 +1,11 @@
 import * as THREE from "three";
-import { BUILD, highestPlayable, isUnlockedLevel } from "./rules.js?v=br2";
-import { createWorld } from "./world.js?v=br2";
-import { createPlay } from "./play.js?v=br2";
-import { createAudio } from "./audio.js?v=br2";
-import { loadSave, rememberWin, rememberGun, writeSave } from "./save.js?v=br2";
-import { drawWeaponIcon, setTime } from "./mats.js?v=br2";
+import { BUILD, highestPlayable, isUnlockedLevel } from "./rules.js?v=br3";
+import { createWorld } from "./world.js?v=br3";
+import { createPlay } from "./play.js?v=br3";
+import { createAudio } from "./audio.js?v=br3";
+import { loadSave, rememberWin, rememberGun, writeSave } from "./save.js?v=br3";
+import { drawWeaponIcon, setTime } from "./mats.js?v=br3";
+import { loadGame, CREDIT_LINES } from "./assets.js?v=br3";
 
 const save = loadSave();
 const canvas = document.getElementById("c");
@@ -19,6 +20,8 @@ renderer.outputColorSpace = THREE.SRGBColorSpace;
 renderer.toneMapping = THREE.ACESFilmicToneMapping;
 renderer.toneMappingExposure = 1.05;
 renderer.setClearColor(0xd7e4ee, 1);
+renderer.shadowMap.enabled = true;
+renderer.shadowMap.type = THREE.PCFSoftShadowMap;
 
 const scene = new THREE.Scene();
 const camera = new THREE.PerspectiveCamera(58, 1, 0.2, 360);
@@ -107,7 +110,7 @@ function showResult(won, info) {
   hud.classList.add("hidden");
   chip.classList.add("hidden");
   tip.classList.add("hidden");
-  banner.classList.add("hidden");
+  if (won) banner.classList.add("hidden");
   flash.classList.add("hidden");
   pauseCard.classList.add("hidden");
   introEl.classList.add("hidden");
@@ -137,6 +140,10 @@ function showResult(won, info) {
     resultTitle.textContent = "The dam crew needs you!";
     resultCopy.textContent = "";
     resultEarn.textContent = "";
+    banner.textContent = "0";
+    banner.classList.remove("hidden");
+    banner.style.left = "50%";
+    banner.style.top = "58%";
     nextBtn.classList.add("hidden");
     stars.classList.add("hidden");
   }
@@ -212,6 +219,7 @@ function resize() {
   camera.aspect = w / Math.max(1, h);
   camera.fov = h >= w ? 46 : 42;
   camera.updateProjectionMatrix();
+  world.setShadow(w);
 }
 
 function paintChip() {
@@ -271,6 +279,11 @@ function placeBanner() {
   const v = play.view;
   bannerV.set(v.squadX, v.bannerY, v.squadZ);
   bannerV.project(camera);
+  if (mode === "lose") {
+    banner.textContent = "0";
+    banner.classList.remove("hidden");
+    return;
+  }
   if (bannerV.z > 1 || mode !== "run") {
     banner.classList.add("hidden");
     return;
@@ -311,6 +324,8 @@ function placeWords() {
 function toggleDbg() {
   showDbg = !showDbg;
   dbg.classList.toggle("hidden", !showDbg);
+  const labBtn = document.getElementById("btn-lab");
+  if (labBtn) labBtn.classList.toggle("hidden", !showDbg);
 }
 
 function frame(now) {
@@ -382,6 +397,8 @@ function frame(now) {
     paintHud();
     placeBanner();
     placeWords();
+  } else if (mode === "lose") {
+    placeBanner();
   }
   if (showDbg) {
     const c = v.counts || [0, 0, 0, 0, 0, 0, 0];
@@ -389,6 +406,7 @@ function frame(now) {
       "FPS " + fpsShow.toFixed(0) +
       "\nENEMIES " + v.enemies +
       "\nDRAWS " + v.calls +
+      "\nTRIS " + renderer.info.render.triangles +
       "\nSCALE " + renderScale.toFixed(1) +
       "\n" + (v.weaponName || "") + " T" + v.tier + " " + (v.family || "") +
       "\nclog " + c[0] + " suds " + c[1] + " haul " + c[2] +
@@ -497,10 +515,31 @@ if (window.visualViewport) window.visualViewport.addEventListener("resize", resi
 paintLevels();
 resize();
 boot.classList.add("hidden");
-document.getElementById("btn-start").disabled = false;
+
+const creditBtn = document.getElementById("btn-credits");
+const creditPanel = document.getElementById("credits");
+if (creditPanel) {
+  creditPanel.innerHTML = CREDIT_LINES.map((line) => "<p>" + line + "</p>").join("");
+}
+if (creditBtn && creditPanel) {
+  creditBtn.addEventListener("click", () => {
+    creditPanel.classList.toggle("hidden");
+  });
+}
+const labBtn = document.getElementById("btn-lab");
+if (labBtn) {
+  labBtn.addEventListener("click", () => {
+    labBtn.disabled = true;
+    const out = play.gunLab();
+    showDbg = true;
+    dbg.classList.remove("hidden");
+    dbg.textContent = out.csv;
+    labBtn.disabled = false;
+  });
+}
 
 window.__bridge = {
-  ready: true,
+  ready: false,
   hold(v) { hold = !!v; },
   start(id) { startRun(id); },
   skipIntro,
@@ -518,6 +557,11 @@ window.__bridge = {
   debugLose() { play.debugLose(); },
   killBoss() { play.killBoss(); },
   setBot: play.setBot,
+  setLock: play.setLock,
+  setAuto: play.setAuto,
+  gunLab() { return play.gunLab(); },
+  labOnce(gun, tier, hp, salt) { return play.labOnce(gun, tier, hp, salt); },
+  equipGun: play.equipGun,
   setLevel(id) { queuedLevel = id; play.setLevel(id); },
   setLoadout(data) { play.setLoadout(data); },
   cycleGun() { play.cycleGun(); },
@@ -531,5 +575,42 @@ window.__bridge = {
   scale() { return renderScale; },
   mode() { return mode; },
 };
+
+const loadBar = document.getElementById("load-bar");
+const loadWrap = document.getElementById("load-wrap");
+const assets = loadGame((step, total) => {
+  if (loadBar) loadBar.style.width = Math.round((100 * step) / Math.max(1, total)) + "%";
+});
+assets.critical.then(() => {
+  document.getElementById("btn-start").disabled = false;
+});
+assets.done.then((pack) => {
+  try {
+    play.adopt(pack);
+    world.applyArt(renderer, Object.assign({}, pack.env, { city: pack.city }));
+  } catch (err) {
+    console.warn("asset adopt failed", err);
+  }
+  if (loadWrap) loadWrap.classList.add("hidden");
+  window.__bridge.ready = true;
+  const params = new URLSearchParams(location.search);
+  if (params.get("lab") === "guns") {
+    const out = play.gunLab();
+    showDbg = true;
+    dbg.classList.remove("hidden");
+    dbg.textContent = out.csv;
+    console.log(out.csv);
+  } else if (params.get("lab") === "run") {
+    play.equipGun(params.get("gun") || "bow", Number(params.get("tier") || 2));
+    play.setLock(true);
+    if (params.get("auto") === "1") play.setAuto(true);
+    startRun(params.get("level") || "1-1");
+  }
+}).catch((err) => {
+  console.warn("asset load failed", err);
+  document.getElementById("btn-start").disabled = false;
+  if (loadWrap) loadWrap.classList.add("hidden");
+  window.__bridge.ready = true;
+});
 
 requestAnimationFrame(frame);

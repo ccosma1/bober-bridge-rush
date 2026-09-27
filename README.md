@@ -10,6 +10,17 @@ Open `index.html` through a static server. Three.js r170 loads from the jsDelivr
 START.bat
 ```
 
-That serves http://127.0.0.1:8792/?v=br2
+That serves http://127.0.0.1:8792/?v=br3
 
-Build tag: br1
+Build tag: br3
+
+## Credits
+
+3D models are public domain (CC0) unless noted. Nothing here is taken from another game.
+
+- Worker, Zombie, Yeti, Rocket Launcher — Quaternius, CC0 1.0, via poly.pizza (https://poly.pizza/m/Yg2bQZO6Hj, https://poly.pizza/m/VlXjG0N8Eg, https://poly.pizza/m/ceRHrn8HHE, https://poly.pizza/m/GCqUvqleqN)
+- Rubber Duck, Crossbow — CreativeTrio, CC0, via poly.pizza (https://poly.pizza/m/oH3dEdlDpB, https://poly.pizza/m/kHb0kA11oD)
+- Wrench — Armory_3D, CC0, via poly.pizza (https://poly.pizza/m/TvT0yqLRln)
+- Blaster Kit, City Kit (Commercial) — Kenney, CC0 (https://kenney.nl/assets/blaster-kit, https://kenney.nl/assets/city-kit-commercial)
+- concrete_floor_02, metal_plate, shanghai_riverside — Poly Haven, CC0 (https://polyhaven.com)
+- waternormals.jpg — three.js authors, MIT (https://github.com/mrdoob/three.js/blob/r170/examples/textures/waternormals.jpg)
