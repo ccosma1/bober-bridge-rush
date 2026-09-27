@@ -10,15 +10,15 @@ Open `index.html` through a static server. Three.js r170 loads from the jsDelivr
 START.bat
 ```
 
-That serves http://127.0.0.1:8792/?v=br3
+That serves http://127.0.0.1:8792/?v=br3b
 
-Build tag: br3
+Build tag: br3b
 
 ## Credits
 
 3D models are public domain (CC0) unless noted. Nothing here is taken from another game.
 
-- Worker, Zombie, Yeti, Rocket Launcher — Quaternius, CC0 1.0, via poly.pizza (https://poly.pizza/m/Yg2bQZO6Hj, https://poly.pizza/m/VlXjG0N8Eg, https://poly.pizza/m/ceRHrn8HHE, https://poly.pizza/m/GCqUvqleqN)
+- Zombie, Yeti, Rocket Launcher — Quaternius, CC0 1.0, via poly.pizza (https://poly.pizza/m/VlXjG0N8Eg, https://poly.pizza/m/ceRHrn8HHE, https://poly.pizza/m/GCqUvqleqN)
 - Rubber Duck, Crossbow — CreativeTrio, CC0, via poly.pizza (https://poly.pizza/m/oH3dEdlDpB, https://poly.pizza/m/kHb0kA11oD)
 - Wrench — Armory_3D, CC0, via poly.pizza (https://poly.pizza/m/TvT0yqLRln)
 - Blaster Kit, City Kit (Commercial) — Kenney, CC0 (https://kenney.nl/assets/blaster-kit, https://kenney.nl/assets/city-kit-commercial)

@@ -159,13 +159,13 @@ function guardParts(s, scarf) {
   const eye = box(0.055, 0.05, 0.03);
   const glint = box(0.02, 0.02, 0.02);
   const ear = cone(0.06, 0.14, 4);
-  const dome = cyl(0.2, 0.22, 0.11, 7);
-  const brim = cyl(0.32, 0.32, 0.028, 8);
+  const dome = cyl(0.12, 0.145, 0.07, 6);
+  const brim = cyl(0.16, 0.16, 0.018, 7);
   const arm = box(0.08, 0.26, 0.08);
   const paw = box(0.08, 0.07, 0.08);
   const stock = box(0.07, 0.08, 0.28);
   const barrel = box(0.045, 0.045, 0.34);
-  const tail = box(0.28, 0.045, 0.22);
+  const tail = box(0.34, 0.06, 0.36);
   const put = (src, color, part, pivot, x, y, z, sx, sy, sz, yaw, rx) =>
     place(
       src,
@@ -198,15 +198,15 @@ function guardParts(s, scarf) {
     put(glint, "#FFFFFF", 0, null, 0.1, 0.88, -0.2),
     put(ear, FUR_D, 0, null, -0.16, 0.98, 0),
     put(ear, FUR_D, 0, null, 0.16, 0.98, 0),
-    put(dome, HAT, 0, null, 0, 1.02, -0.02),
-    put(brim, HAT, 0, null, 0, 0.96, -0.04),
+    put(dome, HAT, 0, null, 0, 0.99, -0.02),
+    put(brim, HAT, 0, null, 0, 0.95, -0.02),
     put(arm, FUR, 0, null, -0.24, 0.5, -0.08),
     put(arm, FUR, 0, null, 0.24, 0.5, -0.12),
     put(paw, FUR_L, 0, null, -0.16, 0.4, -0.22),
     put(paw, FUR_L, 0, null, 0.1, 0.4, -0.24),
     put(stock, WOOD_D, 0, null, 0, 0.42, -0.28),
     put(barrel, "#3C4148", 0, null, 0, 0.44, -0.52),
-    put(tail, FUR, 5, { x: 0, y: 0.42, z: 0.12 }, 0, 0.4, 0.28),
+    put(tail, "#3A2416", 5, { x: 0, y: 0.4, z: 0.16 }, 0, 0.4, 0.32),
   ];
   if (scarf) parts.push(put(box(0.36, 0.08, 0.3), "#C23B4A", 0, null, 0, 0.7, 0.02));
   return parts;

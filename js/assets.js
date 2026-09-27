@@ -2,9 +2,9 @@ import * as THREE from "three";
 import { GLTFLoader } from "three/addons/loaders/GLTFLoader.js";
 import { MeshoptDecoder } from "three/addons/libs/meshopt_decoder.module.js";
 import { RGBELoader } from "three/addons/loaders/RGBELoader.js";
-import { bakeCrowd, staticMerge, mountRig, boxGeo } from "./vat.js?v=br3";
+import { bakeCrowd, staticMerge, mountRig, boxGeo } from "./vat.js?v=br3b";
 
-const V = "br3";
+const V = "br3b";
 const warned = {};
 
 function url(path) {
@@ -42,55 +42,16 @@ function withTimeout(run, ms) {
   });
 }
 
-const FUR = new THREE.Color("#7A4A2A");
-const MUZZLE = new THREE.Color("#C89A6A");
-const HAT = new THREE.Color("#F2C230");
-const VEST = new THREE.Color("#5B6B3A");
-const KHAKI = new THREE.Color("#6E6448");
-const BOOT = new THREE.Color("#1A140F");
 const MUD = new THREE.Color("#5A4128");
 const MUD2 = new THREE.Color("#7B5A3A");
 const MOSS = new THREE.Color("#4E6B2E");
 const LEAF = new THREE.Color("#6E9440");
-const TAIL = new THREE.Color("#3A2416");
-const TOOTH = new THREE.Color("#F4F1E6");
 const FOAM = new THREE.Color("#F7FBFA");
 const RUST = new THREE.Color("#8A4B32");
-
-function paintBeaver(col, name, yNorm, z) {
-  if (name.indexOf("Feet") >= 0 || yNorm < 0.12) col.copy(BOOT);
-  else if (name.indexOf("Legs") >= 0 || (yNorm < 0.42 && name.indexOf("Head") < 0)) col.copy(KHAKI);
-  else if (name.indexOf("Head") >= 0) {
-    if (yNorm > 0.86) col.copy(HAT);
-    else if (z < -0.02 && yNorm < 0.84) col.copy(MUZZLE);
-    else col.copy(FUR);
-  } else if (yNorm > 0.7 && yNorm < 0.76) col.copy(HAT);
-  else if (yNorm > 0.48 && yNorm < 0.82) col.copy(VEST);
-  else col.copy(FUR);
-}
 
 function paintClog(col, name, yNorm) {
   if (yNorm > 0.45) col.copy(yNorm > 0.7 ? MUD2 : MUD);
   else col.copy(MOSS);
-}
-
-function beaverBits(api) {
-  const head = api.bone("Head");
-  const hips = api.bone("Hips");
-  if (head) {
-    const p = new THREE.Vector3();
-    head.getWorldPosition(p);
-    api.add("Head", boxGeo(0.16, 0.1, 0.14, p.x, p.y + 0.02, p.z - 0.1), 0, MUZZLE, 0);
-    api.add("Head", boxGeo(0.09, 0.1, 0.04, p.x - 0.09, p.y + 0.1, p.z + 0.02), 0, FUR, 0);
-    api.add("Head", boxGeo(0.09, 0.1, 0.04, p.x + 0.09, p.y + 0.1, p.z + 0.02), 0, FUR, 0);
-    api.add("Head", boxGeo(0.04, 0.05, 0.04, p.x - 0.025, p.y - 0.02, p.z - 0.16), 0, TOOTH, 0);
-    api.add("Head", boxGeo(0.04, 0.05, 0.04, p.x + 0.025, p.y - 0.02, p.z - 0.16), 0, TOOTH, 0);
-  }
-  if (hips) {
-    const p = new THREE.Vector3();
-    hips.getWorldPosition(p);
-    api.add("Hips", boxGeo(0.26, 0.05, 0.2, p.x, p.y + 0.08, p.z + 0.18), 0, TAIL, 0);
-  }
 }
 
 function clogBits(api, kind) {
@@ -151,7 +112,6 @@ function longbowGeo() {
 }
 
 const FILES = {
-  worker: "assets/models/worker.glb",
   zombie: "assets/models/zombie.glb",
   yeti: "assets/models/yeti.glb",
   yetiCrowd: "assets/models/yeti-crowd.glb",
@@ -221,7 +181,6 @@ export function loadGame(onStep) {
   });
 
   const critical = map.then((got) => ({
-    worker: !!got.worker,
     zombie: !!got.zombie,
     concrete: !!got.concrete,
   }));
@@ -335,35 +294,8 @@ function bakeAll(got) {
   if (pack.env.water) {
     pack.env.water.wrapS = pack.env.water.wrapT = THREE.RepeatWrapping;
   }
-  pack.soldier = safeBake(got.worker, {
-    height: 0.85,
-    fps: 12,
-    maxTris: 2400,
-    clips: [
-      { name: "Run_Shoot", frames: 16 },
-      { name: "Idle_Gun_Shoot", frames: 8 },
-      { name: "HitRecieve", frames: 8 },
-    ],
-    recolor: paintBeaver,
-    decorate: beaverBits,
-  }, "soldier");
+  pack.soldier = null;
   pack.bober = null;
-  if (got.worker) {
-    try {
-      const rig = mountRig(got.worker);
-      if (rig) {
-        rig.inner.scale.multiplyScalar(1.05 / rig.height);
-        rig.outer.userData.kind = "bober";
-        rig.outer.userData.inner = rig.inner;
-        rig.outer.userData.clips = got.worker.animations || [];
-        const scarf = new THREE.Mesh(boxGeo(0.22, 0.06, 0.16, 0, 0.72, -0.02), new THREE.MeshStandardMaterial({ color: 0xc23b4a, roughness: 0.6 }));
-        rig.outer.add(scarf);
-        pack.bober = rig.outer;
-      }
-    } catch (err) {
-      warnOnce("bober", err && err.message);
-    }
-  }
   const clogOpt = (kind, height) => ({
     height,
     fps: 10,
@@ -415,7 +347,7 @@ function bakeAll(got) {
 }
 
 export const CREDIT_LINES = [
-  "Worker, Zombie, Yeti, Rocket Launcher — Quaternius, CC0, poly.pizza",
+  "Zombie, Yeti, Rocket Launcher — Quaternius, CC0, poly.pizza",
   "Rubber Duck, Crossbow — CreativeTrio, CC0, poly.pizza",
   "Wrench — Armory_3D, CC0, poly.pizza",
   "Blaster Kit, City Kit (Commercial) — Kenney, CC0, kenney.nl",

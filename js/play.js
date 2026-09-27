@@ -2,7 +2,6 @@
 // The chase camera sits on +Z, so screen-right is world +X.
 
 import * as THREE from "three";
-import { socketMaterial } from "./vat.js?v=br3";
 import {
   ADVANCE,
   ENEMY,
@@ -38,7 +37,7 @@ import {
   BOSS_TALL,
   TIER_TTK,
   TUNED,
-} from "./rules.js?v=br3";
+} from "./rules.js?v=br3b";
 import {
   animToon,
   attachOutline,
@@ -55,7 +54,7 @@ import {
   writeLog,
   writeQuat,
   writeTRS,
-} from "./mats.js?v=br3";
+} from "./mats.js?v=br3b";
 import {
   arrowGeo,
   buildBaron,
@@ -80,7 +79,7 @@ import {
   quadGeo,
   rocketGeo,
   streamGeo,
-} from "./build.js?v=br3";
+} from "./build.js?v=br3b";
 
 const STRIDE = 320;
 const CAPS = [320, 320, 320, 120, 120, 120, 120];
@@ -147,6 +146,7 @@ export function createPlay(scene, camera, audio) {
   soldiers.frustumCulled = false;
   soldiers.count = 0;
   soldiers.instanceMatrix.setUsage(THREE.DynamicDrawUsage);
+  soldiers.castShadow = true;
   scene.add(soldiers);
   const soldierShell = new THREE.InstancedMesh(soldierBuilt.geo, animShell, RENDER_CAP);
   soldierShell.frustumCulled = false;
@@ -159,6 +159,7 @@ export function createPlay(scene, camera, audio) {
   boberBuilt.geo.setAttribute("aHit", new THREE.BufferAttribute(new Float32Array(boberN), 1));
   const bober = new THREE.Mesh(boberBuilt.geo, animToon());
   bober.frustumCulled = false;
+  bober.castShadow = true;
   attachOutline(bober, 0.04);
   bober.children[0].material = animShell;
   scene.add(bober);
@@ -1514,7 +1515,42 @@ export function createPlay(scene, camera, audio) {
       for (let k = 0; k < flashes; k++) word("-1", squadX + (k - (flashes - 1) * 0.5) * 0.4, 1.8, -dist, 1);
       puff(squadX, 1.1, -dist, 2, Math.min(6, lost), 2.4, 0.35, 0.42);
     }
+    if (lost > 0) flashSquad();
     if (squadN === 0) doLose();
+  }
+
+  function flashSquad() {
+    const n = Math.min(RENDER_CAP, squadN);
+    for (let i = 0; i < n; i++) soldierHit[i] = 1;
+    const attr = soldiers.geometry.getAttribute("aHit");
+    if (attr) attr.needsUpdate = true;
+    const bh = bober.geometry.getAttribute("aHit");
+    if (!bh) return;
+    const a = bh.array;
+    for (let i = 0; i < a.length; i++) a[i] = 1;
+    bh.needsUpdate = true;
+  }
+
+  function decayHits(h) {
+    const step = h / 0.06;
+    const attr = soldiers.geometry.getAttribute("aHit");
+    let dirty = 0;
+    for (let i = 0; i < RENDER_CAP; i++) {
+      if (soldierHit[i] <= 0) continue;
+      soldierHit[i] = Math.max(0, soldierHit[i] - step);
+      dirty = 1;
+    }
+    if (dirty && attr) attr.needsUpdate = true;
+    const bh = bober.geometry.getAttribute("aHit");
+    if (!bh) return;
+    const a = bh.array;
+    let bd = 0;
+    for (let i = 0; i < a.length; i++) {
+      if (a[i] <= 0) continue;
+      a[i] = Math.max(0, a[i] - step);
+      bd = 1;
+    }
+    if (bd) bh.needsUpdate = true;
   }
 
   function doLose() {
@@ -2425,12 +2461,10 @@ export function createPlay(scene, camera, audio) {
       }
     }
     markShot();
-    if (soldierAnim) {
-      const fire = soldiers.geometry.getAttribute("aFire");
-      if (fire) {
-        fire.setX(s, clock);
-        fire.needsUpdate = true;
-      }
+    if (s >= 0 && s < RENDER_CAP) {
+      soldierHit[s] = Math.max(soldierHit[s], 0.65);
+      const flash = soldiers.geometry.getAttribute("aHit");
+      if (flash) flash.needsUpdate = true;
     }
     if (pat === "fan") kickT = 0.2;
     if (pat === "spin") {
@@ -2820,6 +2854,7 @@ export function createPlay(scene, camera, audio) {
   }
 
   function tickOnce(h) {
+    decayHits(h);
     clock += h;
     if (biteLock > 0) biteLock = Math.max(0, biteLock - h);
     if (hitStopCd > 0) hitStopCd = Math.max(0, hitStopCd - h);
@@ -3447,26 +3482,29 @@ export function createPlay(scene, camera, audio) {
       soldierAnim.needsUpdate = true;
       if (vatTime) vatTime.value = clock;
     }
-    if (realCrowd) {
-      soldierShell.count = 0;
-      soldierShell.visible = false;
-      const nextGun = gunMeshes[weaponId] || null;
-      const ids = Object.keys(gunMeshes);
-      for (let g = 0; g < ids.length; g++) {
-        const mesh = gunMeshes[ids[g]];
-        mesh.visible = mesh === nextGun && shown > 0 && ended !== "lose";
-        mesh.count = mesh.visible ? shown : 0;
+    copyInstances(soldiers, soldierShell, shown);
+    const nextGun = gunMeshes[weaponId] || null;
+    const gunIds = Object.keys(gunMeshes);
+    for (let g = 0; g < gunIds.length; g++) {
+      const mesh = gunMeshes[gunIds[g]];
+      const on = mesh === nextGun && shown > 0 && ended !== "lose";
+      mesh.visible = on;
+      mesh.count = on ? shown : 0;
+    }
+    shownGun = nextGun;
+    if (nextGun && shown) {
+      const gm = nextGun.instanceMatrix.array;
+      for (let i = 0; i < shown; i++) {
+        const sx = squadX + fx[i] + wob;
+        const sz = -dist + fz[i] + back;
+        writeTRS(gm, i, sx, DECK + 0.4, sz - 0.1, yawS, 1, 1, 1);
       }
-      shownGun = nextGun;
-      if (shownGun && shown) copyInstances(soldiers, shownGun, shown);
-      if (shownGun && shownGun.material.userData) {
-        const kick = shownGun.material.userData.kick;
-        const pitch = shownGun.material.userData.pitch;
-        if (kick) kick.value = mods.heavy ? 0.12 : 0.06;
-        if (pitch) pitch.value = mods.heavy ? 0.175 : 0.105;
+      nextGun.instanceMatrix.needsUpdate = true;
+      squadGuns.visible = false;
+      if (boberGun.geometry !== nextGun.geometry) {
+        boberGun.geometry = nextGun.geometry;
+        if (nextGun.material) boberGun.material = nextGun.material;
       }
-    } else {
-      copyInstances(soldiers, soldierShell, shown);
     }
     bober.scale.setScalar(boberScale0);
     bober.rotation.y = yawS;
@@ -3508,6 +3546,8 @@ export function createPlay(scene, camera, audio) {
       boss.visible = false;
       if (bossMixer) bossMixer.update(1 / 60);
     }
+    const gunLift = boberScale0 > 0 ? 1 / boberScale0 : 1;
+    boberGun.position.set(0, 0.46 * gunLift, -0.16 * gunLift);
     boberGun.scale.setScalar(boberScale0 > 0 ? 1.3 / boberScale0 : 1.3);
     if (!boberLive) bober.visible = ended !== "lose" && !labMode;
     const pr = Math.max(0.8, radius + 0.5);
@@ -3568,7 +3608,7 @@ export function createPlay(scene, camera, audio) {
         if (p.vat.foam) p.vat.foam.needsUpdate = true;
         if (p.vat.time) p.vat.time.value = clock;
       }
-      if (realCrowd) {
+      if (p.vat) {
         p.shell.count = 0;
         p.shell.visible = false;
       } else {
@@ -4289,42 +4329,18 @@ export function createPlay(scene, camera, audio) {
   function adopt(pack) {
     if (!pack) return { ok: false };
     try {
-      if (pack.soldier) {
-        const bound = bindVat(soldiers, pack.soldier, RENDER_CAP);
-        soldierAnim = bound.anim;
-        soldierClips = bound.clips;
-        vatTime = bound.time;
-        soldierScale0 = 1;
-        soldiers.castShadow = true;
-        bober.castShadow = true;
-        realCrowd = 1;
-        tris.soldier = pack.soldier.tris;
-        const ids = Object.keys(pack.guns || {});
-        for (let i = 0; i < ids.length; i++) {
-          const gun = pack.guns[ids[i]];
-          if (!gun || !gun.geo || !pack.soldier.socket) continue;
-          gun.geo.setAttribute("aAnim", soldierAnim);
-          gun.geo.setAttribute("aFire", soldiers.geometry.getAttribute("aFire"));
-          const mesh = new THREE.InstancedMesh(
-            gun.geo,
-            socketMaterial(gun.mat.color, pack.soldier.socket, vatTime, pack.soldier.uniforms.uVatInfo.value),
-            RENDER_CAP
-          );
-          mesh.frustumCulled = false;
-          mesh.count = 0;
-          mesh.castShadow = true;
-          scene.add(mesh);
-          gunMeshes[ids[i]] = mesh;
-        }
-        squadGuns.visible = false;
-        boberGunLive = new THREE.Mesh(
-          new THREE.BoxGeometry(0.08, 0.08, 0.4),
-          new THREE.MeshStandardMaterial({ color: 0xf2c230, roughness: 0.45 })
-        );
-        boberGunLive.castShadow = true;
-        boberGunLive.visible = false;
-        scene.add(boberGunLive);
+      const ids = Object.keys(pack.guns || {});
+      for (let i = 0; i < ids.length; i++) {
+        const gun = pack.guns[ids[i]];
+        if (!gun || !gun.geo) continue;
+        const mesh = new THREE.InstancedMesh(gun.geo, gun.mat, RENDER_CAP);
+        mesh.frustumCulled = false;
+        mesh.count = 0;
+        mesh.castShadow = true;
+        scene.add(mesh);
+        gunMeshes[ids[i]] = mesh;
       }
+      squadGuns.visible = false;
       const enemyBake = [pack.clog, pack.suds, pack.hauler, null, pack.spit, null, null];
       for (let t = 0; t < enemyBake.length; t++) {
         if (!enemyBake[t]) continue;
@@ -4336,24 +4352,6 @@ export function createPlay(scene, camera, audio) {
         pools[6].mesh.geometry = pack.duck.geo;
         pools[6].mesh.material = pack.duck.mat;
         enemyScale[6] = 1;
-      }
-      if (pack.bober) {
-        boberLive = pack.bober;
-        boberLive.traverse((o) => {
-          if (o.isMesh) o.castShadow = true;
-        });
-        attachOutline(boberLive, 0.03);
-        scene.add(boberLive);
-        bober.visible = false;
-        const clips = pack.bober.userData.clips || [];
-        let clip = null;
-        for (let i = 0; i < clips.length; i++) {
-          if ((clips[i].name || "").indexOf("Run_Shoot") >= 0) clip = clips[i];
-        }
-        if (clip) {
-          boberMixer = new THREE.AnimationMixer(pack.bober.userData.inner || boberLive);
-          boberMixer.clipAction(clip).play();
-        }
       }
       if (pack.bossRig) {
         const rig = pack.bossRig;
