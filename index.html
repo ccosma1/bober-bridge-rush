@@ -6,7 +6,7 @@
   <meta name="theme-color" content="#3A2A6A" />
   <meta name="description" content="Bober Bridge Rush. Hold the pine bridge. Fan game. Unofficial." />
   <title>Bober Bridge Rush</title>
-  <link rel="stylesheet" href="css/game.css?v=br0" />
+  <link rel="stylesheet" href="css/game.css?v=br1" />
 </head>
 <body>
   <canvas id="c"></canvas>
@@ -34,16 +34,44 @@
   <div id="chip" class="hidden">
     <canvas id="chip-icon" width="64" height="64"></canvas>
     <div>
-      <div id="chip-name">Twig Pistol</div>
-      <div id="chip-tier">T1 Wood</div>
+      <div id="chip-name">Twig Crossbow</div>
+      <div class="chip-row">
+        <span id="chip-tier" class="t1">T1 Wood</span>
+        <span id="chip-family">ARROWS</span>
+      </div>
     </div>
   </div>
   <div id="tip" class="hidden">Drag to steer. Shoot gates to grow them.</div>
+  <div id="intro" class="hidden">
+    <div id="intro-name">1-1 PINE BRIDGE</div>
+    <div id="intro-line">The river is three inches lower than yesterday.</div>
+  </div>
+  <div id="toast" class="hidden">
+    <b id="toast-name"></b>
+    <span id="toast-line"></span>
+  </div>
+  <div id="bark" class="hidden"></div>
+  <div id="words" aria-hidden="true">
+    <div class="word hidden"></div>
+    <div class="word hidden"></div>
+    <div class="word hidden"></div>
+    <div class="word hidden"></div>
+    <div class="word hidden"></div>
+    <div class="word hidden"></div>
+    <div class="word hidden"></div>
+    <div class="word hidden"></div>
+  </div>
 
   <section id="title">
     <div class="sheet">
-      <p class="eyebrow">1-1 Pine Bridge</p>
+      <p class="eyebrow">THE DAM RUNS DRY</p>
       <h1>BOBER<br />BRIDGE RUSH</h1>
+      <p id="tagline">Plug the Drain.</p>
+      <div id="level-row">
+        <button type="button" class="level-tile" data-level="1-1" id="lv-1-1"><b>1-1</b><span>PINE BRIDGE</span><i class="lv-stars"></i></button>
+        <button type="button" class="level-tile" data-level="1-2" id="lv-1-2"><b>1-2</b><span>SPILLWAY</span><i class="lv-stars"></i></button>
+        <button type="button" class="level-tile" data-level="1-3" id="lv-1-3"><b>1-3</b><span>DAM FACE</span><i class="lv-stars"></i></button>
+      </div>
       <button id="btn-start" type="button" disabled>HOLD THE BRIDGE</button>
       <div class="meta">
         <span id="bober-total">$BOBER 0</span>
@@ -51,7 +79,7 @@
       </div>
       <p id="fan-line">Fan game. Unofficial.</p>
       <a id="btn-home" href="https://ccosma1.github.io/green-home-games/">Back to Green Home Games</a>
-      <span id="build-tag">br0</span>
+      <span id="build-tag">br1</span>
     </div>
   </section>
 
@@ -70,7 +98,7 @@
       <p id="result-earn"></p>
       <div class="actions">
         <button id="btn-retry" type="button">Retry</button>
-        <button id="btn-next" type="button">Level 1-2 coming soon</button>
+        <button id="btn-next" type="button">Next</button>
       </div>
       <a id="btn-home-result" href="https://ccosma1.github.io/green-home-games/">Back to Green Home Games</a>
     </div>
@@ -83,6 +111,6 @@
     }
   }
   </script>
-  <script type="module" src="js/main.js?v=br0"></script>
+  <script type="module" src="js/main.js?v=br1"></script>
 </body>
 </html>

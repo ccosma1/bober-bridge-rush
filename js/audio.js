@@ -5,8 +5,10 @@ export function createAudio() {
   let master = null;
   let noise = null;
   const loops = {};
+  const oscs = {};
   let muted = false;
   let current = "";
+  let squeakN = 0;
 
   function ac() {
     if (!ctx) {
@@ -77,26 +79,27 @@ export function createAudio() {
     osc.connect(mix);
     mix.connect(g);
     g.connect(master);
-    if (id === "pistol") {
-      filter.frequency.value = 680;
-      osc.frequency.value = 140;
-      mix.gain.value = 0.35;
-    } else if (id === "smg") {
-      filter.frequency.value = 1400;
-      osc.frequency.value = 90;
-      mix.gain.value = 0.55;
-    } else if (id === "shot") {
-      filter.frequency.value = 240;
-      osc.frequency.value = 70;
-      mix.gain.value = 0.7;
-    } else {
-      filter.frequency.value = 160;
-      osc.frequency.value = 54;
-      mix.gain.value = 0.8;
-    }
+    const tune = {
+      bow: [420, 110, 0.45, "triangle"],
+      long: [520, 220, 0.28, "sine"],
+      smg: [1400, 90, 0.55, "square"],
+      shot: [240, 70, 0.7, "square"],
+      gerald: [180, 70, 0.5, "sawtooth"],
+      log: [160, 54, 0.8, "triangle"],
+      rocket: [240, 90, 0.4, "sawtooth"],
+      flame: [140, 48, 0.85, "sawtooth"],
+      party: [660, 330, 0.35, "square"],
+      sap: [200, 60, 0.75, "triangle"],
+    };
+    const row = tune[id] || tune.bow;
+    filter.frequency.value = row[0];
+    osc.frequency.value = row[1];
+    mix.gain.value = row[2];
+    osc.type = row[3];
     src.start();
     osc.start();
     loops[id] = g;
+    oscs[id] = osc;
     return g;
   }
 
@@ -108,16 +111,37 @@ export function createAudio() {
       muted = !!v;
       if (master && ctx) master.gain.setTargetAtTime(muted ? 0 : 0.22, ctx.currentTime, 0.02);
     },
-    noteFire(id) {
+    beginTick() {
+      squeakN = 0;
+    },
+    noteFire(id, spin) {
       try {
         const g = ensureLoop(id);
         if (current !== id) {
           if (current && loops[current]) loops[current].gain.setTargetAtTime(0, ctx.currentTime, 0.03);
           current = id;
         }
-        const level = id === "smg" ? 0.18 : id === "shot" ? 0.22 : id === "log" ? 0.26 : 0.12;
+        const level = id === "smg" || id === "gerald" ? 0.18 : id === "shot" || id === "party" ? 0.2 : id === "log" || id === "rocket" ? 0.24 : id === "flame" ? 0.16 : id === "sap" ? 0.14 : 0.11;
         g.gain.setTargetAtTime(level, ctx.currentTime, 0.02);
+        if (id === "gerald" && oscs[id]) {
+          const f = 70 + Math.max(0, Math.min(1, spin || 0)) * 210;
+          oscs[id].frequency.setTargetAtTime(f, ctx.currentTime, 0.04);
+        }
       } catch (err) { /* ignore */ }
+    },
+    squeak() {
+      if (squeakN >= 6) return;
+      squeakN++;
+      try { blip(720 + squeakN * 40, 0.045, "square", 0.045, 1.7); } catch (err) { /* ignore */ }
+    },
+    quack() {
+      try {
+        blip(520, 0.08, "square", 0.1, 0.7);
+        blip(340, 0.1, "triangle", 0.08, 0.8);
+      } catch (err) { /* ignore */ }
+    },
+    pop() {
+      try { blip(880, 0.07, "square", 0.06, 1.8); } catch (err) { /* ignore */ }
     },
     endFire() {
       try {

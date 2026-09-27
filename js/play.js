@@ -1,22 +1,31 @@
-// Pine Bridge fight. World forward is -Z. Squad z = -distance.
+// Dam Run fight. World forward is -Z. Squad z = -distance.
 // The chase camera sits on +Z, so screen-right is world +X.
 
 import * as THREE from "three";
 import {
   ADVANCE,
+  ENEMY,
+  GUN_ORDER,
+  LEVELS,
   RENDER_CAP,
   SIM_CAP,
+  STARTERS,
   STEER_MAX,
   WEAPONS,
-  SCRIPT,
   applyGate,
   boberReward,
   clampLane,
+  clogHit,
+  crateHp,
   formationOffsets,
   formationRadius,
   freshGate,
   gateBlue,
   gateLabel,
+  hairGrowth,
+  levelOf,
+  mysteryPick,
+  nextLevel,
   selfTestRules,
   shootGate,
   shownCount,
@@ -24,7 +33,7 @@ import {
   starsFor,
   tierAfterPickup,
   weaponMods,
-} from "./rules.js?v=br0";
+} from "./rules.js?v=br1";
 import {
   animToon,
   attachOutline,
@@ -33,48 +42,68 @@ import {
   drawWeaponIcon,
   makeSign,
   paintCrateFace,
+  paintGateSign,
   paintSign,
   toon,
   writeLog,
   writeQuat,
   writeTRS,
-} from "./mats.js?v=br0";
+} from "./mats.js?v=br1";
 import {
-  buildBeetle,
+  arrowGeo,
+  buildBaron,
+  buildBigTub,
   buildBober,
-  buildBoss,
-  buildBrute,
+  buildClogling,
   buildCrateGeo,
+  buildDuck,
   buildGateFrame,
+  buildGrunk,
+  buildHairball,
+  buildHauler,
+  buildLeaf,
   buildPedestal,
-  buildRat,
   buildSoldier,
+  buildSpitter,
+  buildSuds,
+  buildWrench,
   bulletGeo,
+  flameGeo,
   logGeo,
   quadGeo,
-} from "./build.js?v=br0";
+  rocketGeo,
+  streamGeo,
+} from "./build.js?v=br1";
 
-const CAP = 320;
-const BULLETS = 400;
+const STRIDE = 320;
+const CAPS = [320, 320, 320, 120, 120, 120, 120];
+const TYPES = 7;
+const BALLN = 400;
+const ARROWN = 100;
+const LOGN = 80;
+const ROCKN = 60;
+const PARTYN = 150;
+const MUDN = 16;
+const CASEN = 60;
+const EMBN = 80;
+const PUDN = 20;
+const HAZN = 16;
+const DUCKN = 16;
 const PUFFS = 256;
 const FLOATS = 40;
 const GLYPHS = FLOATS * 4;
 const CORE = 0.75;
+const QX = -0.70710678118;
+const QW = 0.70710678118;
 
-const KINDS = [
-  { hp: 20, speed: 5, bite: 1, rad: 0.48, lat: 2.3, y: 0.46 },
-  { hp: 60, speed: 3.5, bite: 2, rad: 0.58, lat: 1.5, y: 0.5 },
-  { hp: 400, speed: 2.5, bite: 5, rad: 1.12, lat: 1.8, y: 0.95 },
-];
-
-const TIER_NAMES = ["", "Wood", "Stone", "Iron"];
-const TIER_COLORS = ["", "#8B5A2B", "#8E99A4", "#6E8EAE"];
+const TIER_NAMES = ["", "Wood", "Stone", "Iron", "Gold"];
+const TIER_COLORS = ["", "#8B5A2B", "#8E99A4", "#6E8EAE", "#F5C400"];
+const KIND_OF = { clog: 0, suds: 1, hauler: 2, hair: 3, spit: 4, leaf: 5, duck: 6 };
 
 function lin(hex) {
   const c = new THREE.Color(hex);
   return [c.r, c.g, c.b];
 }
-
 function clamp(v, a, b) {
   return v < a ? a : v > b ? b : v;
 }
@@ -82,14 +111,23 @@ function clamp(v, a, b) {
 export function createPlay(scene, camera, audio) {
   const soldierBuilt = buildSoldier();
   const boberBuilt = buildBober();
-  const ratBuilt = buildRat();
-  const beetleBuilt = buildBeetle();
-  const bruteBuilt = buildBrute();
-  const bossBuilt = buildBoss();
+  const builtE = [
+    buildClogling(),
+    buildSuds(),
+    buildHauler(),
+    buildHairball(),
+    buildSpitter(),
+    buildLeaf(),
+    buildDuck(),
+  ];
+  const baronBuilt = buildBaron();
+  const tubBuilt = buildBigTub();
+  const grunkBuilt = buildGrunk();
+  const wrenchBuilt = buildWrench();
   const tris = {
     soldier: soldierBuilt.tris,
     bober: boberBuilt.tris,
-    boss: bossBuilt.tris,
+    boss: Math.max(baronBuilt.tris, tubBuilt.tris, grunkBuilt.tris),
   };
 
   const soldierPhase = new Float32Array(RENDER_CAP);
@@ -120,128 +158,191 @@ export function createPlay(scene, camera, audio) {
   shadow.renderOrder = -1;
   scene.add(shadow);
 
-  function makeEnemy(built) {
-    const phase = new Float32Array(CAP);
-    const hit = new Float32Array(CAP);
+  const white = new THREE.Color("#ffffff");
+
+  function makeEnemy(built, cap) {
+    const phase = new Float32Array(cap);
+    const hit = new Float32Array(cap);
     built.geo.setAttribute("aPhase", new THREE.InstancedBufferAttribute(phase, 1));
     built.geo.setAttribute("aHit", new THREE.InstancedBufferAttribute(hit, 1));
-    const mesh = new THREE.InstancedMesh(built.geo, animToon(), CAP);
+    const mesh = new THREE.InstancedMesh(built.geo, animToon(), cap);
     mesh.frustumCulled = false;
     mesh.count = 0;
+    mesh.visible = false;
     mesh.instanceMatrix.setUsage(THREE.DynamicDrawUsage);
     scene.add(mesh);
-    const free = new Int16Array(CAP);
-    for (let i = 0; i < CAP; i++) free[i] = i;
+    const free = new Int16Array(cap);
+    for (let i = 0; i < cap; i++) free[i] = i;
     return {
-      alive: new Uint8Array(CAP),
-      x: new Float32Array(CAP),
-      z: new Float32Array(CAP),
-      hp: new Float32Array(CAP),
+      cap,
+      alive: new Uint8Array(cap),
+      x: new Float32Array(cap),
+      z: new Float32Array(cap),
+      hp: new Float32Array(cap),
+      maxHp: new Float32Array(cap),
+      foam: new Float32Array(cap),
       phase,
       hit,
-      biteAcc: new Float32Array(CAP),
-      freeze: new Uint8Array(CAP),
+      biteAcc: new Float32Array(cap),
+      freeze: new Float32Array(cap),
+      slowT: new Float32Array(cap),
+      stagT: new Float32Array(cap),
+      burnT: new Float32Array(cap),
+      burnD: new Float32Array(cap),
+      age: new Float32Array(cap),
+      radS: new Float32Array(cap),
+      side: new Float32Array(cap),
+      lob: new Float32Array(cap),
+      stamp: new Int32Array(cap),
       free,
-      freeN: CAP,
+      freeN: cap,
       mesh,
       phaseAttr: built.geo.getAttribute("aPhase"),
       hitAttr: built.geo.getAttribute("aHit"),
     };
   }
 
-  const pools = [makeEnemy(ratBuilt), makeEnemy(beetleBuilt), makeEnemy(bruteBuilt)];
+  const pools = [];
+  for (let t = 0; t < TYPES; t++) pools.push(makeEnemy(builtE[t], CAPS[t]));
 
-  const bulletCols = [lin("#F4E6C3"), lin("#F5C400"), lin("#E86A1A")];
-  const ball = new THREE.InstancedMesh(
-    bulletGeo(),
-    new THREE.MeshBasicMaterial({ color: 0xffffff, toneMapped: false }),
-    BULLETS
-  );
-  ball.frustumCulled = false;
-  ball.count = 0;
-  ball.instanceMatrix.setUsage(THREE.DynamicDrawUsage);
-  const white = new THREE.Color("#ffffff");
-  for (let i = 0; i < 8; i++) ball.setColorAt(i, white);
-  scene.add(ball);
+  function makeShots(geo, mat, n) {
+    const mesh = new THREE.InstancedMesh(geo, mat, n);
+    mesh.frustumCulled = false;
+    mesh.count = 0;
+    mesh.visible = false;
+    mesh.instanceMatrix.setUsage(THREE.DynamicDrawUsage);
+    mesh.setColorAt(0, white);
+    scene.add(mesh);
+    const free = new Int16Array(n);
+    for (let i = 0; i < n; i++) free[i] = i;
+    return {
+      n,
+      mesh,
+      x: new Float32Array(n),
+      y: new Float32Array(n),
+      z: new Float32Array(n),
+      vx: new Float32Array(n),
+      vy: new Float32Array(n),
+      vz: new Float32Array(n),
+      dmg: new Float32Array(n),
+      life: new Float32Array(n),
+      roll: new Float32Array(n),
+      ox: new Float32Array(n),
+      oz: new Float32Array(n),
+      extra: new Float32Array(n),
+      extra2: new Float32Array(n),
+      col: new Uint8Array(n),
+      flag: new Uint8Array(n),
+      hits: new Uint8Array(n),
+      tag: new Int32Array(n),
+      alive: new Uint8Array(n),
+      free,
+      freeN: n,
+    };
+  }
 
-  const logs = new THREE.InstancedMesh(logGeo(), toon("#8B5A2B"), 160);
-  logs.frustumCulled = false;
-  logs.count = 0;
-  logs.instanceMatrix.setUsage(THREE.DynamicDrawUsage);
-  scene.add(logs);
+  const ballMat = new THREE.MeshBasicMaterial({ color: 0xffffff, toneMapped: false });
+  const balls = makeShots(bulletGeo(), ballMat, BALLN);
+  const arrows = makeShots(arrowGeo(), new THREE.MeshBasicMaterial({ color: 0xffffff, toneMapped: false }), ARROWN);
+  const logs = makeShots(logGeo(), toon("#8B5A2B"), LOGN);
+  const rockets = makeShots(rocketGeo(), new THREE.MeshBasicMaterial({ color: 0xffffff, toneMapped: false }), ROCKN);
+  const party = makeShots(quadGeo(), new THREE.MeshBasicMaterial({ color: 0xffffff, transparent: true, depthWrite: false, toneMapped: false }), PARTYN);
+  const muds = makeShots(new THREE.SphereGeometry(0.28, 6, 4), toon("#5E6B4A"), MUDN);
+  const cases = makeShots(new THREE.BoxGeometry(0.05, 0.04, 0.08), toon("#E6C15A"), CASEN);
+  const embers = makeShots(quadGeo(), new THREE.MeshBasicMaterial({ color: 0xff6a1a, transparent: true, depthWrite: false, toneMapped: false }), EMBN);
+  const puddles = makeShots(new THREE.CircleGeometry(0.45, 8), new THREE.MeshBasicMaterial({ color: 0xe0a030, transparent: true, opacity: 0.85, depthWrite: false, toneMapped: false }), PUDN);
+  const hazards = makeShots(new THREE.CircleGeometry(1, 16), new THREE.MeshBasicMaterial({ color: 0xff4f5e, transparent: true, opacity: 0.55, depthWrite: false, toneMapped: false }), HAZN);
+  const vducks = makeShots(builtE[6].geo, toon("#ffffff", { vertexColors: true }), DUCKN);
+  const stuckMesh = new THREE.InstancedMesh(builtE[5].geo, animToon(), 16);
+  stuckMesh.frustumCulled = false;
+  stuckMesh.count = 0;
+  stuckMesh.visible = false;
+  scene.add(stuckMesh);
+  const stuckT = new Float32Array(16);
+  const stuckS = new Int16Array(16);
+  let stuckN = 0;
+
+  const bx = balls.x;
+  const by = balls.y;
+  const bz = balls.z;
+  const bvx = balls.vx;
+  const bvy = balls.vy;
+  const bvz = balls.vz;
+  const bdmg = balls.dmg;
+  const blife = balls.life;
+  const bkind = balls.flag;
+  const bfall = balls.col;
+  const balive = balls.alive;
+
+  const flameMat = new THREE.ShaderMaterial({
+    transparent: true,
+    depthWrite: false,
+    side: THREE.DoubleSide,
+    uniforms: { uTime: { value: 0 } },
+    vertexShader: "varying vec2 vUv; void main(){ vUv=uv; gl_Position=projectionMatrix*modelViewMatrix*vec4(position,1.0); }",
+    fragmentShader: "uniform float uTime; varying vec2 vUv; void main(){ float f=fract(vUv.y-uTime*1.4); float a=smoothstep(0.0,0.2,vUv.y)*(1.0-vUv.y); vec3 col=mix(vec3(1.0,0.82,0.25), vec3(0.85,0.22,0.05), f); gl_FragColor=vec4(col,a*0.8); }",
+  });
+  const flames = [];
+  for (let i = 0; i < 6; i++) {
+    const m = new THREE.Mesh(flameGeo(), flameMat);
+    m.frustumCulled = false;
+    m.visible = false;
+    m.renderOrder = 2;
+    scene.add(m);
+    flames.push(m);
+  }
+  const sapMat = new THREE.MeshBasicMaterial({ color: 0xe0a030, transparent: true, opacity: 0.8, depthWrite: false });
+  const saps = [];
+  for (let i = 0; i < 6; i++) {
+    const m = new THREE.Mesh(streamGeo(), sapMat);
+    m.frustumCulled = false;
+    m.visible = false;
+    scene.add(m);
+    saps.push(m);
+  }
+  const glow = new THREE.Sprite(new THREE.SpriteMaterial({ color: 0xff8a2a, transparent: true, opacity: 0.8, depthWrite: false }));
+  glow.visible = false;
+  glow.scale.set(1.2, 1.2, 1);
+  scene.add(glow);
+  const goldRing = new THREE.InstancedMesh(new THREE.TorusGeometry(0.16, 0.03, 4, 8), new THREE.MeshBasicMaterial({ color: 0xf5c400 }), RENDER_CAP);
+  goldRing.frustumCulled = false;
+  goldRing.count = 0;
+  goldRing.visible = false;
+  scene.add(goldRing);
 
   const puffCol = [
-    lin("#6A4A32"),
-    lin("#3E7C52"),
+    lin("#5E6B4A"),
+    lin("#7FA64A"),
     lin("#F4E6C3"),
     lin("#C4A882"),
     lin("#F5C400"),
     lin("#4FC3FF"),
     lin("#FF4F5E"),
     lin("#E86A1A"),
-    lin("#F5C400"),
+    lin("#FF4FA3"),
+    lin("#E0A030"),
+    lin("#F7FBFA"),
   ];
   const puffs = new THREE.InstancedMesh(
     quadGeo(),
-    new THREE.MeshBasicMaterial({
-      map: blobTexture(),
-      transparent: true,
-      depthWrite: false,
-      toneMapped: false,
-    }),
+    new THREE.MeshBasicMaterial({ map: blobTexture(), transparent: true, depthWrite: false, toneMapped: false }),
     PUFFS
   );
   puffs.frustumCulled = false;
   puffs.count = 0;
+  puffs.visible = false;
   puffs.renderOrder = 2;
-  for (let i = 0; i < 4; i++) puffs.setColorAt(i, white);
+  puffs.setColorAt(0, white);
   scene.add(puffs);
 
   const digits = new THREE.InstancedMesh(quadGeo(), digitMaterial(), GLYPHS);
   digits.frustumCulled = false;
   digits.count = 0;
+  digits.visible = false;
   digits.renderOrder = 3;
   const digitAttr = new Float32Array(GLYPHS);
   digits.geometry.setAttribute("aDigit", new THREE.InstancedBufferAttribute(digitAttr, 1));
   scene.add(digits);
-
-  const frameGeo = buildGateFrame();
-  const gateFrame = new THREE.InstancedMesh(frameGeo, toon("#ffffff", { vertexColors: true }), 6);
-  const gateOutline = new THREE.InstancedMesh(frameGeo, outlineGate(0.03), 6);
-  const gatePanel = new THREE.InstancedMesh(
-    new THREE.PlaneGeometry(2.55, 1.4),
-    new THREE.MeshBasicMaterial({ color: 0xffffff, toneMapped: false }),
-    6
-  );
-  const gateRim = new THREE.InstancedMesh(
-    new THREE.TorusGeometry(1, 0.055, 6, 18),
-    new THREE.MeshBasicMaterial({ color: 0xe6c15a, toneMapped: false }),
-    6
-  );
-  for (const m of [gateFrame, gateOutline, gatePanel, gateRim]) {
-    m.frustumCulled = false;
-    m.count = 6;
-    scene.add(m);
-  }
-  const blueC = new THREE.Color("#4FC3FF");
-  const redC = new THREE.Color("#FF4F5E");
-  for (let i = 0; i < 6; i++) gatePanel.setColorAt(i, blueC);
-
-  const signs = [];
-  for (let i = 0; i < 6; i++) {
-    const sign = makeSign();
-    const mat = new THREE.MeshBasicMaterial({
-      map: sign.tex,
-      transparent: true,
-      alphaTest: 0.06,
-      toneMapped: false,
-      side: THREE.DoubleSide,
-    });
-    const mesh = new THREE.Mesh(new THREE.PlaneGeometry(2.7, 1.35), mat);
-    mesh.renderOrder = 2;
-    scene.add(mesh);
-    signs.push({ mesh, canvas: sign.canvas, ctx: sign.ctx, tex: sign.tex });
-  }
 
   function outlineGate(push) {
     return new THREE.ShaderMaterial({
@@ -258,18 +359,48 @@ export function createPlay(scene, camera, audio) {
           gl_Position = projectionMatrix * modelViewMatrix * mv;
         }
       `,
-      fragmentShader: `void main() { gl_FragColor = vec4(0.118, 0.078, 0.063, 1.0); }`,
+      fragmentShader: "void main(){ gl_FragColor=vec4(0.118,0.078,0.063,1.0); }",
     });
+  }
+
+  const frameGeo = buildGateFrame();
+  const gateFrame = new THREE.InstancedMesh(frameGeo, toon("#ffffff", { vertexColors: true }), 8);
+  const gateOutline = new THREE.InstancedMesh(frameGeo, outlineGate(0.03), 8);
+  const gatePanel = new THREE.InstancedMesh(
+    new THREE.PlaneGeometry(2.55, 1.4),
+    new THREE.MeshBasicMaterial({ color: 0xffffff, toneMapped: false }),
+    8
+  );
+  const gateRim = new THREE.InstancedMesh(
+    new THREE.TorusGeometry(1, 0.055, 6, 18),
+    new THREE.MeshBasicMaterial({ color: 0xe6c15a, toneMapped: false }),
+    8
+  );
+  for (const m of [gateFrame, gateOutline, gatePanel, gateRim]) {
+    m.frustumCulled = false;
+    m.count = 0;
+    m.visible = false;
+    scene.add(m);
+  }
+  gatePanel.setColorAt(0, white);
+  const blueC = new THREE.Color("#4FC3FF");
+  const redC = new THREE.Color("#FF4F5E");
+  const signs = [];
+  for (let i = 0; i < 8; i++) {
+    const sign = makeSign();
+    const mesh = new THREE.Mesh(
+      new THREE.PlaneGeometry(2.7, 1.35),
+      new THREE.MeshBasicMaterial({ map: sign.tex, transparent: true, alphaTest: 0.06, toneMapped: false, side: THREE.DoubleSide })
+    );
+    mesh.renderOrder = 2;
+    mesh.visible = false;
+    scene.add(mesh);
+    signs.push({ mesh, canvas: sign.canvas, ctx: sign.ctx, tex: sign.tex });
   }
 
   const crateGeo = buildCrateGeo();
   const crates = [];
-  const crateSpec = [
-    { weapon: "smg", hp: 480, at: 155 },
-    { weapon: "log", hp: 968, at: 590 },
-  ];
-  for (let i = 0; i < crateSpec.length; i++) {
-    const spec = crateSpec[i];
+  for (let i = 0; i < 8; i++) {
     const mesh = new THREE.Mesh(crateGeo, toon("#ffffff", { vertexColors: true }));
     attachOutline(mesh, 0.03);
     const canvas = document.createElement("canvas");
@@ -284,112 +415,120 @@ export function createPlay(scene, camera, audio) {
     );
     face.position.set(0, 1.05, 1.18);
     mesh.add(face);
+    const top = new THREE.Mesh(builtE[6].geo, toon("#ffffff", { vertexColors: true }));
+    top.position.set(0, 2.15, 0);
+    top.scale.set(0.85, 0.85, 0.85);
+    top.visible = false;
+    mesh.add(top);
+    mesh.visible = false;
     scene.add(mesh);
     crates.push({
-      mesh,
-      canvas,
-      ctx,
-      tex,
-      weapon: spec.weapon,
-      max: spec.hp,
-      hp: spec.hp,
-      z: -spec.at,
-      x: 0,
-      state: "idle",
-      shake: 0,
-      dirty: 1,
+      mesh, canvas, ctx, tex, top, face,
+      kind: "weapon", gun: "bow", hp: 1, max: 1, x: 0, z: -40,
+      state: "dead", shake: 0, reel: 0, dirty: 0, extra: "",
     });
   }
 
-  const rackZ = -345;
-  const rackSlots = [
-    { id: "shot", bonus: 0, x: -3.2 },
-    { id: "smg", bonus: 0, x: 0 },
-    { id: "pistol", bonus: 1, x: 3.2 },
-  ];
   const rack = new THREE.Group();
   const ped = new THREE.InstancedMesh(buildPedestal(), toon("#C8B49A"), 3);
   ped.frustumCulled = false;
   ped.count = 3;
   rack.add(ped);
   const pedM = ped.instanceMatrix.array;
-  const rackChips = [];
+  const rackSlots = [
+    { kind: "gun", gun: "shot", bonus: 0, n: 0, x: -3.33 },
+    { kind: "gun", gun: "smg", bonus: 0, n: 0, x: 0 },
+    { kind: "gun", gun: "bow", bonus: 0, n: 0, x: 3.33 },
+  ];
+  const rackBits = [];
   for (let i = 0; i < 3; i++) {
-    writeTRS(pedM, i, rackSlots[i].x, 0, rackZ, 0, 1, 1, 1);
+    writeTRS(pedM, i, rackSlots[i].x, 0, 0, 0, 1, 1, 1);
     const iconC = document.createElement("canvas");
     iconC.width = 256;
     iconC.height = 256;
-    const ig = iconC.getContext("2d");
-    ig.fillStyle = "#F4E6C3";
-    ig.beginPath();
-    ig.arc(128, 128, 112, 0, Math.PI * 2);
-    ig.fill();
-    drawWeaponIcon(ig, rackSlots[i].id, 128, 136, 150);
     const iconTex = new THREE.CanvasTexture(iconC);
     iconTex.colorSpace = THREE.SRGBColorSpace;
     const icon = new THREE.Mesh(
       new THREE.PlaneGeometry(0.95, 0.95),
       new THREE.MeshBasicMaterial({ map: iconTex, toneMapped: false, transparent: true })
     );
-    icon.position.set(rackSlots[i].x, 1.82, rackZ + 0.35);
+    icon.position.set(rackSlots[i].x, 1.82, 0.35);
     rack.add(icon);
     const name = makeSign();
-    paintSign(name.ctx, name.canvas, WEAPONS[rackSlots[i].id].name);
-    name.tex.needsUpdate = true;
     const nameMesh = new THREE.Mesh(
-      new THREE.PlaneGeometry(2.15, 0.52),
+      new THREE.PlaneGeometry(2.2, 0.7),
       new THREE.MeshBasicMaterial({ map: name.tex, transparent: true, alphaTest: 0.05, toneMapped: false })
     );
-    nameMesh.position.set(rackSlots[i].x, 2.62, rackZ + 0.2);
+    nameMesh.position.set(rackSlots[i].x, 2.55, 0.2);
     rack.add(nameMesh);
     const chipC = document.createElement("canvas");
     chipC.width = 256;
     chipC.height = 96;
-    const chipCtx = chipC.getContext("2d");
     const chipTex = new THREE.CanvasTexture(chipC);
     chipTex.colorSpace = THREE.SRGBColorSpace;
     const chipMesh = new THREE.Mesh(
-      new THREE.PlaneGeometry(1.15, 0.4),
+      new THREE.PlaneGeometry(1.3, 0.42),
       new THREE.MeshBasicMaterial({ map: chipTex, toneMapped: false })
     );
-    chipMesh.position.set(rackSlots[i].x, 2.18, rackZ + 0.28);
+    chipMesh.position.set(rackSlots[i].x, 2.12, 0.28);
     rack.add(chipMesh);
-    rackChips.push({ canvas: chipC, ctx: chipCtx, tex: chipTex });
+    rackBits.push({
+      iconC, iconG: iconC.getContext("2d"), iconTex, icon,
+      name, nameMesh, chipC, chipG: chipC.getContext("2d"), chipTex, chipMesh,
+    });
   }
   ped.instanceMatrix.needsUpdate = true;
+  const banner = makeSign();
+  const bannerMesh = new THREE.Mesh(
+    new THREE.PlaneGeometry(6.4, 0.7),
+    new THREE.MeshBasicMaterial({ map: banner.tex, transparent: true, alphaTest: 0.05, toneMapped: false })
+  );
+  bannerMesh.position.set(0, 3.15, 0.15);
+  bannerMesh.visible = false;
+  rack.add(bannerMesh);
+  rack.visible = false;
   scene.add(rack);
+  let rackZ = -345;
+  let rackBanner = "";
+  let rackStyle = "standard";
 
-  const boss = new THREE.Mesh(bossBuilt.geo, toon("#ffffff", { vertexColors: true }));
+  const boss = new THREE.Mesh(baronBuilt.geo, toon("#ffffff", { vertexColors: true }));
   boss.frustumCulled = false;
   attachOutline(boss, 0.08);
   const crownMarker = new THREE.Object3D();
-  crownMarker.position.copy(bossBuilt.crownLocal);
+  crownMarker.position.copy(baronBuilt.crownLocal);
   boss.add(crownMarker);
   boss.visible = false;
   scene.add(boss);
-
-  const flyMat = new THREE.MeshToonMaterial({ color: new THREE.Color("#F4E6C3"), gradientMap: animToon().gradientMap });
-  const fly = new THREE.Mesh(new THREE.BoxGeometry(0.18, 0.18, 0.7), flyMat);
-  fly.visible = false;
-  scene.add(fly);
-
-  const bx = new Float32Array(BULLETS);
-  const by = new Float32Array(BULLETS);
-  const bz = new Float32Array(BULLETS);
-  const bvx = new Float32Array(BULLETS);
-  const bvy = new Float32Array(BULLETS);
-  const bvz = new Float32Array(BULLETS);
-  const bdmg = new Float32Array(BULLETS);
-  const broll = new Float32Array(BULLETS);
-  const blife = new Float32Array(BULLETS);
-  const borx = new Float32Array(BULLETS);
-  const borz = new Float32Array(BULLETS);
-  const balive = new Uint8Array(BULLETS);
-  const bkind = new Uint8Array(BULLETS);
-  const bcol = new Uint8Array(BULLETS);
-  const bfall = new Uint8Array(BULLETS);
-  const bfree = new Int16Array(BULLETS);
-  let bFreeN = BULLETS;
+  const wrench = new THREE.Mesh(wrenchBuilt.geo, toon("#ffffff", { vertexColors: true }));
+  wrench.frustumCulled = false;
+  wrench.visible = false;
+  scene.add(wrench);
+  const manhole = new THREE.Mesh(
+    new THREE.CircleGeometry(1.1, 12),
+    new THREE.MeshBasicMaterial({ color: 0x1a1714, toneMapped: false })
+  );
+  manhole.rotation.x = -Math.PI / 2;
+  manhole.position.y = 0.24;
+  manhole.visible = false;
+  scene.add(manhole);
+  const waySign = makeSign();
+  paintSign(waySign.ctx, waySign.canvas, "THIS WAY");
+  waySign.tex.needsUpdate = true;
+  const wayArrow = new THREE.Mesh(
+    new THREE.PlaneGeometry(2.4, 1.1),
+    new THREE.MeshBasicMaterial({ map: waySign.tex, transparent: true, toneMapped: false })
+  );
+  wayArrow.visible = false;
+  scene.add(wayArrow);
+  const zone = new THREE.Mesh(
+    new THREE.PlaneGeometry(1, 1),
+    new THREE.MeshBasicMaterial({ color: 0x6a1020, transparent: true, opacity: 0.45, depthWrite: false })
+  );
+  zone.rotation.x = -Math.PI / 2;
+  zone.position.y = 0.25;
+  zone.visible = false;
+  scene.add(zone);
 
   const px = new Float32Array(PUFFS);
   const py = new Float32Array(PUFFS);
@@ -413,9 +552,12 @@ export function createPlay(scene, camera, audio) {
   const flZ = new Float32Array(FLOATS);
   const flTarget = new Int16Array(FLOATS);
   const digScratch = new Uint8Array(4);
+  const words = [];
+  for (let i = 0; i < 8; i++) words.push({ on: 0, text: "", x: 0, y: 0, z: 0, life: 0 });
+  let wordI = 0;
 
   const head = new Int16Array(512);
-  const nextE = new Int16Array(CAP * 3);
+  const nextE = new Int16Array(STRIDE * TYPES);
   const fx = new Float32Array(64);
   const fz = new Float32Array(64);
   const cds = new Float32Array(RENDER_CAP);
@@ -423,58 +565,42 @@ export function createPlay(scene, camera, audio) {
   const ci = new Int16Array(48);
   let cn = 0;
   const cd = new Float32Array(48);
-
+  const counts = [0, 0, 0, 0, 0, 0, 0];
   const gates = [];
-  const fired = new Uint8Array(SCRIPT.length);
+  const fired = new Uint8Array(16);
+
+  let level = levelOf("1-1");
+  let unlocked = STARTERS.slice();
+  const seen = {};
+  for (let i = 0; i < STARTERS.length; i++) seen[STARTERS[i]] = true;
 
   const bossState = {
-    hp: 3000,
-    alive: 1,
-    shown: 0,
-    summoned: 0,
-    x: 0,
-    z: -711,
-    y: 0,
-    homeZ: -711,
-    mode: 0,
-    t: 1.4,
-    lock: 0,
+    hp: 3000, alive: 0, shown: 0, summoned: 0, x: 0, z: -711, homeZ: -711,
+    mode: 0, t: 1.4, lock: 0, cool: 6, p60: 0, p30: 0,
   };
+  let bossKind = "baron";
+  let wrenchPhase = 0;
+  let wrenchT = 0;
+  let wrenchX = 0;
+  let wrenchY = 1.4;
+  let wrenchZ = 0;
+  let zoneSide = 1;
+  let zoneT = 0;
+  let pullT = 0;
+  let shotTag = 1;
+  let frameTag = 1;
 
   const view = {
-    n: 3,
-    weaponId: "pistol",
-    tier: 1,
-    weaponName: "Twig Pistol",
-    tierName: "Wood",
-    color: "#F4E6C3",
-    dist: 0,
-    arena: 0,
-    bar: 0,
-    barText: "",
-    enemies: 0,
-    bossHp: 3000,
-    bossMax: 3000,
-    bossX: 0,
-    flash: "",
-    half: 5,
-    squadX: 0,
-    squadZ: 0,
-    radius: 0.8,
-    bannerY: 2.7,
-    ended: "",
-    running: 0,
-    steered: 0,
-    kills: 0,
-    cratesOpened: 0,
-    crateRammed: 0,
-    bossSec: 0,
-    calls: 0,
-    mPerPx: 0.02,
-    gate0: "+5",
-    crateHp: 480,
-    targetX: 0,
-    slow: 0,
+    n: 3, weaponId: "bow", tier: 1, weaponName: "Twig Crossbow", tierName: "Wood",
+    family: "ARROWS", color: "#F4E6C3", gold: 0, spin: 0,
+    dist: 0, arena: 0, bar: 0, barText: "", enemies: 0, counts,
+    bossHp: 3000, bossMax: 3000, bossX: 0, flash: "", half: 5,
+    squadX: 0, squadZ: 0, radius: 0.8, bannerY: 2.7, ended: "", running: 0,
+    steered: 0, kills: 0, cratesOpened: 0, crateRammed: 0, bossSec: 0,
+    calls: 0, mPerPx: 0.02, gate0: "+5", crateHp: 480, targetX: 0, slow: 0,
+    levelId: "1-1", levelName: level.name, intro: level.intro, winTitle: level.win,
+    river: 0, dam: 1, theme: 0, toastT: 0, toastName: "", toastLine: "",
+    barkT: 0, bark: "", words,
   };
 
   let clock = 0;
@@ -485,9 +611,9 @@ export function createPlay(scene, camera, audio) {
   let prevZ = 0;
   let half = 5;
   let radius = 0.8;
-  let weaponId = "pistol";
+  let weaponId = "bow";
   let tier = 1;
-  let mods = weaponMods("pistol", 1);
+  let mods = weaponMods("bow", 1);
   let running = false;
   let ended = "";
   let winSent = false;
@@ -495,6 +621,8 @@ export function createPlay(scene, camera, audio) {
   let flashT = 0;
   let liveN = 0;
   let kills = 0;
+  let duckKills = 0;
+  let duckCrates = 0;
   let cratesOpened = 0;
   let crateRammed = 0;
   let bossSec = 0;
@@ -510,55 +638,55 @@ export function createPlay(scene, camera, audio) {
   let bench = 0;
   let shotThisTick = false;
   let seed = 12345;
-  let bFreeTop = 0;
-  let pFreeTop = 0;
-
-  const crownV = new THREE.Vector3();
-  const projA = new THREE.Vector3();
-  const projB = new THREE.Vector3();
-  let crownX = 0;
-  let crownY = 3.4;
-  let crownZ = -711;
+  let spin = 0;
+  let kickT = 0;
+  let gunAcc = 0;
+  let toastT = 0;
+  let toastName = "";
+  let toastLine = "";
+  let barkT = 0;
+  let barkText = "";
   let aimX = 0;
   let aimY = 1;
   let aimZ = 0;
-
-  let hooks = { win() {}, lose() {} };
+  let crownX = 0;
+  let crownY = 3;
+  let crownZ = -711;
+  let hooks = { win() {}, lose() {}, seen() {} };
+  const crownV = new THREE.Vector3();
+  const projA = new THREE.Vector3();
+  const projB = new THREE.Vector3();
 
   function rnd() {
     seed = (seed * 16807) % 2147483647;
     return seed / 2147483647;
   }
 
-  function resetBullets() {
-    bFreeN = BULLETS;
-    for (let i = 0; i < BULLETS; i++) {
-      bfree[i] = i;
-      balive[i] = 0;
-    }
-    bFreeTop = 0;
+  function clearPool(s) {
+    s.freeN = s.n;
+    s.alive.fill(0);
+    for (let i = 0; i < s.n; i++) s.free[i] = i;
   }
-
-  function resetPuffs() {
-    pFreeN = PUFFS;
-    for (let i = 0; i < PUFFS; i++) {
-      pfree[i] = i;
-      palive[i] = 0;
-    }
-    pFreeTop = 0;
-  }
-
-  function allocB() {
-    if (bFreeN <= 0) return -1;
-    const i = bfree[--bFreeN];
-    balive[i] = 1;
+  function allocS(s) {
+    if (s.freeN <= 0) return -1;
+    const i = s.free[--s.freeN];
+    s.alive[i] = 1;
+    s.life[i] = 1;
+    s.hits[i] = 0;
+    s.flag[i] = 0;
+    s.extra[i] = 0;
+    s.extra2[i] = 0;
+    s.roll[i] = 0;
+    s.vy[i] = 0;
     return i;
   }
-
-  function freeB(i) {
-    if (!balive[i]) return;
-    balive[i] = 0;
-    bfree[bFreeN++] = i;
+  function freeS(s, i) {
+    if (!s.alive[i]) return;
+    s.alive[i] = 0;
+    s.free[s.freeN++] = i;
+  }
+  function allocB() {
+    return allocS(balls);
   }
 
   function puff(x0, y0, z0, kind, n, speed, life, size) {
@@ -610,6 +738,22 @@ export function createPlay(scene, camera, audio) {
     }
   }
 
+  function word(text, x0, y0, z0) {
+    const w = words[wordI];
+    wordI = (wordI + 1) % 8;
+    w.on = 1;
+    w.text = text;
+    w.x = x0;
+    w.y = y0;
+    w.z = z0;
+    w.life = 1.15;
+  }
+
+  function say(text) {
+    barkText = text;
+    barkT = 1.5;
+  }
+
   function fillDigits(n) {
     let v = n | 0;
     if (v < 0) v = 0;
@@ -638,59 +782,124 @@ export function createPlay(scene, camera, audio) {
 
   function spawnEnemy(type, x0, z0) {
     const p = pools[type];
-    if (p.freeN <= 0) return -1;
+    if (!p || p.freeN <= 0 || liveN >= 320) return -1;
     const i = p.free[--p.freeN];
+    const spec = ENEMY[type];
+    const base = spec.hp * level.hpMul;
     p.alive[i] = 1;
     p.x[i] = x0;
     p.z[i] = z0;
-    p.hp[i] = KINDS[type].hp;
+    p.hp[i] = base;
+    p.maxHp[i] = base;
+    p.foam[i] = spec.foam ? spec.foam * level.hpMul : 0;
     p.hit[i] = 0;
     p.phase[i] = rnd() * 6.28;
     p.biteAcc[i] = rnd();
     p.freeze[i] = 0;
+    p.slowT[i] = 0;
+    p.stagT[i] = 0;
+    p.burnT[i] = 0;
+    p.burnD[i] = 0;
+    p.age[i] = 0;
+    p.radS[i] = 1;
+    p.side[i] = rnd() < 0.5 ? -1 : 1;
+    p.lob[i] = 0.6 + rnd() * 1.4;
+    p.stamp[i] = 0;
     liveN++;
+    counts[type]++;
     return i;
   }
 
-  function killEnemy(type, i, splashFx) {
+  function releaseEnemy(type, i) {
     const p = pools[type];
     if (!p.alive[i]) return;
     p.alive[i] = 0;
     p.free[p.freeN++] = i;
     liveN--;
+    counts[type]--;
     if (liveN < 0) liveN = 0;
+    if (counts[type] < 0) counts[type] = 0;
+  }
+
+  function killEnemy(type, i, splashFx) {
+    const p = pools[type];
+    if (!p.alive[i]) return;
+    const x0 = p.x[i];
+    const z0 = p.z[i];
+    releaseEnemy(type, i);
     kills++;
-    if (splashFx && pFreeN > 0) {
-      puff(p.x[i], 0.45, p.z[i], 0, 4, 2.2, 0.4, 0.48);
-      puff(p.x[i], 0.7, p.z[i], 1, 4, 1.6, 0.5, 0.4);
+    if (type === 6) {
+      duckKills++;
+      word("QUACK", x0, 1.6, z0);
+      audio.quack();
+    }
+    if (splashFx && pFreeN > 8) {
+      puff(x0, 0.35, z0, 0, 4, 2.2, 0.4, 0.45);
+      puff(x0, 0.7, z0, 1, 3, 1.8, 0.45, 0.32);
+      if (kills % 100 === 0) popDuck(x0, 0.8, z0, 1);
+    }
+  }
+
+  function popDuck(x0, y0, z0, n) {
+    for (let k = 0; k < n; k++) {
+      const i = allocS(vducks);
+      if (i < 0) return;
+      vducks.x[i] = x0;
+      vducks.y[i] = y0;
+      vducks.z[i] = z0;
+      vducks.vx[i] = (rnd() * 2 - 1) * 3;
+      vducks.vy[i] = 3 + rnd() * 2;
+      vducks.vz[i] = (rnd() * 2 - 1) * 2;
+      vducks.life[i] = 1.1;
     }
   }
 
   function dump(type, count, z, per, spacing) {
-    if (count <= 0) return z;
-    for (let i = 0; i < count; i++) {
+    if (!count || count <= 0) return z;
+    const p = pools[type];
+    const room = Math.min(count, p.freeN, 320 - liveN);
+    for (let i = 0; i < room; i++) {
       const row = (i / per) | 0;
       const col = i % per;
-      const cols = Math.min(per, count - row * per);
-      const x0 = cols <= 1 ? 0 : -4.15 + (col / (cols - 1)) * 8.3;
+      const cols = Math.min(per, room - row * per);
+      const x0 = cols <= 1 ? (rnd() * 2 - 1) * 0.4 : -4.15 + (col / (cols - 1)) * 8.3;
       spawnEnemy(type, x0, z - row * spacing);
     }
-    return z - Math.ceil(count / per) * spacing;
+    return z - Math.ceil(room / per) * spacing;
   }
 
   function spawnWave(ev) {
     let z = -(ev.at + 45);
-    const ratPer = ev.rat > 100 ? 12 : ev.rat > 40 ? 10 : 8;
-    z = dump(0, ev.rat, z, ratPer, 5.8);
-    if (ev.brute) dump(2, ev.brute, z - 6, 2, 4);
-    if (ev.beetle) dump(1, ev.beetle, z - 12, 5, 8);
+    const rats = ev.clog || 0;
+    const per = rats > 100 ? 12 : rats > 40 ? 10 : 8;
+    z = dump(0, rats, z, per, 5.8);
+    if (ev.hauler) z = dump(2, ev.hauler, z - 6, 2, 4);
+    if (ev.suds) z = dump(1, ev.suds, z - 10, 5, 8);
+    if (ev.hair) z = dump(3, ev.hair, z - 6, 2, 6);
+    if (ev.spit) z = dump(4, ev.spit, z - 14, 4, 5);
+    if (ev.leaf) {
+      for (let s = 0; s < ev.leaf; s++) z = dump(5, 8, z - 4, 4, 1.2);
+    }
+    if (ev.duck) dump(6, ev.duck, z - 4, 1, 4);
+  }
+
+  function armHazard(x0, z0, r, delay, maxKill) {
+    const i = allocS(hazards);
+    if (i < 0) return;
+    hazards.x[i] = x0;
+    hazards.z[i] = z0;
+    hazards.y[i] = 0.26;
+    hazards.extra[i] = r;
+    hazards.life[i] = delay;
+    hazards.extra2[i] = maxKill;
   }
 
   function buildGates() {
     gates.length = 0;
     let n = 0;
-    for (let s = 0; s < SCRIPT.length; s++) {
-      const ev = SCRIPT[s];
+    const evs = level.events;
+    for (let s = 0; s < evs.length; s++) {
+      const ev = evs[s];
       if (ev.kind !== "gate") continue;
       for (let side = 0; side < 2; side++) {
         const g = freshGate(ev.pair[side].op, ev.pair[side].k);
@@ -702,91 +911,243 @@ export function createPlay(scene, camera, audio) {
         g.label = gateLabel(g);
         g.index = n;
         gates.push(g);
-        paintSign(signs[n].ctx, signs[n].canvas, g.label);
+        paintGateSign(signs[n].ctx, signs[n].canvas, g.label, gateBlue(g.op));
         signs[n].tex.needsUpdate = true;
         gatePanel.setColorAt(n, gateBlue(g.op) ? blueC : redC);
         n++;
       }
     }
-    gatePanel.instanceColor.needsUpdate = true;
+    if (gatePanel.instanceColor) gatePanel.instanceColor.needsUpdate = true;
   }
 
   function relabel(i) {
     const g = gates[i];
     g.label = gateLabel(g);
     g.bump = 0.36;
-    paintSign(signs[i].ctx, signs[i].canvas, g.label);
+    paintGateSign(signs[i].ctx, signs[i].canvas, g.label, gateBlue(g.op));
     signs[i].tex.needsUpdate = true;
     gatePanel.setColorAt(i, gateBlue(g.op) ? blueC : redC);
     gatePanel.instanceColor.needsUpdate = true;
-    const kind = gateBlue(g.op) ? 5 : 6;
-    puff(g.x, 2.2, g.z, kind, 3, 2.5, 0.3, 0.28);
+    puff(g.x, 2.2, g.z, gateBlue(g.op) ? 5 : 6, 3, 2.5, 0.3, 0.28);
   }
 
-  function paintChip(i) {
+  function paintRackSlot(i) {
     const slot = rackSlots[i];
-    const t = tierAfterPickup(weaponId, tier, slot.id, slot.bonus);
-    const ctx = rackChips[i].ctx;
-    const canvas = rackChips[i].canvas;
-    ctx.clearRect(0, 0, canvas.width, canvas.height);
-    ctx.fillStyle = TIER_COLORS[t];
-    ctx.fillRect(0, 0, canvas.width, canvas.height);
-    ctx.fillStyle = "#F4E6C3";
-    ctx.font = "900 48px Arial Black, Arial, sans-serif";
-    ctx.textAlign = "center";
-    ctx.textBaseline = "middle";
-    ctx.fillText("T" + t + " " + TIER_NAMES[t], canvas.width / 2, canvas.height / 2 + 2);
-    rackChips[i].tex.needsUpdate = true;
-  }
-
-  function refreshMods() {
-    mods = weaponMods(weaponId, tier);
-    flyMat.color.set(mods.color);
-  }
-
-  function equip(id, bonus) {
-    tier = tierAfterPickup(weaponId, tier, id, bonus);
-    weaponId = id;
-    refreshMods();
-    if (!rackTaken) {
-      for (let i = 0; i < 3; i++) paintChip(i);
+    const bit = rackBits[i];
+    const ig = bit.iconG;
+    ig.clearRect(0, 0, 256, 256);
+    ig.fillStyle = "#F4E6C3";
+    ig.beginPath();
+    ig.arc(128, 128, 112, 0, Math.PI * 2);
+    ig.fill();
+    let label = "";
+    let family = "";
+    let chip = "";
+    let col = TIER_COLORS[1];
+    if (slot.kind === "tier") {
+      ig.fillStyle = "#F5C400";
+      ig.font = "900 92px Arial Black, Arial, sans-serif";
+      ig.textAlign = "center";
+      ig.textBaseline = "middle";
+      ig.fillText("+1", 128, 132);
+      label = "+1 TIER";
+      family = "TIER";
+      chip = "+1";
+      col = "#F5C400";
+    } else if (slot.kind === "vol") {
+      ig.fillStyle = "#F5C400";
+      ig.beginPath();
+      ig.moveTo(78, 150);
+      ig.lineTo(100, 96);
+      ig.lineTo(156, 96);
+      ig.lineTo(178, 150);
+      ig.fill();
+      label = "+" + (slot.n || 10) + " VOLUNTEERS";
+      family = "SQUAD";
+      chip = "+" + (slot.n || 10);
+      col = "#3E6B45";
+    } else {
+      const w = WEAPONS[slot.gun] || WEAPONS.bow;
+      drawWeaponIcon(ig, w.id, 128, 136, 150);
+      const t = tierAfterPickup(weaponId, tier, w.id, slot.bonus || 0);
+      label = w.name;
+      family = w.family;
+      chip = "T" + t + " " + TIER_NAMES[t];
+      col = TIER_COLORS[t];
     }
-    fly.visible = true;
-    flyT = 0.4;
+    bit.iconTex.needsUpdate = true;
+    paintSign(bit.name.ctx, bit.name.canvas, label);
+    bit.name.ctx.font = "700 36px Arial, sans-serif";
+    bit.name.ctx.fillStyle = "#F5C400";
+    bit.name.ctx.textAlign = "center";
+    bit.name.ctx.fillText(family, 256, 230);
+    bit.name.tex.needsUpdate = true;
+    const cg = bit.chipG;
+    cg.clearRect(0, 0, 256, 96);
+    cg.fillStyle = col;
+    cg.fillRect(0, 0, 256, 96);
+    cg.fillStyle = "#1E1410";
+    cg.font = "900 40px Arial Black, Arial, sans-serif";
+    cg.textAlign = "center";
+    cg.textBaseline = "middle";
+    cg.fillText(chip, 128, 50);
+    bit.chipTex.needsUpdate = true;
+  }
+
+  function layoutLevel() {
+    let ci = 0;
+    rackTaken = 0;
+    rackBanner = "";
+    rackStyle = "standard";
+    let haveRack = 0;
+    for (let s = 0; s < level.events.length; s++) {
+      const ev = level.events[s];
+      if (ev.kind === "crate") {
+        const items = ev.items || [];
+        for (let k = 0; k < items.length && ci < crates.length; k++) {
+          const item = items[k];
+          let kind = item.type || "weapon";
+          if (kind === "volunteer" && rnd() < 0.15) kind = "duck";
+          let x = 0;
+          if (ev.layout === "pair") x = k === 0 ? -3.35 : 3.35;
+          else if (ev.layout === "row") x = (k - 1) * 3.3;
+          if (item.x != null) x = item.x;
+          const c = crates[ci++];
+          c.kind = kind;
+          c.gun = item.gun || "";
+          c.max = crateHp(level.baseHp, kind, item.hp);
+          c.hp = c.max;
+          c.x = x;
+          c.z = -ev.at;
+          c.state = "idle";
+          c.shake = 0;
+          c.reel = 0;
+          c.dirty = 1;
+          c.extra = kind === "volunteer" ? "+" + level.vol : "";
+          c.top.visible = kind === "duck";
+        }
+      } else if (ev.kind === "rack" && !haveRack) {
+        haveRack = 1;
+        rackZ = -ev.at;
+        rackStyle = ev.rack || "standard";
+        rackBanner = ev.banner || "";
+        const slots = ev.slots || [];
+        for (let k = 0; k < 3; k++) {
+          const src = slots[k] || { kind: "gun", gun: "bow" };
+          rackSlots[k].kind = src.kind || "gun";
+          rackSlots[k].gun = src.gun || "bow";
+          rackSlots[k].bonus = src.bonus || 0;
+          rackSlots[k].n = src.n || 10;
+          rackSlots[k].x = k === 0 ? -3.33 : k === 1 ? 0 : 3.33;
+          writeTRS(pedM, k, rackSlots[k].x, 0, 0, 0, 1, 1, 1);
+          rackBits[k].icon.position.x = rackSlots[k].x;
+          rackBits[k].nameMesh.position.x = rackSlots[k].x;
+          rackBits[k].chipMesh.position.x = rackSlots[k].x;
+        }
+        ped.instanceMatrix.needsUpdate = true;
+      }
+    }
+    for (let i = ci; i < crates.length; i++) {
+      crates[i].state = "dead";
+      crates[i].hp = 0;
+      crates[i].mesh.visible = false;
+      crates[i].top.visible = false;
+    }
+    rack.visible = !!haveRack;
+    if (rackBanner) {
+      paintSign(banner.ctx, banner.canvas, rackBanner);
+      banner.tex.needsUpdate = true;
+      bannerMesh.visible = true;
+    } else bannerMesh.visible = false;
+    for (let i = 0; i < 3; i++) paintRackSlot(i);
+    rack.position.set(0, 0, rackZ);
   }
 
   function flushCrates() {
     for (let i = 0; i < crates.length; i++) {
       const c = crates[i];
-      if (!c.dirty) continue;
-      paintCrateFace(c.ctx, c.canvas, c.weapon, c.hp);
+      if (!c.dirty || c.state === "dead") continue;
+      const icon = c.state === "reel" ? (c.gun || "bow") : c.gun;
+      paintCrateFace(c.ctx, c.canvas, c.kind, icon, c.hp, c.extra);
       c.tex.needsUpdate = true;
       c.dirty = 0;
     }
   }
 
+  function refreshMods() {
+    mods = weaponMods(weaponId, tier);
+    if (!rackTaken) {
+      for (let i = 0; i < 3; i++) paintRackSlot(i);
+    }
+  }
+
+  function equip(id, bonus) {
+    tier = tierAfterPickup(weaponId, tier, id, bonus || 0);
+    weaponId = id;
+    spin = 0;
+    refreshMods();
+    if (mods.line && !seen[id]) {
+      seen[id] = true;
+      toastT = 1.5;
+      toastName = "NEW GUN: " + mods.name;
+      toastLine = mods.line;
+      if (hooks.seen) hooks.seen(id);
+    }
+    flyX = squadX;
+    flyZ = -dist;
+    flyT = 0.35;
+  }
+
   function breakCrate(c) {
     if (c.state !== "idle") return;
-    c.state = "shake";
-    c.shake = 0.15;
     c.hp = 0;
     c.dirty = 1;
     audio.crack();
-    puff(c.x, 1.2, c.z, 3, 12, 3.2, 0.45, 0.55);
+    puff(c.x, 1.2, c.z, 3, 10, 3.2, 0.45, 0.5);
+    if (c.kind === "mystery") {
+      c.state = "reel";
+      c.reel = 0.6;
+      c.gun = mysteryPick(unlocked, rnd);
+    } else {
+      c.state = "shake";
+      c.shake = 0.15;
+    }
   }
 
   function grantCrate(c) {
     c.state = "dead";
     c.mesh.visible = false;
-    cratesOpened++;
+    c.top.visible = false;
     flyX = c.x;
     flyZ = c.z;
-    equip(c.weapon, 0);
+    if (c.kind === "weapon" || c.kind === "mystery") {
+      cratesOpened++;
+      equip(c.gun || "bow", 0);
+    } else if (c.kind === "volunteer") {
+      cratesOpened++;
+      squadN = Math.min(SIM_CAP, squadN + level.vol);
+      floater(9200, c.x, 2.2, c.z, level.vol);
+    } else if (c.kind === "tier") {
+      cratesOpened++;
+      tier = Math.min(4, tier + 1);
+      refreshMods();
+      flyT = 0.35;
+    } else if (c.kind === "duck") {
+      duckCrates++;
+      audio.quack();
+      popDuck(c.x, 1.6, c.z, 10);
+      word("+40", c.x, 2.4, c.z);
+    } else if (c.kind === "forged") {
+      dump(0, 20, -dist - 10, 5, 2.2);
+      word("FORGERY!", c.x, 2.4, c.z);
+      audio.crack();
+    }
   }
 
   function ramCrate(c) {
     c.state = "dead";
     c.mesh.visible = false;
+    c.top.visible = false;
     crateRammed = 1;
     audio.crack();
     puff(c.x, 1, c.z, 3, 8, 2.4, 0.35, 0.45);
@@ -794,7 +1155,7 @@ export function createPlay(scene, camera, audio) {
   }
 
   function hurtSquad(n) {
-    if (ended || !running) return;
+    if (ended || !running || n <= 0) return;
     squadN -= n;
     if (squadN < 0) squadN = 0;
     audio.hurt();
@@ -820,15 +1181,26 @@ export function createPlay(scene, camera, audio) {
     bossState.hp = 0;
     audio.endFire();
     audio.bossOut();
-    puff(bossState.x, 1.3, bossState.z, 0, 16, 4.5, 0.6, 0.8);
+    if (bossKind === "baron") {
+      say("THIS IS MERELY A FIRST NOTICE.");
+      manhole.visible = true;
+      manhole.position.set(bossState.x, 0.24, bossState.z);
+    } else if (bossKind === "grunk") {
+      say("Oh, it's a PLAN plan.");
+      wayArrow.visible = true;
+      wayArrow.position.set(bossState.x, 2.2, bossState.z - 2.4);
+      wrench.visible = false;
+      puff(bossState.x, 1.6, bossState.z, 7, 8, 3, 0.4, 0.4);
+    }
+    puff(bossState.x, 1.3, bossState.z, 0, 14, 4.5, 0.6, 0.8);
     puff(bossState.x, 1.8, bossState.z, 1, 8, 3, 0.55, 0.55);
   }
 
   function finishWin() {
     if (winSent) return;
     winSent = true;
-    const stars = starsFor(true, squadN, crateRammed, bossSec);
-    const earned = boberReward(kills, cratesOpened, stars);
+    const stars = starsFor(true, squadN, crateRammed, bossSec, level.starN, level.starSec);
+    const earned = boberReward(kills, cratesOpened, stars, duckKills, duckCrates);
     hooks.win({
       n: squadN,
       kills,
@@ -837,54 +1209,97 @@ export function createPlay(scene, camera, audio) {
       bossSec,
       stars,
       earned,
+      levelId: level.id,
+      winTitle: level.win,
+      nextId: nextLevel(level.id),
     });
+  }
+
+  function showBossMesh() {
+    const src = bossKind === "tub" ? tubBuilt : bossKind === "grunk" ? grunkBuilt : baronBuilt;
+    boss.geometry = src.geo;
+    if (boss.children[0]) boss.children[0].geometry = src.geo;
+    crownMarker.position.copy(src.crownLocal);
   }
 
   function startArena() {
     if (arenaStarted) return;
     arenaStarted = 1;
-    dist = 700;
+    dist = level.len;
     half = 7;
+    bossKind = level.boss;
+    showBossMesh();
     bossState.shown = 1;
     bossState.alive = 1;
-    bossState.hp = 3000;
+    bossState.hp = level.bossHp;
     bossState.summoned = 0;
-    bossState.homeZ = -711;
-    bossState.z = -711;
+    bossState.p60 = 0;
+    bossState.p30 = 0;
+    bossState.homeZ = -(level.len + 11);
+    bossState.z = bossState.homeZ;
     bossState.x = 0;
     bossState.mode = 0;
     bossState.t = 1.2;
     bossState.lock = squadX;
+    bossState.cool = bossKind === "baron" ? 6 : bossKind === "tub" ? 8 : 5;
+    wrenchPhase = 0;
+    wrench.visible = false;
+    zone.visible = false;
+    pullT = 0;
     boss.visible = true;
     audio.bossIn();
+    if (bossKind === "baron") say("BY ORDER OF THE DRAIN.");
   }
 
-  function hurtBoss(dmg, crit, x0, y0, z0) {
+  function hurtBoss(dmg, crit, splash, pierce, x0, y0, z0) {
     if (!bossState.alive || ended) return;
-    const dealt = crit ? dmg * 2 : dmg;
+    let dealt = dmg;
+    if (bossKind === "tub" && !crit && !splash && !pierce) dealt *= 0.4;
+    if (crit) dealt *= 2;
+    if (dealt < 0.05) return;
     bossState.hp -= dealt;
+    if (bossState.hp < 0) bossState.hp = 0;
     floater(9000, x0, y0 + 0.4, z0, dealt);
     if (crit && pFreeN > 8) puff(crownX, crownY, crownZ, 4, 4, 3, 0.28, 0.32);
-    if (!bossState.summoned && bossState.hp <= 1500) {
+    const max = level.bossHp;
+    if (bossKind === "baron" && !bossState.summoned && bossState.hp <= max * 0.5) {
       bossState.summoned = 1;
-      dump(0, 40, bossState.z - 5, 8, 3.2);
+      dump(0, 40, bossState.z - 4, 8, 3.2);
+      say("All water flows to me. Eventually.");
     }
-    if (bossState.hp <= 0) {
-      bossState.hp = 0;
-      beginWin();
+    if (bossKind === "grunk") {
+      if (!bossState.p60 && bossState.hp <= max * 0.6) {
+        bossState.p60 = 1;
+        pullT = 1;
+      }
+      if (!bossState.p30 && bossState.hp <= max * 0.3) {
+        bossState.p30 = 1;
+        pullT = 1;
+      }
+      if (!bossState.summoned && bossState.hp <= max * 0.5) {
+        bossState.summoned = 1;
+        dump(0, 30, bossState.z - 4, 8, 3);
+        dump(3, 1, bossState.z - 8, 1, 2);
+      }
     }
+    if (bossState.hp <= 0) beginWin();
   }
 
-  function damageEnemy(type, i, dmg, x0, y0, z0, splashHit) {
+  function damageEnemy(type, i, dmg, x0, y0, z0, splash, pierce, flame) {
     const p = pools[type];
     if (!p.alive[i]) return;
-    let dealt = dmg;
-    if (type === 1 && !splashHit) dealt *= 0.4;
-    if (dealt < 0.05) return;
-    p.hp[i] -= dealt;
+    const hit = clogHit(type, p.hp[i], p.foam[i], dmg, splash ? 1 : 0, pierce ? 1 : 0, flame ? 1 : 0, p.slowT[i] > 0 ? 1 : 0);
+    p.hp[i] = hit.hp;
+    p.foam[i] = hit.foam;
     p.hit[i] = 1;
-    floater(type * 400 + i, p.x[i], KINDS[type].y + 0.8, p.z[i], dealt);
-    if (pFreeN > 40) puff(x0, y0, z0, splashHit ? 3 : 2, 1, 1.5, 0.18, 0.22);
+    if (flame && mods.burn) {
+      p.burnT[i] = 2;
+      p.burnD[i] = mods.burn;
+    }
+    floater(type * 400 + i, p.x[i], ENEMY[type].y + 0.7, p.z[i], hit.dealt);
+    audio.squeak();
+    if (hit.burst && pFreeN > 12) puff(p.x[i], ENEMY[type].y, p.z[i], 10, 8, 2.4, 0.45, 0.35);
+    if (pFreeN > 40) puff(x0, y0, z0, flame ? 7 : 2, 1, 1.4, 0.16, 0.2);
     if (p.hp[i] <= 0) killEnemy(type, i, true);
   }
 
@@ -896,11 +1311,11 @@ export function createPlay(scene, camera, audio) {
 
   function rebuildGrid() {
     head.fill(-1);
-    for (let t = 0; t < 3; t++) {
+    for (let t = 0; t < TYPES; t++) {
       const p = pools[t];
-      for (let i = 0; i < CAP; i++) {
+      for (let i = 0; i < p.cap; i++) {
         if (!p.alive[i]) continue;
-        const id = t * CAP + i;
+        const id = t * STRIDE + i;
         const h = cellOf(p.x[i], p.z[i]);
         nextE[id] = head[h];
         head[h] = id;
@@ -909,64 +1324,57 @@ export function createPlay(scene, camera, audio) {
   }
 
   function segHit(x0, y0, z0, x1, y1, z1, cx, cy, cz, rad) {
-    const vx = x1 - x0;
-    const vy = y1 - y0;
-    const vz = z1 - z0;
-    const len2 = vx * vx + vy * vy + vz * vz;
+    const dx = x1 - x0;
+    const dy = y1 - y0;
+    const dz = z1 - z0;
+    const len2 = dx * dx + dy * dy + dz * dz;
     let t = 0;
-    if (len2 > 1e-8) {
-      t = ((cx - x0) * vx + (cy - y0) * vy + (cz - z0) * vz) / len2;
-      if (t < 0) t = 0;
-      else if (t > 1) t = 1;
-    }
-    const dx = x0 + vx * t - cx;
-    const dy = y0 + vy * t - cy;
-    const dz = z0 + vz * t - cz;
-    return dx * dx + dy * dy + dz * dz <= rad * rad;
+    if (len2 > 1e-8) t = ((cx - x0) * dx + (cy - y0) * dy + (cz - z0) * dz) / len2;
+    if (t < 0) t = 0;
+    else if (t > 1) t = 1;
+    const px0 = x0 + dx * t - cx;
+    const py0 = y0 + dy * t - cy;
+    const pz0 = z0 + dz * t - cz;
+    return px0 * px0 + py0 * py0 + pz0 * pz0 <= rad * rad;
   }
 
-  function splashAt(x0, y0, z0, dmg, knock) {
-    puff(x0, 0.35, z0, 3, 8, 3.4, 0.4, 0.7);
-    const ix = Math.floor(x0 * 0.5);
-    const iz = Math.floor(z0 * 0.5);
-    const r2 = 2.2 * 2.2;
-    for (let dz = -2; dz <= 2; dz++) {
-      for (let dx = -2; dx <= 2; dx++) {
-        const h = (((ix + dx) * 73856093) ^ ((iz + dz) * 19349663)) & 511;
-        for (let id = head[h]; id >= 0; id = nextE[id]) {
-          const type = (id / CAP) | 0;
-          const i = id - type * CAP;
-          const p = pools[type];
-          if (!p.alive[i]) continue;
-          const ex = p.x[i] - x0;
-          const ez = p.z[i] - z0;
-          if (ex * ex + ez * ez > r2) continue;
-          p.z[i] -= knock;
-          damageEnemy(type, i, dmg, p.x[i], KINDS[type].y, p.z[i], true);
-        }
+  function splashAt(x0, y0, z0, dmg, knock, r) {
+    const rad = r || 2.2;
+    const r2 = rad * rad;
+    puff(x0, 0.4, z0, 3, 10, 3.4, 0.35, 0.7);
+    for (let t = 0; t < TYPES; t++) {
+      const p = pools[t];
+      const k = ENEMY[t];
+      for (let i = 0; i < p.cap; i++) {
+        if (!p.alive[i]) continue;
+        const dx = p.x[i] - x0;
+        const dz = p.z[i] - z0;
+        if (dx * dx + dz * dz > r2) continue;
+        if (knock && t === 0) p.z[i] -= knock;
+        else if (knock) p.z[i] -= knock * 0.45;
+        damageEnemy(t, i, dmg, p.x[i], k.y, p.z[i], 1, 0, 0);
       }
     }
     if (bossState.alive) {
       const dx = bossState.x - x0;
       const dz = bossState.z - z0;
-      if (dx * dx + dz * dz <= r2) {
-        const nearCrown = (crownX - x0) * (crownX - x0) + (crownZ - z0) * (crownZ - z0) < 1.4;
-        hurtBoss(dmg, nearCrown ? 1 : 0, bossState.x, 1.6, bossState.z);
-        bossState.z -= knock * 0.4;
+      if (dx * dx + dz * dz <= (rad + 1.2) * (rad + 1.2)) {
+        const near = (crownX - x0) * (crownX - x0) + (crownZ - z0) * (crownZ - z0) < 0.8;
+        hurtBoss(dmg, near ? 1 : 0, 1, 0, bossState.x, 1.6, bossState.z);
+        bossState.z -= (knock || 0) * 0.35;
       }
     }
   }
 
   function hitGate(x0, z0, z1) {
-    const side = x0 <= 0 ? 0 : 1;
-    for (let i = side; i < gates.length; i += 2) {
+    for (let i = 0; i < gates.length; i++) {
       const g = gates[i];
       if (g.passed) continue;
-      const straddles = (z0 - g.z) * (z1 - g.z) <= 0 || Math.abs(z1 - g.z) < 0.35;
-      if (!straddles) continue;
-      if (x0 < -5.3 || x0 > 5.3) continue;
+      if (Math.abs(x0 - g.x) > 1.35) continue;
+      const lo = z0 < z1 ? z0 : z1;
+      const hi = z0 < z1 ? z1 : z0;
+      if (g.z < lo - 0.4 || g.z > hi + 0.4) continue;
       if (shootGate(g, 1)) relabel(i);
-      else if (pFreeN > 48) puff(g.x, 2, g.z + 0.3, gateBlue(g.op) ? 5 : 6, 1, 1, 0.15, 0.18);
       return 1;
     }
     return 0;
@@ -976,7 +1384,7 @@ export function createPlay(scene, camera, audio) {
     for (let i = 0; i < crates.length; i++) {
       const c = crates[i];
       if (c.state !== "idle") continue;
-      if (Math.abs(x0 - c.x) > 1.72) continue;
+      if (Math.abs(x0 - c.x) > 1.7) continue;
       if (Math.abs(z0 - c.z) > 1.25) continue;
       if (y0 < 0.15 || y0 > 2.2) continue;
       c.hp -= dmg;
@@ -989,80 +1397,241 @@ export function createPlay(scene, camera, audio) {
     return 0;
   }
 
-  function moveBullets(h) {
-    for (let i = 0; i < BULLETS; i++) {
-      if (!balive[i]) continue;
-      const x0 = bx[i];
-      const y0 = by[i];
-      const z0 = bz[i];
-      if (bkind[i] === 2) {
-        bvy[i] -= 16 * h;
-        broll[i] += h * 11;
-      }
-      bx[i] = x0 + bvx[i] * h;
-      by[i] = y0 + bvy[i] * h;
-      bz[i] = z0 + bvz[i] * h;
-      blife[i] -= h;
-      if (blife[i] <= 0 || by[i] < -1 || bz[i] > prevZ + 8) {
-        freeB(i);
-        continue;
-      }
-      if (bkind[i] === 2 && by[i] <= 0.34) {
-        splashAt(bx[i], 0.4, bz[i], bdmg[i], 1);
-        freeB(i);
-        continue;
-      }
-      let hit = 0;
-      const ix = Math.floor(bx[i] * 0.5);
-      const iz = Math.floor(bz[i] * 0.5);
-      for (let dz = -1; dz <= 1 && !hit; dz++) {
-        for (let dx = -1; dx <= 1 && !hit; dx++) {
-          const bucket = (((ix + dx) * 73856093) ^ ((iz + dz) * 19349663)) & 511;
-          for (let id = head[bucket]; id >= 0 && !hit; id = nextE[id]) {
-            const type = (id / CAP) | 0;
-            const slot = id - type * CAP;
-            const p = pools[type];
-            if (!p.alive[slot]) continue;
-            const rad = KINDS[type].rad;
-            if (!segHit(x0, y0, z0, bx[i], by[i], bz[i], p.x[slot], KINDS[type].y, p.z[slot], rad)) continue;
-            if (bkind[i] === 2) {
-              splashAt(p.x[slot], KINDS[type].y, p.z[slot], bdmg[i], 1);
-            } else {
-              let dmg = bdmg[i];
-              if (bfall[i]) {
-                const travel = Math.hypot(bx[i] - borx[i], bz[i] - borz[i]);
-                if (travel > 14) dmg *= Math.max(0, 1 - (travel - 14) / 14);
-              }
-              damageEnemy(type, slot, dmg, p.x[slot], KINDS[type].y, p.z[slot], false);
-            }
-            hit = 1;
-          }
+  function queryEnemies(x0, y0, z0, x1, y1, z1, visitor) {
+    const ix = Math.floor(x1 * 0.5);
+    const iz = Math.floor(z1 * 0.5);
+    for (let dz = -1; dz <= 1; dz++) {
+      for (let dx = -1; dx <= 1; dx++) {
+        const bucket = (((ix + dx) * 73856093) ^ ((iz + dz) * 19349663)) & 511;
+        for (let id = head[bucket]; id >= 0; id = nextE[id]) {
+          const type = (id / STRIDE) | 0;
+          const slot = id - type * STRIDE;
+          const p = pools[type];
+          if (!p || !p.alive[slot]) continue;
+          const rad = ENEMY[type].rad * (p.radS[slot] || 1);
+          if (!segHit(x0, y0, z0, x1, y1, z1, p.x[slot], ENEMY[type].y * (p.radS[slot] || 1), p.z[slot], rad)) continue;
+          if (visitor(type, slot)) return 1;
         }
       }
-      if (hit) {
-        freeB(i);
+    }
+    return 0;
+  }
+
+  function bossCrit(x0, y0, z0, x1, y1, z1) {
+    if (!bossState.alive || !arenaStarted) return 0;
+    if (bossKind === "grunk" && wrenchPhase === 2) {
+      if (segHit(x0, y0, z0, x1, y1, z1, wrenchX, wrenchY, wrenchZ, 0.7)) return 2;
+    }
+    if (segHit(x0, y0, z0, x1, y1, z1, crownX, crownY, crownZ, 0.62)) return 1;
+    if (segHit(x0, y0, z0, x1, y1, z1, bossState.x, 1.45, bossState.z, 1.45)) return 0;
+    return -1;
+  }
+
+  function movePool(s, h, kind) {
+    for (let i = 0; i < s.n; i++) {
+      if (!s.alive[i]) continue;
+      const x0 = s.x[i];
+      const y0 = s.y[i];
+      const z0 = s.z[i];
+      if (kind === "log") {
+        s.vy[i] -= 16 * h;
+        s.roll[i] += h * 11;
+      } else if (kind === "rocket" && s.flag[i]) {
+        steerRocket(s, i, h);
+      } else if (kind === "party" || kind === "case" || kind === "ember" || kind === "duck") {
+        s.vy[i] -= (kind === "party" ? 2.2 : 6) * h;
+      } else if (kind === "mud") {
+        s.vy[i] -= 14 * h;
+      }
+      s.x[i] = x0 + s.vx[i] * h;
+      s.y[i] = y0 + s.vy[i] * h;
+      s.z[i] = z0 + s.vz[i] * h;
+      s.life[i] -= h;
+      if (kind === "puddle" || kind === "hazard") {
+        if (kind === "puddle" && s.life[i] <= 0) freeS(s, i);
         continue;
       }
-      if (bossState.alive && arenaStarted) {
-        const crit = segHit(x0, y0, z0, bx[i], by[i], bz[i], crownX, crownY, crownZ, 0.62);
-        const body = segHit(x0, y0, z0, bx[i], by[i], bz[i], bossState.x, 1.45, bossState.z, 1.45);
-        if (crit || body) {
-          if (bkind[i] === 2) splashAt(bx[i], by[i], bz[i], bdmg[i], 1);
-          else hurtBoss(bdmg[i], crit ? 1 : 0, bx[i], by[i], bz[i]);
-          freeB(i);
+      if (kind === "case" || kind === "ember" || kind === "duck") {
+        if (s.life[i] <= 0 || s.y[i] < 0) freeS(s, i);
+        continue;
+      }
+      if (s.flag[i] === 3 && kind === "arrow") {
+        if (s.life[i] <= 0) freeS(s, i);
+        continue;
+      }
+      if (s.life[i] <= 0 || s.y[i] < -1 || s.z[i] > prevZ + 12) {
+        if (kind === "rocket") {
+          splashAt(s.x[i], 0.4, s.z[i], s.dmg[i], 0.4, s.extra[i] || 1.5);
+          audio.pop();
+        }
+        freeS(s, i);
+        continue;
+      }
+      if ((kind === "log" || kind === "rocket" || kind === "mud") && s.y[i] <= 0.36) {
+        if (kind === "mud") resolveMud(s, i);
+        else {
+          splashAt(s.x[i], 0.4, s.z[i], s.dmg[i], kind === "log" ? (s.extra2[i] || 1) : 0.4, s.extra[i] || (kind === "log" ? 2.2 : 1.5));
+          if (kind === "rocket") audio.pop();
+        }
+        freeS(s, i);
+        continue;
+      }
+      if (kind === "mud") {
+        if (s.life[i] <= 0) freeS(s, i);
+        continue;
+      }
+      let stop = 0;
+      queryEnemies(x0, y0, z0, s.x[i], s.y[i], s.z[i], (type, slot) => {
+        const p = pools[type];
+        if (p.stamp[slot] === s.tag[i]) return 0;
+        p.stamp[slot] = s.tag[i];
+        if (kind === "arrow" && s.flag[i] === 1) {
+          s.flag[i] = 3;
+          s.vx[i] = 0;
+          s.vy[i] = 0;
+          s.vz[i] = 0;
+          s.life[i] = 0.3;
+          s.x[i] = p.x[slot];
+          s.y[i] = ENEMY[type].y;
+          s.z[i] = p.z[slot];
+          damageEnemy(type, slot, s.dmg[i], p.x[slot], ENEMY[type].y, p.z[slot], 0, 0, 0);
+          stop = 0;
+          return 1;
+        }
+        if (kind === "log" || kind === "rocket") {
+          splashAt(p.x[slot], ENEMY[type].y, p.z[slot], s.dmg[i], kind === "log" ? (s.extra2[i] || 1) : 0.4, s.extra[i] || 2.2);
+          if (kind === "rocket") audio.pop();
+          stop = 1;
+          return 1;
+        }
+        let dmg = s.dmg[i];
+        if (s.flag[i] && kind === "ball") {
+          const travel = Math.hypot(s.x[i] - s.ox[i], s.z[i] - s.oz[i]);
+          if (travel > 14) dmg *= Math.max(0, 1 - (travel - 14) / 14);
+        }
+        if (kind === "ball" && s.extra2[i] && type === 0) p.z[slot] -= s.extra2[i];
+        if (kind === "party") {
+          let dealt = dmg;
+          if (rnd() < (s.extra[i] || 0.1)) {
+            dealt *= 5;
+            word("PARTY!", p.x[slot], ENEMY[type].y + 1.1, p.z[slot]);
+          }
+          p.stagT[slot] = s.extra2[i] || 0.3;
+          damageEnemy(type, slot, dealt, p.x[slot], ENEMY[type].y, p.z[slot], 0, 0, 0);
+          stop = 1;
+          return 1;
+        }
+        const pierce = kind === "arrow" && s.extra[i] > 0 ? 1 : 0;
+        damageEnemy(type, slot, dmg, p.x[slot], ENEMY[type].y, p.z[slot], 0, pierce, 0);
+        if (pierce) {
+          s.hits[i]++;
+          s.extra[i] -= 1;
+          if (s.hits[i] >= 3 && s.flag[i] !== 2) {
+            s.flag[i] = 2;
+            word("PIERCE x3", p.x[slot], 1.8, p.z[slot]);
+          }
+          if (s.hits[i] >= 3 && p.freeze[slot] < 1) p.freeze[slot] = 0.05;
+          if (s.extra[i] <= 0) stop = 1;
+          return stop;
+        }
+        stop = 1;
+        return 1;
+      });
+      if (stop) {
+        freeS(s, i);
+        continue;
+      }
+      if (bossState.alive && arenaStarted && kind !== "mud") {
+        const crit = bossCrit(x0, y0, z0, s.x[i], s.y[i], s.z[i]);
+        if (crit >= 0) {
+          if (kind === "log" || kind === "rocket") {
+            splashAt(s.x[i], s.y[i], s.z[i], s.dmg[i], kind === "log" ? 1 : 0.4, s.extra[i] || 2.2);
+            if (kind === "rocket") audio.pop();
+          } else {
+            const pierce = kind === "arrow" && s.extra[i] > 0 ? 1 : 0;
+            hurtBoss(s.dmg[i], crit > 0 ? 1 : 0, 0, pierce, s.x[i], s.y[i], s.z[i]);
+          }
+          freeS(s, i);
           continue;
         }
       }
-      if (hitCrate(bx[i], by[i], bz[i], bdmg[i]) || hitGate(bx[i], z0, bz[i])) freeB(i);
+      if (kind !== "mud" && (hitCrate(s.x[i], s.y[i], s.z[i], s.dmg[i]) || hitGate(s.x[i], z0, s.z[i]))) {
+        if (!(kind === "arrow" && s.extra[i] > 1)) freeS(s, i);
+      }
     }
   }
 
-  function consider(kind, index, x0, z0) {
+  function steerRocket(s, i, h) {
+    let tx = s.ox[i];
+    let tz = s.oz[i];
+    let hpBest = -1;
+    const reach = 30;
+    for (let t = 0; t < TYPES; t++) {
+      const p = pools[t];
+      for (let k = 0; k < p.cap; k++) {
+        if (!p.alive[k] || p.hp[k] <= hpBest) continue;
+        const dx = p.x[k] - s.x[i];
+        const dz = p.z[k] - s.z[i];
+        if (dx * dx + dz * dz > reach * reach) continue;
+        hpBest = p.hp[k];
+        tx = p.x[k];
+        tz = p.z[k];
+      }
+    }
+    if (bossState.alive && bossState.hp > hpBest) {
+      const dx = bossState.x - s.x[i];
+      const dz = bossState.z - s.z[i];
+      if (dx * dx + dz * dz < reach * reach) {
+        tx = bossState.x;
+        tz = bossState.z;
+      }
+    }
+    const spd = Math.hypot(s.vx[i], s.vz[i]) || 26;
+    const cur = Math.atan2(s.vx[i], -s.vz[i]);
+    const want = Math.atan2(tx - s.x[i], -(tz - s.z[i]));
+    let d = want - cur;
+    while (d > Math.PI) d -= Math.PI * 2;
+    while (d < -Math.PI) d += Math.PI * 2;
+    const max = ((s.extra2[i] || 180) * Math.PI / 180) * h;
+    const ny = cur + clamp(d, -max, max);
+    s.vx[i] = Math.sin(ny) * spd;
+    s.vz[i] = -Math.cos(ny) * spd;
+  }
+
+  function resolveMud(s, i) {
+    puff(s.x[i], 0.4, s.z[i], 0, 6, 2, 0.3, 0.4);
+  }
+
+  function resolveHazards() {
+    const shown = shownCount(squadN);
+    for (let i = 0; i < hazards.n; i++) {
+      if (!hazards.alive[i] || hazards.life[i] > 0) continue;
+      const r = hazards.extra[i];
+      const max = hazards.extra2[i] || 2;
+      let hit = 0;
+      for (let n = 0; n < shown && hit < max; n++) {
+        const sx = squadX + fx[n];
+        const sz = -dist + fz[n];
+        const dx = sx - hazards.x[i];
+        const dz = sz - hazards.z[i];
+        if (dx * dx + dz * dz <= r * r) {
+          hurtSquad(1);
+          hit++;
+          if (ended) return;
+        }
+      }
+      puff(hazards.x[i], 0.5, hazards.z[i], 3, 4, 2, 0.25, 0.35);
+      freeS(hazards, i);
+    }
+  }
+
+  function consider(kind, index, x0, z0, reach) {
     const dx = x0 - squadX;
     const dz = z0 - (-dist);
     if (dz > 2) return;
     const d2 = dx * dx + dz * dz;
-    if (d2 > 28 * 28) return;
+    const lim = reach || 28;
+    if (d2 > lim * lim) return;
     if (cn < 48) {
       ct[cn] = kind;
       ci[cn] = index;
@@ -1099,33 +1668,36 @@ export function createPlay(scene, camera, audio) {
 
   function buildCands() {
     cn = 0;
-    for (let t = 0; t < 3; t++) {
+    for (let t = 0; t < TYPES; t++) {
       const p = pools[t];
-      for (let i = 0; i < CAP; i++) {
-        if (p.alive[i]) consider(t, i, p.x[i], p.z[i]);
-      }
+      const reach = t === 4 ? 34 : 28;
+      for (let i = 0; i < p.cap; i++) if (p.alive[i]) consider(t, i, p.x[i], p.z[i], reach);
     }
-    if (bossState.alive && bossState.shown) consider(3, 0, bossState.x, bossState.z);
+    if (bossState.alive && bossState.shown) consider(7, 0, bossState.x, bossState.z, 28);
     for (let i = 0; i < crates.length; i++) {
-      if (crates[i].state === "idle") consider(4, i, crates[i].x, crates[i].z);
+      if (crates[i].state === "idle") consider(8, i, crates[i].x, crates[i].z, 28);
     }
     for (let i = 0; i < gates.length; i++) {
-      if (!gates[i].passed) consider(5, i, gates[i].x, gates[i].z);
+      if (!gates[i].passed) consider(9, i, gates[i].x, gates[i].z, 28);
     }
   }
 
   function aimOf(kind, index, soldierX) {
-    if (kind < 3) {
+    if (kind < 7) {
       const p = pools[kind];
       if (!p.alive[index]) return 0;
       aimX = p.x[index];
-      aimY = KINDS[kind].y;
+      aimY = ENEMY[kind].y * (p.radS[index] || 1);
       aimZ = p.z[index];
       return 1;
     }
-    if (kind === 3) {
+    if (kind === 7) {
       if (!bossState.alive) return 0;
-      if (Math.abs(soldierX - bossState.x) < 0.85) {
+      if (bossKind === "grunk" && wrenchPhase === 2) {
+        aimX = wrenchX;
+        aimY = wrenchY;
+        aimZ = wrenchZ;
+      } else if (Math.abs(soldierX - bossState.x) < 0.85) {
         aimX = crownX;
         aimY = crownY;
         aimZ = crownZ;
@@ -1136,7 +1708,7 @@ export function createPlay(scene, camera, audio) {
       }
       return 1;
     }
-    if (kind === 4) {
+    if (kind === 8) {
       const c = crates[index];
       if (c.state !== "idle") return 0;
       aimX = c.x;
@@ -1150,6 +1722,28 @@ export function createPlay(scene, camera, audio) {
     aimY = 2.15;
     aimZ = g.z;
     return 1;
+  }
+
+  function spawnShot(pool, sx, sy, sz, vx, vy, vz, dmg, life, col, flag, extra, extra2) {
+    const id = allocS(pool);
+    if (id < 0) return -1;
+    pool.x[id] = sx;
+    pool.y[id] = sy;
+    pool.z[id] = sz;
+    pool.vx[id] = vx;
+    pool.vy[id] = vy;
+    pool.vz[id] = vz;
+    pool.dmg[id] = dmg;
+    pool.life[id] = life;
+    pool.col[id] = col;
+    pool.flag[id] = flag;
+    pool.extra[id] = extra || 0;
+    pool.extra2[id] = extra2 || 0;
+    pool.ox[id] = sx;
+    pool.oz[id] = sz;
+    pool.tag[id] = ++shotTag;
+    pool.roll[id] = rnd() * 6;
+    return id;
   }
 
   function fireSoldier(s) {
@@ -1166,73 +1760,209 @@ export function createPlay(scene, camera, audio) {
     const len = Math.hypot(dx, dy, dz) || 1;
     const base = Math.atan2(dx, -dz);
     const pitch = Math.asin(clamp(dy / len, -0.85, 0.85));
-    const pellets = mods.pellets;
     const dmg = mods.dmg * squadDmgMul(squadN);
-    const col = weaponId === "smg" ? 1 : weaponId === "shot" ? 2 : 0;
+    const pat = mods.pattern;
+    if (pat === "cone" || pat === "stream") return;
+    const pellets = mods.pellets;
     for (let p = 0; p < pellets; p++) {
-      const id = allocB();
-      if (id < 0) return;
       let ang = base;
-      if (mods.pattern === "fan" && pellets > 1) ang += (p / (pellets - 1) - 0.5) * mods.spread;
-      else if (mods.pattern === "spread") ang += (rnd() * 2 - 1) * mods.spread;
-      else if (pellets > 1) ang += (p - (pellets - 1) / 2) * 0.045;
-      const lob = mods.pattern === "lob";
-      if (lob) {
+      if ((pat === "fan" || pat === "confetti") && pellets > 1) ang += (p / (pellets - 1) - 0.5) * mods.spread;
+      else if (pat === "spread" || pat === "spin") ang += (rnd() * 2 - 1) * mods.spread;
+      const cp = Math.cos(pitch);
+      if (pat === "lob") {
         const horiz = Math.hypot(dx, dz) || 1;
-        bvx[id] = (dx / horiz) * 18;
-        bvz[id] = (dz / horiz) * 18;
-        bvy[id] = 8;
-        bkind[id] = 2;
+        spawnShot(logs, sx, sy, sz - 0.3, (dx / horiz) * 18, 8, (dz / horiz) * 18, dmg, 1.6, 0, 0, mods.splash, mods.knock);
+      } else if (pat === "home") {
+        const id = spawnShot(rockets, sx, sy, sz - 0.3, Math.sin(ang) * cp * 26, Math.sin(pitch) * 8, -Math.cos(ang) * cp * 26, dmg, 2.2, 2 + (shotTag % 3), 1, mods.splash, mods.turn);
+        if (id >= 0) {
+          rockets.ox[id] = aimX;
+          rockets.oz[id] = aimZ;
+        }
+      } else if (pat === "confetti") {
+        spawnShot(party, sx, sy, sz - 0.2, Math.sin(ang) * 24, 2.5 + rnd(), -Math.cos(ang) * 24, dmg, 0.85, 2 + (p % 3), 0, mods.crit, mods.stagger);
+      } else if (pat === "arrow" || pat === "pierce") {
+        const speed = pat === "pierce" ? 90 : 48;
+        spawnShot(arrows, sx, sy, sz - 0.35, Math.sin(ang) * cp * speed, Math.sin(pitch) * speed, -Math.cos(ang) * cp * speed, dmg, pat === "pierce" ? 0.55 : 0.8, pat === "pierce" ? 1 : 0, pat === "arrow" ? 1 : 0, pat === "pierce" ? mods.pierce : 0, 0);
       } else {
-        const cp = Math.cos(pitch);
-        bvx[id] = Math.sin(ang) * cp * 52;
-        bvy[id] = Math.sin(pitch) * 52;
-        bvz[id] = -Math.cos(ang) * cp * 52;
-        bkind[id] = mods.pattern === "fan" ? 1 : 0;
+        const speed = 52;
+        const col = weaponId === "shot" || weaponId === "gerald" ? 5 : 2;
+        spawnShot(balls, sx, sy, sz - 0.4, Math.sin(ang) * cp * speed, Math.sin(pitch) * speed, -Math.cos(ang) * cp * speed, dmg, 0.75, col, mods.falloff > 0 ? 1 : 0, 0, pat === "fan" ? 0.4 : 0);
       }
-      bx[id] = sx;
-      by[id] = sy;
-      bz[id] = sz - 0.4;
-      bdmg[id] = dmg;
-      blife[id] = lob ? 1.6 : 0.75;
-      broll[id] = rnd() * 6;
-      borx[id] = sx;
-      borz[id] = sz;
-      bcol[id] = col;
-      bfall[id] = mods.falloff > 0 ? 1 : 0;
-      shotThisTick = true;
     }
-    if ((s & 3) === 0 && pFreeN > 24) puff(sx, sy, sz - 0.6, col === 1 ? 8 : col === 2 ? 7 : 2, 1, 0.4, 0.08, 0.22);
+    shotThisTick = true;
+    if (pat === "fan") kickT = 0.2;
+    if (pat === "spin") {
+      const id = allocS(cases);
+      if (id >= 0) {
+        cases.x[id] = sx + 0.2;
+        cases.y[id] = sy;
+        cases.z[id] = sz;
+        cases.vx[id] = 1.5 + rnd();
+        cases.vy[id] = 2 + rnd();
+        cases.vz[id] = 0.5;
+        cases.life[id] = 0.7;
+      }
+    }
+    if ((s & 3) === 0 && pFreeN > 24) puff(sx, sy, sz - 0.55, 2, 1, 0.4, 0.08, 0.18);
+  }
+
+  function tickCone() {
+    const range = 11;
+    const halfAng = mods.spread * 0.5;
+    const dmg = mods.dmg * squadDmgMul(squadN);
+    const shown = Math.max(1, shownCount(squadN));
+    const origins = Math.max(1, Math.ceil(shown / 10));
+    stuckN = 0;
+    for (let t = 0; t < TYPES; t++) {
+      const p = pools[t];
+      for (let i = 0; i < p.cap; i++) {
+        if (!p.alive[i]) continue;
+        let hit = 0;
+        for (let c = 0; c < origins && !hit; c++) {
+          const s = Math.min(shown - 1, c * 10);
+          const sx = squadX + (fx[s] || 0);
+          const sz = -dist + (fz[s] || 0);
+          const dx = p.x[i] - sx;
+          const fwd = sz - p.z[i];
+          if (fwd <= 0.15 || fwd > range) continue;
+          if (Math.atan2(Math.abs(dx), fwd) > halfAng) continue;
+          hit = 1;
+        }
+        if (!hit) continue;
+        damageEnemy(t, i, dmg, p.x[i], ENEMY[t].y, p.z[i], 0, 0, 1);
+      }
+    }
+    for (let k = 0; k < 4; k++) {
+      const id = allocS(embers);
+      if (id < 0) break;
+      embers.x[id] = squadX + (rnd() * 2 - 1) * 0.8;
+      embers.y[id] = 0.8 + rnd();
+      embers.z[id] = -dist - rnd() * 6;
+      embers.vx[id] = (rnd() * 2 - 1) * 0.6;
+      embers.vy[id] = 0.8 + rnd();
+      embers.vz[id] = -2 - rnd() * 2;
+      embers.life[id] = 0.45;
+    }
+  }
+
+  function tickStream() {
+    const dmg = mods.dmg * squadDmgMul(squadN);
+    const shown = Math.max(1, shownCount(squadN));
+    for (let t = 0; t < TYPES; t++) {
+      const p = pools[t];
+      for (let i = 0; i < p.cap; i++) {
+        if (!p.alive[i]) continue;
+        let hits = 0;
+        const fwd = -dist - p.z[i];
+        if (fwd <= 0 || fwd > 20) continue;
+        for (let s = 0; s < shown; s++) {
+          if (Math.abs(p.x[i] - (squadX + fx[s])) < 0.45) hits++;
+        }
+        if (!hits) continue;
+        p.slowT[i] = mods.slow || 2.5;
+        damageEnemy(t, i, dmg * hits, p.x[i], ENEMY[t].y, p.z[i], 0, 0, 0);
+        if (puddles.freeN > 0 && rnd() < 0.25) {
+          const id = allocS(puddles);
+          if (id >= 0) {
+            puddles.x[id] = p.x[i];
+            puddles.z[id] = p.z[i];
+            puddles.y[id] = 0.24;
+            puddles.life[id] = 3;
+            puddles.extra[id] = 0.7;
+          }
+        }
+      }
+    }
   }
 
   function botX() {
-    if (arenaStarted) return bossState.x;
-    if (dist > 145 && dist < 178) return 3.35;
-    if (dist > 330 && dist < 368) return 0;
-    if (dist > 555 && dist < 625) return 3.35;
-    return -2.3;
+    let x = -2.3;
+    if (level.id === "1-1") {
+      if (dist > 145 && dist < 178) x = 3.35;
+      else if (dist > 330 && dist < 368) x = 0;
+      else if (dist > 555 && dist < 625) x = 3.35;
+    }
+    if (arenaStarted) {
+      x = bossState.x;
+      if (wrenchPhase === 1) {
+        const band = (half * 2) / 3;
+        const mid = -half + band * (zoneSide + 0.5);
+        if (Math.abs(x - mid) < band * 0.55) x = zoneSide === 2 ? -half * 0.7 : half * 0.7;
+      }
+      for (let i = 0; i < hazards.n; i++) {
+        if (!hazards.alive[i]) continue;
+        x = 4.8;
+        break;
+      }
+    }
+    return x;
   }
 
-  function updateCrown() {
-    boss.position.set(bossState.x, 0.08 + Math.sin(clock * 2.1) * 0.06, bossState.z);
-    boss.rotation.y = Math.PI;
-    boss.visible = !!bossState.shown && !!bossState.alive;
-    if (!boss.visible) return;
-    boss.updateMatrixWorld();
-    crownMarker.getWorldPosition(crownV);
-    crownX = crownV.x;
-    crownY = crownV.y;
-    crownZ = crownV.z;
+  function updateBoss() {
+    const bob = Math.sin(clock * 2.1) * 0.06;
+    let y = 0.08 + bob;
+    let yaw = Math.PI;
+    if (bossKind === "baron" && ended === "win") {
+      const u = clamp(1 - slowLeft / 0.5, 0, 1);
+      y = 0.08 - u * 3.2;
+      yaw = Math.PI + u * 8;
+      manhole.visible = true;
+    }
+    boss.position.set(bossState.x, y, bossState.z);
+    boss.rotation.y = yaw;
+    boss.visible = !!(bossState.shown && (bossState.alive || (ended === "win" && slowLeft > 0)));
+    if (boss.visible) {
+      boss.updateMatrixWorld();
+      crownMarker.getWorldPosition(crownV);
+      crownX = crownV.x;
+      crownY = crownV.y;
+      crownZ = crownV.z;
+    }
+    if (bossKind === "grunk" && wrenchPhase === 2) {
+      const span = -dist - bossState.z;
+      const u = wrenchT < 0.4 ? wrenchT / 0.4 : Math.max(0, (0.8 - wrenchT) / 0.4);
+      const band = (half * 2) / 3;
+      wrenchX = -half + band * (zoneSide + 0.5);
+      wrenchY = 1.3 + Math.sin(u * Math.PI) * 1.4;
+      wrenchZ = bossState.z + span * u;
+      wrench.position.set(wrenchX, wrenchY, wrenchZ);
+      wrench.rotation.y = Math.PI;
+      wrench.rotation.z = clock * 14;
+      wrench.visible = true;
+    } else if (!(bossKind === "grunk" && ended === "win")) {
+      wrench.visible = false;
+    }
+    if (wrenchPhase === 1) {
+      const band = (half * 2) / 3;
+      zone.visible = true;
+      zone.position.set(-half + band * (zoneSide + 0.5), 0.25, -dist - 4);
+      zone.scale.set(band, 18, 1);
+    } else zone.visible = false;
+    wayArrow.visible = bossKind === "grunk" && ended === "win" && slowLeft > 0;
   }
 
   function checkScript() {
-    for (let i = 0; i < SCRIPT.length; i++) {
+    const evs = level.events;
+    for (let i = 0; i < evs.length; i++) {
       if (fired[i]) continue;
-      const ev = SCRIPT[i];
+      const ev = evs[i];
       if (dist < ev.at) continue;
       fired[i] = 1;
       if (dist - ev.at < 25 && ev.kind === "wave") spawnWave(ev);
     }
+  }
+
+  function soldiersInThird(side) {
+    const band = (half * 2) / 3;
+    const lo = -half + band * side;
+    const hi = lo + band;
+    const shown = shownCount(squadN);
+    let n = 0;
+    for (let s = 0; s < shown; s++) {
+      const x = squadX + fx[s];
+      if (x >= lo && x < hi) n++;
+    }
+    return n > 6 ? 6 : n;
   }
 
   function tickOnce(h) {
@@ -1252,17 +1982,25 @@ export function createPlay(scene, camera, audio) {
         else squadX = targetX;
       }
       squadX = clampLane(squadX, radius, half);
+      if (pullT > 0 && bossKind === "grunk" && arenaStarted) {
+        const step = 1.5 * h;
+        if (squadX > step) squadX -= step;
+        else if (squadX < -step) squadX += step;
+        else squadX = 0;
+        pullT -= h;
+      }
       if (!arenaStarted && !bench) {
         dist += ADVANCE * h;
-        if (dist > 700) dist = 700;
+        if (dist > level.len) dist = level.len;
       }
-      if (dist >= 700) startArena();
-      half = arenaStarted ? 7 : dist > 670 ? 5 + Math.min(1, (dist - 670) / 30) * 2 : 5;
+      if (dist >= level.len) startArena();
+      const widen = level.len - 30;
+      half = arenaStarted ? 7 : dist > widen ? 5 + Math.min(1, (dist - widen) / 30) * 2 : 5;
       const z = -dist;
       if (!arenaStarted) {
         for (let i = 0; i < gates.length; i += 2) {
           const g = gates[i];
-          if (g.passed) continue;
+          if (!g || g.passed) continue;
           if (prevZ > g.z && z <= g.z && prevZ - g.z < 20) {
             const side = squadX <= 0 ? 0 : 1;
             const pick = gates[i + side];
@@ -1279,25 +2017,49 @@ export function createPlay(scene, camera, audio) {
           }
         }
       }
+      let rammed = -1;
+      let ramD = 1e9;
       for (let i = 0; i < crates.length; i++) {
         const c = crates[i];
         if (c.state === "shake") {
           c.shake -= h;
           if (c.shake <= 0) grantCrate(c);
-        } else if (c.state === "idle" && Math.abs(z - c.z) < 1.35 && Math.abs(squadX - c.x) < 1.65 + CORE) {
-          ramCrate(c);
-          if (ended) {
-            prevZ = z;
-            return;
+        } else if (c.state === "reel") {
+          c.reel -= h;
+          if (c.reel <= 0) grantCrate(c);
+          else if (((c.reel * 10) | 0) !== (((c.reel + h) * 10) | 0)) {
+            c.gun = mysteryPick(unlocked, rnd);
+            c.dirty = 1;
+          }
+        } else if (c.state === "idle" && Math.abs(z - c.z) < 1.35) {
+          const d = Math.abs(squadX - c.x);
+          if (d < 1.65 + CORE && d < ramD) {
+            ramD = d;
+            rammed = i;
           }
         }
       }
-      if (!rackTaken && Math.abs(z - rackZ) < 1.25) {
+      if (rammed >= 0) {
+        ramCrate(crates[rammed]);
+        if (ended) {
+          prevZ = z;
+          return;
+        }
+      }
+      if (!rackTaken && rack.visible && Math.abs(z - rackZ) < 1.25) {
         for (let i = 0; i < 3; i++) {
           if (Math.abs(squadX - rackSlots[i].x) < 1.45) {
-            flyX = rackSlots[i].x;
+            const slot = rackSlots[i];
+            flyX = slot.x;
             flyZ = rackZ;
-            equip(rackSlots[i].id, rackSlots[i].bonus);
+            if (slot.kind === "tier") {
+              tier = Math.min(4, tier + 1);
+              refreshMods();
+              flyT = 0.35;
+            } else if (slot.kind === "vol") {
+              squadN = Math.min(SIM_CAP, squadN + (slot.n || 10));
+              floater(9300, slot.x, 2, rackZ, slot.n || 10);
+            } else equip(slot.gun, slot.bonus || 0);
             rackTaken = 1;
             rack.visible = false;
             audio.gate();
@@ -1310,6 +2072,7 @@ export function createPlay(scene, camera, audio) {
       if (arenaStarted && bossState.alive) {
         bossSec += h;
         bossState.t -= h;
+        bossState.cool -= h;
         if (bossState.mode === 0) {
           bossState.x += clamp(bossState.lock - bossState.x, -1, 1) * 2.2 * h;
           bossState.z += clamp(bossState.homeZ - bossState.z, -1, 1) * 3.2 * h;
@@ -1333,40 +2096,151 @@ export function createPlay(scene, camera, audio) {
             bossState.lock = squadX;
           }
         }
-        const lim = half - 1.3;
-        bossState.x = clamp(bossState.x, -lim, lim);
+        bossState.x = clamp(bossState.x, -(half - 1.3), half - 1.3);
+        if (bossKind === "baron" && bossState.cool <= 0) {
+          bossState.cool = 6;
+          const land = -dist;
+          armHazard(-3.2, land - 0.3, 1, 0.8, 2);
+          armHazard(-0.9, land + 0.7, 1, 0.8, 2);
+          armHazard(1.2, land - 0.2, 1, 0.8, 2);
+        } else if (bossKind === "tub" && bossState.cool <= 0) {
+          bossState.cool = 8;
+          dump(0, 12, bossState.z + 2.2, 6, 2);
+        } else if (bossKind === "grunk") {
+          if (wrenchPhase === 0 && bossState.cool <= 0) {
+            bossState.cool = 5;
+            zoneSide = (rnd() * 3) | 0;
+            wrenchPhase = 1;
+            zoneT = 1;
+          } else if (wrenchPhase === 1) {
+            zoneT -= h;
+            if (zoneT <= 0) {
+              wrenchPhase = 2;
+              wrenchT = 0;
+              formationOffsets(squadN, radius, fx, fz);
+              hurtSquad(soldiersInThird(zoneSide));
+              if (ended) return;
+            }
+          } else if (wrenchPhase === 2) {
+            wrenchT += h;
+            if (wrenchT > 0.8) wrenchPhase = 0;
+          }
+        }
       }
-      updateCrown();
-      for (let t = 0; t < 3; t++) {
+      updateBoss();
+      for (let t = 0; t < TYPES; t++) {
         const p = pools[t];
-        const k = KINDS[t];
-        for (let i = 0; i < CAP; i++) {
-          if (!p.alive[i] || p.freeze[i]) continue;
-          const steer = squadX - p.x[i];
-          p.x[i] += clamp(steer, -1, 1) * k.lat * h;
-          p.z[i] += k.speed * h;
+        const k = ENEMY[t];
+        for (let i = 0; i < p.cap; i++) {
+          if (!p.alive[i]) continue;
+          if (p.burnT[i] > 0) {
+            const hit = clogHit(t, p.hp[i], p.foam[i], p.burnD[i] * h, 0, 0, 1, p.slowT[i] > 0 ? 1 : 0);
+            p.hp[i] = hit.hp;
+            p.foam[i] = hit.foam;
+            p.burnT[i] -= h;
+            if (hit.burst) puff(p.x[i], k.y, p.z[i], 10, 6, 2, 0.35, 0.3);
+            if (p.hp[i] <= 0) {
+              killEnemy(t, i, true);
+              continue;
+            }
+          }
+          if (p.slowT[i] > 0) p.slowT[i] -= h;
+          if (p.freeze[i] >= 1 || p.stagT[i] > 0) {
+            if (p.stagT[i] > 0) p.stagT[i] -= h;
+            continue;
+          }
+          if (p.freeze[i] > 0) {
+            p.freeze[i] -= h;
+            continue;
+          }
+          const slow = p.slowT[i] > 0 ? 0.5 : 1;
+          if (t === 3) {
+            p.age[i] += h;
+            const g = hairGrowth(p.age[i]);
+            const max = k.hp * level.hpMul * g.hpScale;
+            if (max > p.maxHp[i]) p.hp[i] += max - p.maxHp[i];
+            p.maxHp[i] = max;
+            p.radS[i] = g.radScale;
+            p.z[i] += 6 * slow * h;
+          } else if (t === 4) {
+            const holdZ = -dist - 30;
+            if (p.z[i] < holdZ) p.z[i] = Math.min(holdZ, p.z[i] + 8 * h);
+            else p.z[i] = Math.max(holdZ, p.z[i] - 8 * slow * h);
+            p.x[i] += clamp(squadX - p.x[i], -1, 1) * k.lat * slow * h;
+            p.lob[i] -= h;
+            if (p.lob[i] <= 0) {
+              p.lob[i] = 3;
+              const id = allocS(muds);
+              if (id >= 0) {
+                const tx = squadX;
+                const tz = -dist;
+                muds.x[id] = p.x[i];
+                muds.y[id] = 1.3;
+                muds.z[id] = p.z[i];
+                muds.vx[id] = (tx - p.x[i]) / 0.8;
+                muds.vz[id] = (tz - p.z[i]) / 0.8;
+                muds.vy[id] = 4.42;
+                muds.life[id] = 0.85;
+                armHazard(tx, tz, 1.2, 0.8, 3);
+              }
+            }
+          } else if (t === 6) {
+            p.x[i] += p.side[i] * 3 * slow * h;
+            p.z[i] += 0.35 * h;
+            if (Math.abs(p.x[i]) > half + 1.3) releaseEnemy(t, i);
+          } else {
+            p.x[i] += clamp(squadX - p.x[i], -1, 1) * k.lat * slow * h;
+            p.z[i] += k.speed * slow * h;
+          }
           if (p.hit[i] > 0) p.hit[i] = Math.max(0, p.hit[i] - h * 5);
         }
       }
       rebuildGrid();
-      moveBullets(h);
+      movePool(balls, h, "ball");
+      movePool(arrows, h, "arrow");
+      movePool(logs, h, "log");
+      movePool(rockets, h, "rocket");
+      movePool(party, h, "party");
+      movePool(muds, h, "mud");
+      movePool(cases, h, "case");
+      movePool(embers, h, "ember");
+      movePool(puddles, h, "puddle");
+      movePool(hazards, h, "hazard");
+      movePool(vducks, h, "duck");
+      formationOffsets(squadN, radius, fx, fz);
+      resolveHazards();
+      if (ended) return;
       if (!ended) {
         const blob = formationRadius(Math.max(squadN, 1), half);
-        for (let t = 0; t < 3; t++) {
+        for (let t = 0; t < TYPES; t++) {
           const p = pools[t];
-          const k = KINDS[t];
-          for (let i = 0; i < CAP; i++) {
-            if (!p.alive[i] || p.freeze[i]) continue;
-            if (p.z[i] > -dist + 2.55) {
-              p.alive[i] = 0;
-              p.free[p.freeN++] = i;
-              liveN--;
+          const k = ENEMY[t];
+          for (let i = 0; i < p.cap; i++) {
+            if (!p.alive[i] || p.freeze[i] >= 1) continue;
+            if (p.z[i] > -dist + 2.8) {
+              releaseEnemy(t, i);
               continue;
             }
+            const rad = k.rad * (p.radS[i] || 1);
             const dx = p.x[i] - squadX;
             const dz = p.z[i] - (-dist);
-            const rr = blob + k.rad;
+            const rr = blob + rad;
             if (dx * dx + dz * dz >= rr * rr) continue;
+            if (t === 5) {
+              if (stuckN < 16) {
+                stuckS[stuckN] = (stuckN * 3) % Math.max(1, shownCount(squadN));
+                stuckT[stuckN] = 2;
+                stuckN++;
+              }
+              releaseEnemy(t, i);
+              continue;
+            }
+            if (t === 6) {
+              p.side[i] *= -1;
+              const len = Math.sqrt(dx * dx + dz * dz) || 0.001;
+              p.x[i] = squadX + (dx / len) * (rr + 0.2);
+              continue;
+            }
             if (t === 2) {
               const len = Math.sqrt(dx * dx + dz * dz) || 0.001;
               p.x[i] = squadX + (dx / len) * rr;
@@ -1378,7 +2252,9 @@ export function createPlay(scene, camera, audio) {
                 if (ended) return;
               }
             } else {
-              hurtSquad(k.bite);
+              let bite = k.bite;
+              if (t === 3) bite = hairGrowth(p.age[i]).bite;
+              hurtSquad(bite);
               killEnemy(t, i, true);
               if (ended) return;
             }
@@ -1386,23 +2262,55 @@ export function createPlay(scene, camera, audio) {
         }
       }
       if (!ended) {
-        formationOffsets(squadN, radius, fx, fz);
+        let aliveStuck = 0;
+        for (let i = 0; i < stuckN; i++) {
+          stuckT[i] -= h;
+          if (stuckT[i] > 0) {
+            stuckT[aliveStuck] = stuckT[i];
+            stuckS[aliveStuck] = stuckS[i];
+            aliveStuck++;
+          }
+        }
+        stuckN = aliveStuck;
         buildCands();
         const shooters = squadN > RENDER_CAP ? RENDER_CAP : squadN;
-        const interval = 1 / mods.rate;
-        for (let s = 0; s < shooters; s++) {
-          cds[s] -= h;
-          if (cds[s] > 0) continue;
-          if (cn <= 0) continue;
-          cds[s] = interval;
-          fireSoldier(s);
+        const leafCut = Math.min(0.4, stuckN * 0.05);
+        const rateScale = leafCut > 0 ? 1 / (1 - leafCut) : 1;
+        if (mods.pattern === "spin") {
+          if (cn > 0) spin = Math.min(1, spin + h / 0.6);
+          else spin = Math.max(0, spin - h / 0.4);
+        } else spin = Math.max(0, spin - h);
+        const rateNow = mods.pattern === "spin" ? mods.rate + (mods.rateMax - mods.rate) * spin : mods.rate;
+        if (mods.pattern === "cone" || mods.pattern === "stream") {
+          gunAcc -= h;
+          if (gunAcc <= 0 && cn > 0) {
+            gunAcc += (1 / Math.max(0.05, rateNow)) * rateScale;
+            if (mods.pattern === "cone") tickCone();
+            else tickStream();
+            shotThisTick = true;
+          }
+        } else {
+          const interval = (1 / Math.max(0.05, rateNow)) * rateScale;
+          for (let s = 0; s < shooters; s++) {
+            cds[s] -= h;
+            if (cds[s] > 0) continue;
+            if (cn <= 0) continue;
+            cds[s] = interval;
+            fireSoldier(s);
+          }
         }
       }
     }
+    if (kickT > 0) kickT = Math.max(0, kickT - h);
     for (let i = 0; i < gates.length; i++) {
       if (gates[i].bump > 0) gates[i].bump = Math.max(0, gates[i].bump - h * 2.4);
     }
     if (flyT > 0) flyT -= h;
+    for (let i = 0; i < 8; i++) {
+      if (!words[i].on) continue;
+      words[i].life -= h;
+      if (words[i].life <= 0) words[i].on = 0;
+    }
     for (let i = 0; i < PUFFS; i++) {
       if (!palive[i]) continue;
       plife[i] -= h;
@@ -1429,12 +2337,16 @@ export function createPlay(scene, camera, audio) {
     view.weaponId = weaponId;
     view.tier = tier;
     view.weaponName = mods.name;
-    view.tierName = TIER_NAMES[tier];
+    view.tierName = TIER_NAMES[tier] || "Wood";
+    view.family = mods.family;
     view.color = mods.color;
+    view.gold = mods.gold ? 1 : 0;
+    view.spin = spin;
     view.dist = dist;
     view.arena = arenaStarted;
     view.enemies = liveN;
     view.bossHp = bossState.hp;
+    view.bossMax = level.bossHp;
     view.bossX = bossState.x;
     view.half = half;
     view.squadX = squadX;
@@ -1449,21 +2361,34 @@ export function createPlay(scene, camera, audio) {
     view.crateRammed = crateRammed;
     view.bossSec = bossSec;
     view.gate0 = gates.length ? gates[0].label : "+5";
-    view.crateHp = crates[0].hp;
+    view.crateHp = crates[0] ? crates[0].hp : 0;
     view.targetX = targetX;
     view.slow = slowLeft;
-    view.flash = flashT > 0 ? "BRIDGE HELD!" : "";
+    view.flash = flashT > 0 ? level.win : "";
+    view.levelId = level.id;
+    view.levelName = level.name;
+    view.intro = level.intro;
+    view.winTitle = level.win;
+    view.river = level.river;
+    view.dam = level.dam;
+    view.theme = level.theme;
+    view.toastT = toastT;
+    view.toastName = toastName;
+    view.toastLine = toastLine;
+    view.barkT = barkT;
+    view.bark = barkText;
     if (arenaStarted) {
-      view.bar = bossState.hp / 3000;
-      view.barText = "RAT BARON";
+      view.bar = level.bossHp > 0 ? bossState.hp / level.bossHp : 0;
+      view.barText = level.bossName;
     } else {
-      view.bar = dist / 700;
+      view.bar = level.len > 0 ? dist / level.len : 0;
       view.barText = "";
     }
   }
 
   function reset() {
     seed = 12345;
+    level = levelOf(level.id);
     squadN = 3;
     squadX = 0;
     targetX = 0;
@@ -1471,15 +2396,19 @@ export function createPlay(scene, camera, audio) {
     prevZ = 0;
     half = 5;
     radius = formationRadius(3, 5);
-    weaponId = "pistol";
+    weaponId = "bow";
     tier = 1;
-    refreshMods();
+    spin = 0;
+    kickT = 0;
+    gunAcc = 0;
     running = false;
     ended = "";
     winSent = false;
     slowLeft = 0;
     flashT = 0;
     kills = 0;
+    duckKills = 0;
+    duckCrates = 0;
     cratesOpened = 0;
     crateRammed = 0;
     bossSec = 0;
@@ -1490,68 +2419,107 @@ export function createPlay(scene, camera, audio) {
     bench = 0;
     steered = 0;
     liveN = 0;
+    stuckN = 0;
     shotThisTick = false;
+    toastT = 0;
+    barkT = 0;
+    wrenchPhase = 0;
+    pullT = 0;
+    counts.fill(0);
     fired.fill(0);
-    for (let t = 0; t < 3; t++) {
+    for (let t = 0; t < TYPES; t++) {
       const p = pools[t];
       p.alive.fill(0);
-      p.freeN = CAP;
-      for (let i = 0; i < CAP; i++) p.free[i] = i;
+      p.freeN = p.cap;
+      for (let i = 0; i < p.cap; i++) p.free[i] = i;
     }
-    resetBullets();
-    resetPuffs();
+    clearPool(balls);
+    clearPool(arrows);
+    clearPool(logs);
+    clearPool(rockets);
+    clearPool(party);
+    clearPool(muds);
+    clearPool(cases);
+    clearPool(embers);
+    clearPool(puddles);
+    clearPool(hazards);
+    clearPool(vducks);
+    pFreeN = PUFFS;
+    for (let i = 0; i < PUFFS; i++) {
+      pfree[i] = i;
+      palive[i] = 0;
+    }
     flAlive.fill(0);
+    for (let i = 0; i < 8; i++) words[i].on = 0;
     for (let i = 0; i < RENDER_CAP; i++) cds[i] = rnd() * 0.25;
-    bossState.hp = 3000;
-    bossState.alive = 1;
+    bossKind = level.boss;
+    showBossMesh();
+    bossState.hp = level.bossHp;
+    bossState.alive = 0;
     bossState.shown = 0;
     bossState.summoned = 0;
     bossState.x = 0;
-    bossState.z = -711;
-    bossState.homeZ = -711;
+    bossState.z = -(level.len + 11);
+    bossState.homeZ = bossState.z;
     bossState.mode = 0;
     bossState.t = 1.4;
     boss.visible = false;
-    fly.visible = false;
-    rack.visible = true;
-    for (let i = 0; i < 3; i++) paintChip(i);
-    for (let i = 0; i < crates.length; i++) {
-      const c = crates[i];
-      c.hp = c.max;
-      c.state = "idle";
-      c.shake = 0;
-      c.dirty = 1;
-      c.mesh.visible = true;
-      c.mesh.position.set(0, 0, c.z);
-    }
+    wrench.visible = false;
+    manhole.visible = false;
+    wayArrow.visible = false;
+    zone.visible = false;
+    rack.visible = false;
+    layoutLevel();
     buildGates();
+    refreshMods();
     audio.endFire();
     publish();
   }
 
   function sync(cam) {
     flushCrates();
+    flameMat.uniforms.uTime.value = clock;
     const shown = formationOffsets(squadN, radius, fx, fz);
+    const back = kickT > 0 ? 0.15 * (kickT / 0.2) : 0;
+    const wob = spin * Math.sin(clock * 90) * 0.03;
     const sM = soldiers.instanceMatrix.array;
     soldiers.count = shown;
     soldiers.visible = shown > 0;
-    for (let i = 0; i < shown; i++) writeTRS(sM, i, squadX + fx[i], 0.14, -dist + fz[i], 0, 1, 1, 1);
+    const gM = goldRing.instanceMatrix.array;
+    goldRing.count = mods.gold ? shown : 0;
+    goldRing.visible = mods.gold && shown > 0;
+    for (let i = 0; i < shown; i++) {
+      writeTRS(sM, i, squadX + fx[i] + wob, 0.14, -dist + fz[i] + back, 0, 1, 1, 1);
+      if (mods.gold) writeTRS(gM, i, squadX + fx[i] + wob + 0.22, 0.55, -dist + fz[i] + back - 0.25, 0, 1, 1, 1);
+    }
     if (shown) soldiers.instanceMatrix.needsUpdate = true;
-    bober.position.set(squadX, 0.12, -dist - radius - 1.15);
+    if (goldRing.visible) goldRing.instanceMatrix.needsUpdate = true;
+    bober.position.set(squadX + wob, 0.12, -dist - radius - 1.15 + back);
     bober.visible = ended !== "lose";
     shadow.position.set(squadX, 0.23, -dist + 0.15);
     const sh = Math.max(1.3, radius * 2.5);
     shadow.scale.set(sh, sh, 1);
-    for (let t = 0; t < 3; t++) {
+    glow.visible = spin > 0.2;
+    if (glow.visible) {
+      glow.position.set(squadX + wob, 1.15, -dist + 0.2);
+      const gs = 0.6 + spin * 1.1;
+      glow.scale.set(gs, gs, 1);
+    }
+    for (let t = 0; t < TYPES; t++) {
       const p = pools[t];
       const m = p.mesh.instanceMatrix.array;
       const ph = p.phaseAttr.array;
       const ht = p.hitAttr.array;
       let w = 0;
-      for (let i = 0; i < CAP; i++) {
+      for (let i = 0; i < p.cap; i++) {
         if (!p.alive[i]) continue;
-        writeTRS(m, w, p.x[i], 0, p.z[i], Math.PI, 1, 1, 1);
-        ph[w] = p.phase[i];
+        const sc = p.radS[i] || 1;
+        const y = t === 3 ? ENEMY[t].y * sc : 0;
+        const yaw = t === 6 ? (p.side[i] < 0 ? Math.PI / 2 : -Math.PI / 2) : Math.PI;
+        const roll = t === 3 ? clock * 6 : 0;
+        if (t === 3) writeLog(m, w, p.x[i], y, p.z[i], yaw, roll, sc);
+        else writeTRS(m, w, p.x[i], y, p.z[i], yaw, sc, sc, sc);
+        ph[w] = p.phase[i] + (t === 5 ? clock : 0);
         ht[w] = p.hit[i];
         w++;
       }
@@ -1563,37 +2531,46 @@ export function createPlay(scene, camera, audio) {
         p.hitAttr.needsUpdate = true;
       }
     }
-    const bM = ball.instanceMatrix.array;
-    const bC = ball.instanceColor.array;
-    const lM = logs.instanceMatrix.array;
-    let bw = 0;
-    let lw = 0;
-    for (let i = 0; i < BULLETS; i++) {
-      if (!balive[i]) continue;
-      if (bkind[i] === 2) {
-        if (lw >= 160) continue;
-        const yaw = Math.atan2(-bvx[i], -bvz[i]);
-        writeLog(lM, lw, bx[i], by[i], bz[i], yaw, broll[i], 1);
-        lw++;
-      } else {
-        const yaw = Math.atan2(bvx[i], bvz[i]);
-        writeTRS(bM, bw, bx[i], by[i], bz[i], yaw, 1, 1, 1);
-        const c = bulletCols[bcol[i]] || bulletCols[0];
-        bC[bw * 3] = c[0];
-        bC[bw * 3 + 1] = c[1];
-        bC[bw * 3 + 2] = c[2];
-        bw++;
+    const stM = stuckMesh.instanceMatrix.array;
+    stuckMesh.count = stuckN;
+    stuckMesh.visible = stuckN > 0;
+    for (let i = 0; i < stuckN; i++) {
+      const s = stuckS[i] % Math.max(1, shown);
+      writeTRS(stM, i, squadX + (fx[s] || 0), 1.15, -dist + (fz[s] || 0), clock, 0.7, 0.7, 0.7);
+    }
+    if (stuckN) stuckMesh.instanceMatrix.needsUpdate = true;
+
+    paintShots(balls, "ball", cam);
+    paintShots(arrows, "arrow", cam);
+    paintShots(logs, "log", cam);
+    paintShots(rockets, "rocket", cam);
+    paintShots(party, "party", cam);
+    paintShots(muds, "mud", cam);
+    paintShots(cases, "case", cam);
+    paintShots(embers, "ember", cam);
+    paintShots(puddles, "puddle", cam);
+    paintShots(hazards, "hazard", cam);
+    paintShots(vducks, "vduck", cam);
+
+    const coneOn = mods.pattern === "cone" && running && !ended && shown > 0;
+    const streamOn = mods.pattern === "stream" && running && !ended && shown > 0;
+    const origins = Math.max(1, Math.ceil(Math.max(1, shown) / 10));
+    for (let i = 0; i < 6; i++) {
+      const s = Math.min(shown - 1, i * 10);
+      const on = coneOn && i < origins;
+      flames[i].visible = !!on;
+      if (on) {
+        const rad = Math.tan(mods.spread * 0.5) * 11;
+        flames[i].position.set(squadX + (fx[s] || 0), 1.05, -dist + (fz[s] || 0));
+        flames[i].scale.set(rad, rad, 11);
+      }
+      const onS = streamOn && i < origins;
+      saps[i].visible = !!onS;
+      if (onS) {
+        saps[i].position.set(squadX + (fx[s] || 0), 1.0, -dist + (fz[s] || 0));
+        saps[i].scale.set(1, 1, 20);
       }
     }
-    ball.count = bw;
-    ball.visible = bw > 0;
-    logs.count = lw;
-    logs.visible = lw > 0;
-    if (bw) {
-      ball.instanceMatrix.needsUpdate = true;
-      ball.instanceColor.needsUpdate = true;
-    }
-    if (lw) logs.instanceMatrix.needsUpdate = true;
 
     cam.updateMatrixWorld();
     const qx = cam.quaternion.x;
@@ -1605,7 +2582,7 @@ export function createPlay(scene, camera, audio) {
     let pw = 0;
     for (let i = 0; i < PUFFS; i++) {
       if (!palive[i]) continue;
-      const s = psize[i] * (0.45 + 0.55 * (plife[i] / pmax[i]));
+      const s = psize[i] * (0.45 + 0.55 * (plife[i] / (pmax[i] || 1)));
       writeQuat(pM, pw, px[i], py[i], pz[i], s, qx, qy, qz, qw);
       const c = puffCol[pkind[i]] || puffCol[0];
       pC[pw * 3] = c[0];
@@ -1619,7 +2596,6 @@ export function createPlay(scene, camera, audio) {
       puffs.instanceMatrix.needsUpdate = true;
       puffs.instanceColor.needsUpdate = true;
     }
-
     const dM = digits.instanceMatrix.array;
     const dA = digits.geometry.getAttribute("aDigit").array;
     let dw = 0;
@@ -1627,7 +2603,7 @@ export function createPlay(scene, camera, audio) {
       if (!flAlive[f]) continue;
       const nDig = fillDigits(flValue[f] + 0.5);
       const y = flY[f] + (0.72 - flLife[f]) * 1.3;
-      for (let k = 0; k < nDig; k++) {
+      for (let k = 0; k < nDig && dw < GLYPHS; k++) {
         const ox = (k - (nDig - 1) / 2) * 0.38;
         writeQuat(dM, dw, flX[f] + ox, y, flZ[f], 0.62, qx, qy, qz, qw);
         dA[dw] = digScratch[k];
@@ -1648,22 +2624,28 @@ export function createPlay(scene, camera, audio) {
     let anyGate = 0;
     for (let i = 0; i < gates.length; i++) {
       const g = gates[i];
-      const s = g.passed ? 0 : 1;
+      const near = Math.abs(-g.z - dist) < 70;
+      const s = g.passed || !near ? 0 : 1;
       if (s) anyGate = 1;
       writeTRS(fM, i, g.x, 0, g.z, 0, s, s, s);
       writeTRS(oM, i, g.x, 0, g.z, 0, s, s, s);
       writeTRS(pPM, i, g.x, 2.18, g.z + 0.12, 0, s, s, s);
-      const gold = !g.passed && g.op === "mul" ? 1 : 0;
+      const gold = s && g.op === "mul" ? 1 : 0;
       writeTRS(rM, i, g.x, 2.2, g.z + 0.16, 0, gold * 1.42, gold * 0.78, gold);
       const sign = signs[i].mesh;
-      sign.visible = !g.passed;
-      if (!g.passed) {
+      sign.visible = !!s;
+      if (s) {
         sign.position.set(g.x, 2.22, g.z + 0.32);
         sign.quaternion.copy(cam.quaternion);
         const bump = 1 + g.bump;
         sign.scale.set(bump, bump, bump);
       }
     }
+    for (let i = gates.length; i < 8; i++) signs[i].mesh.visible = false;
+    gateFrame.count = gates.length;
+    gateOutline.count = gates.length;
+    gatePanel.count = gates.length;
+    gateRim.count = gates.length;
     gateFrame.visible = !!anyGate;
     gateOutline.visible = !!anyGate;
     gatePanel.visible = !!anyGate;
@@ -1680,28 +2662,91 @@ export function createPlay(scene, camera, audio) {
         c.mesh.visible = false;
         continue;
       }
-      c.mesh.visible = true;
+      const near = Math.abs(-c.z - dist) < 48;
+      c.mesh.visible = near;
+      if (!near) continue;
       const jx = c.state === "shake" ? Math.sin(clock * 95) * 0.08 : 0;
+      const wobble = c.kind === "mystery" ? Math.sin(clock * 2.2) * 0.05 : 0;
       c.mesh.position.set(c.x + jx, 0, c.z);
+      c.mesh.rotation.z = wobble;
     }
-    if (flyT > 0) {
-      fly.visible = true;
-      fly.position.set(flyX, 1.3 + (0.4 - flyT) * 5, flyZ);
-      fly.rotation.z += 0.2;
-    } else fly.visible = false;
+    if (rack.visible) {
+      const near = Math.abs(-rackZ - dist) < 46;
+      rack.visible = near && !rackTaken;
+    }
 
     projA.set(squadX, 1, -dist);
     projB.set(squadX + 1, 1, -dist);
     projA.project(cam);
     projB.project(cam);
-    const pxPerM = Math.abs(projB.x - projA.x) * 0.5 * window.innerWidth;
+    const pxPerM = Math.abs(projB.x - projA.x) * 0.5 * (cam.userData.viewW || window.innerWidth);
     view.mPerPx = pxPerM > 0.5 ? 1 / pxPerM : view.mPerPx;
+  }
+
+  const COLS = {
+    0: lin("#F4E6C3"),
+    1: lin("#F7F7FF"),
+    2: lin("#F5C400"),
+    3: lin("#4FC3FF"),
+    4: lin("#FF4FA3"),
+    5: lin("#E86A1A"),
+  };
+
+  function paintShots(s, kind, cam) {
+    const m = s.mesh.instanceMatrix.array;
+    const col = s.mesh.instanceColor ? s.mesh.instanceColor.array : null;
+    let w = 0;
+    const qx = cam.quaternion.x;
+    const qy = cam.quaternion.y;
+    const qz = cam.quaternion.z;
+    const qw = cam.quaternion.w;
+    for (let i = 0; i < s.n; i++) {
+      if (!s.alive[i]) continue;
+      if (kind === "log") {
+        const yaw = Math.atan2(-s.vx[i], -s.vz[i]);
+        writeLog(m, w, s.x[i], s.y[i], s.z[i], yaw, s.roll[i], 1);
+      } else if (kind === "rocket") {
+        const yaw = Math.atan2(-s.vx[i], -s.vz[i]);
+        writeTRS(m, w, s.x[i], s.y[i], s.z[i], yaw, 1, 1, 1);
+      } else if (kind === "arrow") {
+        const yaw = Math.atan2(s.vx[i], s.vz[i]);
+        const len = s.col[i] ? 8.3 : 1;
+        writeTRS(m, w, s.x[i], s.y[i], s.z[i], yaw, 1, 1, len);
+      } else if (kind === "ball" || kind === "case") {
+        const yaw = Math.atan2(s.vx[i], s.vz[i]);
+        writeTRS(m, w, s.x[i], s.y[i], s.z[i], yaw, 1, 1, 1);
+      } else if (kind === "hazard" || kind === "puddle") {
+        const sc = kind === "hazard" ? (s.extra[i] || 1) * 2 : 1.1;
+        writeQuat(m, w, s.x[i], s.y[i], s.z[i], sc, QX, 0, 0, QW);
+      } else if (kind === "party" || kind === "ember") {
+        const sc = kind === "party" ? 0.22 : 0.16;
+        writeQuat(m, w, s.x[i], s.y[i], s.z[i], sc, qx, qy, qz, qw);
+      } else if (kind === "vduck") {
+        writeTRS(m, w, s.x[i], s.y[i], s.z[i], 0, 0.7, 0.7, 0.7);
+      } else {
+        writeTRS(m, w, s.x[i], s.y[i], s.z[i], 0, 1, 1, 1);
+      }
+      if (col) {
+        const c = COLS[s.col[i]] || COLS[0];
+        col[w * 3] = c[0];
+        col[w * 3 + 1] = c[1];
+        col[w * 3 + 2] = c[2];
+      }
+      w++;
+    }
+    s.mesh.count = w;
+    s.mesh.visible = w > 0;
+    if (w) {
+      s.mesh.instanceMatrix.needsUpdate = true;
+      if (col) s.mesh.instanceColor.needsUpdate = true;
+    }
   }
 
   function tick(dt) {
     let left = dt > 0.05 ? 0.05 : dt;
     if (left < 0) left = 0;
     shotThisTick = false;
+    audio.beginTick();
     while (left > 1e-5) {
       const h = left > 1 / 60 ? 1 / 60 : left;
       const sim = slowLeft > 0 ? h * 0.35 : h;
@@ -1710,16 +2755,20 @@ export function createPlay(scene, camera, audio) {
       if (ended === "lose") break;
     }
     if (running && !ended) {
-      if (shotThisTick) audio.noteFire(weaponId);
+      if (shotThisTick) audio.noteFire(weaponId, spin);
       else audio.endFire();
     }
   }
 
   function tickReal(real) {
+    if (toastT > 0) toastT = Math.max(0, toastT - real);
+    if (barkT > 0) barkT = Math.max(0, barkT - real);
+    view.toastT = toastT;
+    view.barkT = barkT;
     if (flashT > 0) {
       flashT -= real;
       if (flashT < 0) flashT = 0;
-      view.flash = flashT > 0 ? "BRIDGE HELD!" : "";
+      view.flash = flashT > 0 ? level.win : "";
     }
     if (slowLeft > 0) {
       slowLeft -= real;
@@ -1752,12 +2801,14 @@ export function createPlay(scene, camera, audio) {
     snap.n = squadN;
     snap.weapon = weaponId;
     snap.tier = tier;
+    snap.family = mods.family;
+    snap.gold = mods.gold ? 1 : 0;
     snap.color = mods.color;
     snap.dist = dist;
     snap.enemies = liveN;
     snap.bossHp = bossState.hp;
-    snap.crateHp = crates[0].hp;
-    snap.crate2 = crates[1].hp;
+    snap.crateHp = crates[0] ? crates[0].hp : 0;
+    snap.crate2 = crates[1] ? crates[1].hp : 0;
     snap.gate0 = gates[0] ? gates[0].label : "";
     snap.gate1 = gates[1] ? gates[1].label : "";
     snap.x = squadX;
@@ -1771,6 +2822,31 @@ export function createPlay(scene, camera, audio) {
     snap.target = targetX;
     snap.running = running ? 1 : 0;
     snap.arena = arenaStarted;
+    snap.spin = spin;
+    snap.foam = 0;
+    const suds = pools[1];
+    for (let i = 0; i < suds.cap; i++) {
+      if (suds.alive[i]) {
+        snap.foam = suds.foam[i];
+        break;
+      }
+    }
+    snap.stuck = stuckN;
+    snap.duckKills = duckKills;
+    snap.level = level.id;
+    snap.bark = barkText;
+    snap.river = level.river;
+    snap.rack = rackStyle;
+    snap.banner = rackBanner;
+    if (!snap.counts) snap.counts = [0, 0, 0, 0, 0, 0, 0];
+    for (let i = 0; i < 7; i++) snap.counts[i] = counts[i];
+    if (!snap.kinds) snap.kinds = [];
+    snap.kinds.length = 0;
+    for (let i = 0; i < crates.length; i++) {
+      if (crates[i].hp > 0) snap.kinds.push(crates[i].kind);
+    }
+    if (!snap.slots) snap.slots = ["", "", ""];
+    for (let i = 0; i < 3; i++) snap.slots[i] = rackSlots[i].kind === "gun" ? rackSlots[i].gun : rackSlots[i].kind;
     return snap;
   }
 
@@ -1802,7 +2878,7 @@ export function createPlay(scene, camera, audio) {
     reset();
     running = true;
     for (let i = 0; i < RENDER_CAP; i++) cds[i] = 5;
-    const rat = spawnEnemy(0, 0.05, -8);
+    const clog = spawnEnemy(0, 0.05, -8);
     const id = allocB();
     bx[id] = 0.05;
     by[id] = 0.46;
@@ -1814,9 +2890,47 @@ export function createPlay(scene, camera, audio) {
     blife[id] = 1;
     bkind[id] = 0;
     bfall[id] = 0;
+    balls.tag[id] = ++shotTag;
     step(0.2);
     const pr = pools[0];
-    if (rat >= 0 && pr.alive[rat] && pr.hp[rat] > 15) fails.push("bullet miss hp " + pr.hp[rat]);
+    if (clog >= 0 && pr.alive[clog]) fails.push("bullet miss hp " + pr.hp[clog]);
+
+    reset();
+    running = true;
+    for (let i = 0; i < RENDER_CAP; i++) cds[i] = 9;
+    const line = [];
+    for (let i = 0; i < 4; i++) line.push(spawnEnemy(0, 0, -8 - i * 3));
+    const arrow = allocS(arrows);
+    arrows.x[arrow] = 0;
+    arrows.y[arrow] = 0.5;
+    arrows.z[arrow] = -4;
+    arrows.vx[arrow] = 0;
+    arrows.vy[arrow] = 0;
+    arrows.vz[arrow] = -90;
+    arrows.dmg[arrow] = 60;
+    arrows.life[arrow] = 1;
+    arrows.extra[arrow] = 4;
+    arrows.flag[arrow] = 0;
+    arrows.col[arrow] = 1;
+    arrows.tag[arrow] = ++shotTag;
+    step(0.35);
+    let pierced = 0;
+    for (let i = 0; i < 4; i++) if (line[i] >= 0 && !pools[0].alive[line[i]]) pierced++;
+    if (pierced < 4) fails.push("pierce " + pierced);
+
+    reset();
+    running = true;
+    const leaf = spawnEnemy(5, 0, -12);
+    damageEnemy(5, leaf, 1, 0, 1, -12, 0, 0, 1);
+    if (leaf >= 0 && pools[5].alive[leaf]) fails.push("flame leaf");
+
+    reset();
+    running = true;
+    const held = spawnEnemy(0, 0, -18);
+    if (held >= 0) pools[0].stagT[held] = 0.3;
+    const z0 = held >= 0 ? pools[0].z[held] : 0;
+    step(0.2);
+    if (held >= 0 && Math.abs(pools[0].z[held] - z0) > 0.08) fails.push("stagger");
 
     reset();
     running = true;
@@ -1860,23 +2974,30 @@ export function createPlay(scene, camera, audio) {
     const hitch = performance.now() - t0;
     if (hitch > 35) fails.push("hitch " + hitch.toFixed(1));
     if (liveN !== 0) fails.push("killall " + liveN);
+
+    reset();
+    running = true;
+    squadN = 3;
+    armHazard(0, 0, 2, 0.05, 3);
+    step(0.2);
+    if (squadN !== 0) fails.push("hazard " + squadN);
     reset();
     return { fails, soldier: tris.soldier, bober: tris.bober, boss: tris.boss };
   }
 
   function killAll() {
-    for (let t = 0; t < 3; t++) {
+    for (let t = 0; t < TYPES; t++) {
       const p = pools[t];
-      for (let i = 0; i < CAP; i++) {
+      for (let i = 0; i < p.cap; i++) {
         if (!p.alive[i]) continue;
         const fxOn = pFreeN > 8;
-        p.alive[i] = 0;
-        p.free[p.freeN++] = i;
-        liveN--;
+        const x0 = p.x[i];
+        const z0 = p.z[i];
+        releaseEnemy(t, i);
         kills++;
         if (fxOn) {
-          puff(p.x[i], 0.4, p.z[i], 0, 4, 2, 0.35, 0.4);
-          puff(p.x[i], 0.6, p.z[i], 1, 4, 1.4, 0.4, 0.35);
+          puff(x0, 0.4, z0, 0, 3, 2, 0.3, 0.35);
+          puff(x0, 0.6, z0, 1, 2, 1.4, 0.3, 0.28);
         }
       }
     }
@@ -1886,11 +3007,12 @@ export function createPlay(scene, camera, audio) {
   }
 
   function spawnPack(kind, count, hp, freeze) {
-    const type = kind === "beetle" ? 1 : kind === "brute" ? 2 : 0;
+    const type = KIND_OF[kind] != null ? KIND_OF[kind] : 0;
     bench = 1;
     const n = count | 0;
     for (let i = 0; i < n; i++) {
-      const id = spawnEnemy(type, ((i % 14) - 7) * 0.62, -dist - 18 - ((i / 14) | 0) * 1.35);
+      const near = n === 1;
+      const id = spawnEnemy(type, near ? squadX : ((i % 14) - 7) * 0.62, -dist - (near ? 8 : 18) - ((i / 14) | 0) * 1.35);
       if (id < 0) break;
       if (hp) pools[type].hp[id] = hp;
       if (freeze) pools[type].freeze[id] = 1;
@@ -1918,6 +3040,27 @@ export function createPlay(scene, camera, audio) {
     step,
     sync,
     tickTitle,
+    setLevel(id) {
+      level = levelOf(id);
+    },
+    setLoadout(save) {
+      unlocked = (save && save.unlocked && save.unlocked.length ? save.unlocked : STARTERS).slice();
+      const list = (save && save.seenGuns) || STARTERS;
+      for (let i = 0; i < GUN_ORDER.length; i++) seen[GUN_ORDER[i]] = false;
+      for (let i = 0; i < list.length; i++) seen[list[i]] = true;
+    },
+    cycleGun() {
+      const i = GUN_ORDER.indexOf(weaponId);
+      weaponId = GUN_ORDER[(i + 1) % GUN_ORDER.length];
+      spin = 0;
+      refreshMods();
+      publish();
+    },
+    bumpTier() {
+      tier = Math.min(4, tier + 1);
+      refreshMods();
+      publish();
+    },
     setHooks(h) {
       hooks = h || hooks;
     },
@@ -1948,12 +3091,21 @@ export function createPlay(scene, camera, audio) {
     },
     hurtCrate(dmg) {
       const c = crates[0];
-      if (c.state !== "idle") return c.hp;
+      if (!c || c.state !== "idle") return c ? c.hp : 0;
       c.hp = Math.max(0, c.hp - dmg);
       c.dirty = 1;
       if (c.hp <= 0) breakCrate(c);
       publish();
       return c.hp;
+    },
+    openCrate(index) {
+      const c = crates[index | 0];
+      if (!c || c.state !== "idle") return 0;
+      c.hp = 0;
+      c.dirty = 1;
+      breakCrate(c);
+      publish();
+      return 1;
     },
     damageGate(hits) {
       const g = gates[0];
@@ -1962,11 +3114,13 @@ export function createPlay(scene, camera, audio) {
       return g ? g.label : "";
     },
     forceRack() {
-      for (let i = 0; i < SCRIPT.length; i++) if (SCRIPT[i].at < 340) fired[i] = 1;
+      const evs = level.events;
+      for (let i = 0; i < evs.length; i++) if (evs[i].at < 340) fired[i] = 1;
       dist = 345;
       prevZ = -345;
       squadX = -3.2;
       targetX = -3.2;
+      rack.visible = true;
       publish();
     },
     debugWin() {
@@ -1974,6 +3128,8 @@ export function createPlay(scene, camera, audio) {
       kills = 40;
       cratesOpened = 1;
       crateRammed = 0;
+      duckKills = 0;
+      duckCrates = 0;
       if (!arenaStarted) startArena();
       bossSec = 10;
       bossState.hp = 0;
@@ -1988,7 +3144,7 @@ export function createPlay(scene, camera, audio) {
     },
     killBoss() {
       if (!arenaStarted) startArena();
-      hurtBoss(99999, 0, bossState.x, 1.6, bossState.z);
+      hurtBoss(99999, 0, 0, 1, bossState.x, 1.6, bossState.z);
       publish();
     },
     setBot(v) {

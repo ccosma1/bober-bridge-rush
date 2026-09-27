@@ -13,6 +13,12 @@ banned = [
     "rainbow road",
     "crypto",
     "kart",
+    "rat baron",
+    "bog rat",
+    "beetle shell",
+    "otter brute",
+    "mudrot",
+    "twig pistol",
 ]
 skip = {".git"}
 bad = []

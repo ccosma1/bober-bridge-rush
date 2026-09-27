@@ -1,6 +1,6 @@
 import * as THREE from "three";
-import { toon, pineTexture, skyTexture, writeTRS } from "./mats.js?v=br0";
-import { buildTile } from "./build.js?v=br0";
+import { toon, pineTexture, skyTexture, writeTRS } from "./mats.js?v=br1";
+import { buildTile } from "./build.js?v=br1";
 
 const TILE = 20;
 const TILES = 9;
@@ -26,7 +26,7 @@ export function createWorld(scene) {
 
   const waterUniforms = { uTime: { value: 0 } };
   const water = new THREE.Mesh(
-    new THREE.PlaneGeometry(90, 980, 1, 1),
+    new THREE.PlaneGeometry(90, 1600, 1, 1),
     new THREE.ShaderMaterial({
       transparent: true,
       depthWrite: false,
@@ -58,19 +58,46 @@ export function createWorld(scene) {
     })
   );
   water.rotation.x = -Math.PI / 2;
-  water.position.set(0, -1.35, -420);
+  water.position.set(0, -1.35, -520);
   water.frustumCulled = false;
   group.add(water);
 
   const shoreMat = toon("#6E8B52");
-  const shoreGeo = new THREE.BoxGeometry(18, 0.4, 860);
+  const shoreGeo = new THREE.BoxGeometry(18, 0.4, 1500);
   const shoreL = new THREE.Mesh(shoreGeo, shoreMat);
   const shoreR = new THREE.Mesh(shoreGeo, shoreMat);
-  shoreL.position.set(-20, -0.85, -400);
-  shoreR.position.set(20, -0.85, -400);
+  shoreL.position.set(-20, -0.85, -520);
+  shoreR.position.set(20, -0.85, -520);
   group.add(shoreL, shoreR);
 
-  const tile = new THREE.InstancedMesh(buildTile(), toon("#ffffff", { vertexColors: true }), TILES);
+  const mudMat = toon("#5A4638");
+  const mudGeo = new THREE.BoxGeometry(2.4, 0.9, 1500);
+  const mudL = new THREE.Mesh(mudGeo, mudMat);
+  const mudR = new THREE.Mesh(mudGeo, mudMat);
+  mudL.position.set(-6.6, -1.75, -520);
+  mudR.position.set(6.6, -1.75, -520);
+  group.add(mudL, mudR);
+
+  const dam = new THREE.Group();
+  const wall = new THREE.Mesh(new THREE.BoxGeometry(16, 11, 2.2), toon("#C8C2B4"));
+  wall.position.y = 4.2;
+  const lip = new THREE.Mesh(new THREE.BoxGeometry(16.4, 0.6, 2.6), toon("#A8A090"));
+  lip.position.y = 9.6;
+  const streak = new THREE.Mesh(new THREE.BoxGeometry(1.1, 8, 0.2), toon("#8A7A68"));
+  streak.position.set(-3.2, 4, 1.2);
+  const streak2 = new THREE.Mesh(new THREE.BoxGeometry(0.7, 6.5, 0.2), toon("#7A6A58"));
+  streak2.position.set(2.4, 3.2, 1.2);
+  dam.add(wall, lip, streak, streak2);
+  const steps = new THREE.InstancedMesh(new THREE.BoxGeometry(7, 0.28, 1.4), toon("#B7B1A4"), 6);
+  steps.frustumCulled = false;
+  const stepM = steps.instanceMatrix.array;
+  for (let i = 0; i < 6; i++) writeTRS(stepM, i, 0, -0.4 - i * 0.28, 2.2 + i * 1.5, 0, 1, 1, 1);
+  steps.instanceMatrix.needsUpdate = true;
+  dam.add(steps);
+  group.add(dam);
+
+  const tileMat = toon("#ffffff", { vertexColors: true });
+  const tile = new THREE.InstancedMesh(buildTile(), tileMat, TILES);
   tile.frustumCulled = false;
   tile.count = TILES;
   group.add(tile);
@@ -119,8 +146,18 @@ export function createWorld(scene) {
   const tileM = tile.instanceMatrix.array;
   const lanM = lanterns.instanceMatrix.array;
 
-  function follow(x, z, half, time) {
+  function follow(x, z, half, time, river, damScale, theme) {
     waterUniforms.uTime.value = time;
+    const drop = river || 0;
+    const look = theme || 0;
+    water.position.y = -1.35 + drop;
+    const scale = damScale || 1;
+    dam.position.set(look >= 2 ? 7.5 : 0, drop, z - (look >= 2 ? 28 : 78));
+    dam.scale.set(scale, scale, scale);
+    steps.visible = look >= 1;
+    if (look >= 2) tileMat.color.set("#C9C3B6");
+    else if (look >= 1) tileMat.color.set("#DDD6CC");
+    else tileMat.color.set("#ffffff");
     sky.position.set(x, 6, z);
     key.position.set(x - 4.5, 12, z + 10);
     key.target.position.set(x, 0.8, z - 10);
