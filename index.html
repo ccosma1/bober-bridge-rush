@@ -1,0 +1,88 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover" />
+  <meta name="theme-color" content="#3A2A6A" />
+  <meta name="description" content="Bober Bridge Rush. Hold the pine bridge. Fan game. Unofficial." />
+  <title>Bober Bridge Rush</title>
+  <link rel="stylesheet" href="css/game.css?v=br0" />
+</head>
+<body>
+  <canvas id="c"></canvas>
+  <div id="boot">Raising the bridge…</div>
+
+  <header id="hud" class="hidden">
+    <div class="top">
+      <div class="titles">
+        <div id="level-name">1-1 PINE BRIDGE</div>
+        <div id="bober-run">$BOBER 0</div>
+      </div>
+      <button id="btn-pause" type="button" aria-label="Pause">II</button>
+    </div>
+    <div class="bar-wrap">
+      <div id="bar-label"></div>
+      <div class="bar" id="bar"><div id="bar-fill"></div></div>
+    </div>
+  </header>
+
+  <div id="dbg-hot" aria-hidden="true"></div>
+  <pre id="dbg" class="hidden"></pre>
+  <div id="squad-banner" class="hidden">3</div>
+  <div id="flash" class="hidden">BRIDGE HELD!</div>
+
+  <div id="chip" class="hidden">
+    <canvas id="chip-icon" width="64" height="64"></canvas>
+    <div>
+      <div id="chip-name">Twig Pistol</div>
+      <div id="chip-tier">T1 Wood</div>
+    </div>
+  </div>
+  <div id="tip" class="hidden">Drag to steer. Shoot gates to grow them.</div>
+
+  <section id="title">
+    <div class="sheet">
+      <p class="eyebrow">1-1 Pine Bridge</p>
+      <h1>BOBER<br />BRIDGE RUSH</h1>
+      <button id="btn-start" type="button" disabled>HOLD THE BRIDGE</button>
+      <div class="meta">
+        <span id="bober-total">$BOBER 0</span>
+        <button id="btn-mute" type="button" aria-pressed="false">Sound</button>
+      </div>
+      <p id="fan-line">Fan game. Unofficial.</p>
+      <a id="btn-home" href="https://ccosma1.github.io/green-home-games/">Back to Green Home Games</a>
+      <span id="build-tag">br0</span>
+    </div>
+  </section>
+
+  <section id="pause-card" class="hidden">
+    <div class="sheet">
+      <h2>Paused</h2>
+      <button id="btn-resume" type="button">RESUME</button>
+    </div>
+  </section>
+
+  <section id="result" class="hidden">
+    <div class="sheet">
+      <h2 id="result-title">BRIDGE HELD!</h2>
+      <div id="stars" aria-label="Stars"><i></i><i></i><i></i></div>
+      <p id="result-copy"></p>
+      <p id="result-earn"></p>
+      <div class="actions">
+        <button id="btn-retry" type="button">Retry</button>
+        <button id="btn-next" type="button">Level 1-2 coming soon</button>
+      </div>
+      <a id="btn-home-result" href="https://ccosma1.github.io/green-home-games/">Back to Green Home Games</a>
+    </div>
+  </section>
+
+  <script type="importmap">
+  {
+    "imports": {
+      "three": "https://cdn.jsdelivr.net/npm/three@0.170.0/build/three.module.js"
+    }
+  }
+  </script>
+  <script type="module" src="js/main.js?v=br0"></script>
+</body>
+</html>
