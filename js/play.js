@@ -41,7 +41,7 @@ import {
   TIER_TTK,
   TUNED,
   laneCols,
-} from "./rules.js?v=br3d";
+} from "./rules.js?v=br4";
 import {
   animToon,
   attachOutline,
@@ -58,7 +58,7 @@ import {
   writeLog,
   writeQuat,
   writeTRS,
-} from "./mats.js?v=br3d";
+} from "./mats.js?v=br4";
 import {
   arrowGeo,
   buildBaron,
@@ -83,14 +83,14 @@ import {
   quadGeo,
   rocketGeo,
   streamGeo,
-} from "./build.js?v=br3d";
+} from "./build.js?v=br4";
 
 const STRIDE = 320;
 const CAPS = [320, 320, 320, 120, 120, 120, 120];
 const TYPES = 7;
 const BALLN = 400;
 const ARROWN = 100;
-const LOGN = 80;
+const LOGN = 160;
 const ROCKN = 60;
 const PARTYN = 150;
 const MUDN = 16;
@@ -151,6 +151,7 @@ export function createPlay(scene, camera, audio) {
   const beaverMat = animToon(0.5);
   const beaverShell = outlineAnim(0.035, 0.5);
   const soldiers = new THREE.InstancedMesh(soldierBuilt.geo, beaverMat, RENDER_CAP);
+  soldiers.renderOrder = 4;
   soldiers.frustumCulled = false;
   soldiers.count = 0;
   soldiers.instanceMatrix.setUsage(THREE.DynamicDrawUsage);
@@ -166,6 +167,7 @@ export function createPlay(scene, camera, audio) {
   boberBuilt.geo.setAttribute("aPhase", new THREE.BufferAttribute(new Float32Array(boberN), 1));
   boberBuilt.geo.setAttribute("aHit", new THREE.BufferAttribute(new Float32Array(boberN), 1));
   const bober = new THREE.Mesh(boberBuilt.geo, beaverMat);
+  bober.renderOrder = 4;
   bober.frustumCulled = false;
   bober.castShadow = true;
   attachOutline(bober, 0.04);
@@ -208,12 +210,14 @@ export function createPlay(scene, camera, audio) {
     built.geo.setAttribute("aPhase", new THREE.InstancedBufferAttribute(phase, 1));
     built.geo.setAttribute("aHit", new THREE.InstancedBufferAttribute(hit, 1));
     const mesh = new THREE.InstancedMesh(built.geo, animToon(), cap);
+    mesh.renderOrder = 1;
     mesh.frustumCulled = false;
     mesh.count = 0;
     mesh.visible = false;
     mesh.instanceMatrix.setUsage(THREE.DynamicDrawUsage);
     scene.add(mesh);
     const shell = new THREE.InstancedMesh(built.geo, animShell, cap);
+    shell.renderOrder = 1;
     shell.frustumCulled = false;
     shell.count = 0;
     shell.visible = false;
@@ -304,7 +308,7 @@ export function createPlay(scene, camera, audio) {
     blending: THREE.AdditiveBlending,
   });
   const balls = makeShots(bulletGeo(), streakMat(), BALLN);
-  const pellets = makeShots(new THREE.SphereGeometry(0.1, 6, 5), streakMat(), 280);
+  const pellets = makeShots(new THREE.SphereGeometry(0.1, 6, 5), streakMat(), 2400);
   const ices = makeShots(new THREE.OctahedronGeometry(0.22, 0), new THREE.MeshBasicMaterial({
     color: 0x7debff, toneMapped: false,
   }), 80);
@@ -757,6 +761,8 @@ export function createPlay(scene, camera, audio) {
   const flY = new Float32Array(FLOATS);
   const flZ = new Float32Array(FLOATS);
   const flTarget = new Int16Array(FLOATS);
+  const flStamp = new Float32Array(FLOATS);
+  const flDmg = new Uint8Array(FLOATS);
   const digScratch = new Uint8Array(4);
   const words = [];
   for (let i = 0; i < 16; i++) words.push({ on: 0, text: "", x: 0, y: 0, z: 0, life: 0, bad: 0, big: 0 });
@@ -799,8 +805,8 @@ export function createPlay(scene, camera, audio) {
   let frameTag = 1;
 
   const view = {
-    n: 3, weaponId: "bow", tier: 1, weaponName: "Twig Crossbow", tierName: "Wood",
-    family: "ARROWS", color: "#F4E6C3", gold: 0, spin: 0,
+    n: 3, weaponId: "smg", tier: 1, weaponName: "Acorn SMG", tierName: "Wood",
+    family: "BULLETS", color: "#F5C400", gold: 0, spin: 0, wave: 0,
     dist: 0, arena: 0, bar: 0, barText: "", enemies: 0, counts,
     bossHp: 3000, bossMax: 3000, bossX: 0, flash: "", half: DECK_HALF,
     squadX: 0, squadZ: 0, radius: 0.8, bannerY: 2.7, ended: "", running: 0,
@@ -819,9 +825,12 @@ export function createPlay(scene, camera, audio) {
   let prevZ = 0;
   let half = DECK_HALF;
   let radius = 0.8;
-  let weaponId = "bow";
+  let weaponId = "smg";
   let tier = 1;
-  let mods = weaponMods("bow", 1);
+  let loadoutGun = "bow";
+  let waveBlend = 0;
+  let holdFire = 0;
+  let mods = weaponMods("smg", 1);
   let running = false;
   let ended = "";
   let winSent = false;
@@ -1013,21 +1022,41 @@ export function createPlay(scene, camera, audio) {
     if (v <= 60) return 0.8;
     return 1.1;
   }
-  function floater(target, x0, y0, z0, amount, crit) {
+  function phoneNarrow() {
+    const w = camera.userData.viewW || (typeof window !== "undefined" ? window.innerWidth : 800);
+    return w < 500;
+  }
+  function floater(target, x0, y0, z0, amount, crit, isDmg) {
     const add = amount > 0 ? amount : 0;
     if (add <= 0) return;
+    const narrow = isDmg && phoneNarrow();
+    const now = clock;
     for (let i = 0; i < FLOATS; i++) {
-      if (flAlive[i] && flTarget[i] === target && flLife[i] > 0.2) {
-        flValue[i] += add;
-        if (flValue[i] > 9999) flValue[i] = 9999;
-        flLife[i] = 0.5;
-        flSize[i] = numSize(flValue[i]);
-        if (crit) flCrit[i] = 1;
-        flX[i] = x0;
-        flY[i] = y0;
-        flZ[i] = z0;
-        return;
+      if (!flAlive[i] || flTarget[i] !== target) continue;
+      if (now - flStamp[i] > 0.3) continue;
+      flValue[i] += add;
+      if (flValue[i] > 9999) flValue[i] = 9999;
+      flSize[i] = numSize(flValue[i]) * (narrow || (flDmg[i] && phoneNarrow()) ? 0.7 : 1);
+      if (crit === 1) flCrit[i] = 1;
+      else if (crit === 2 && flCrit[i] !== 1) flCrit[i] = 2;
+      flX[i] = x0;
+      flY[i] = y0;
+      flZ[i] = z0;
+      return;
+    }
+    if (isDmg) {
+      let n = 0;
+      let oldest = -1;
+      let oldestT = 1e9;
+      for (let i = 0; i < FLOATS; i++) {
+        if (!flAlive[i] || !flDmg[i]) continue;
+        n++;
+        if (flStamp[i] < oldestT) {
+          oldestT = flStamp[i];
+          oldest = i;
+        }
       }
+      if (n >= 10 && oldest >= 0) flAlive[oldest] = 0;
     }
     let slot = -1;
     for (let i = 0; i < FLOATS; i++) if (!flAlive[i]) { slot = i; break; }
@@ -1037,11 +1066,13 @@ export function createPlay(scene, camera, audio) {
       slot = best;
     }
     flAlive[slot] = 1;
+    flDmg[slot] = isDmg ? 1 : 0;
     flTarget[slot] = target;
+    flStamp[slot] = now;
     flValue[slot] = add > 9999 ? 9999 : add;
     flLife[slot] = 0.5;
-    flSize[slot] = numSize(add);
-    flCrit[slot] = crit ? 1 : 0;
+    flSize[slot] = numSize(add) * (narrow ? 0.7 : 1);
+    flCrit[slot] = crit === 2 ? 2 : crit ? 1 : 0;
     flX[slot] = x0;
     flY[slot] = y0;
     flZ[slot] = z0;
@@ -1526,12 +1557,13 @@ export function createPlay(scene, camera, audio) {
 
   function grantGun(id) {
     const next = id || "bow";
+    tier = tierAfterPickup(weaponId, tier, next, 0);
     weaponId = next;
     spin = 0;
     refreshMods();
     toastT = 2.2;
     toastName = mods.name;
-    toastLine = mods.line || mods.family;
+    toastLine = "T" + tier + " " + (TIER_NAMES[tier] || "");
     if (!seen[next]) {
       seen[next] = true;
       if (hooks.seen) hooks.seen(next);
@@ -1540,6 +1572,7 @@ export function createPlay(scene, camera, audio) {
     flyZ = -dist;
     flyT = 0.45;
     word(mods.name, squadX, 2.8, -dist, 0, 1);
+    publish();
   }
 
   function breakCrate(c) {
@@ -1606,8 +1639,9 @@ export function createPlay(scene, camera, audio) {
     crateRammed = 1;
     audio.crack();
     puff(c.x, 1.4, c.z, 3, 8, 2.4, 0.35, 0.45);
-    word("-5", c.x, 2.2, c.z, 1);
+    word("-5", squadX, 2.45, -dist, 1, 1);
     hurtSquad(5, 1);
+    publish();
   }
 
   function hurtSquad(n, quiet) {
@@ -1760,7 +1794,8 @@ export function createPlay(scene, camera, audio) {
     if (bossState.hp < 0) bossState.hp = 0;
     camShake = 0.15;
     spawnFx(sparks, x0, y0, z0, 0.08, 0.34);
-    floater(9000, x0, y0 + 0.4, z0, dealt);
+    const bossKill = bossState.hp <= 0;
+    if (!(phoneNarrow() && !bossKill && dealt < 20)) floater(9000, x0, y0 + 0.4, z0, dealt, crit ? 1 : 0, 1);
     if (crit && pFreeN > 8) puff(crownX, crownY, crownZ, 4, 4, 3, 0.28, 0.32);
     const max = level.bossHp;
     if (bossKind === "baron" && !bossState.summoned && bossState.hp <= max * 0.5) {
@@ -1860,7 +1895,10 @@ export function createPlay(scene, camera, audio) {
       p.burnT[i] = 2;
       p.burnD[i] = mods.burn;
     }
-    floater(type * 400 + i, p.x[i], ENEMY[type].y + 0.7, p.z[i], hit.dealt, crit);
+    const killed = p.hp[i] <= 0;
+    if (!(phoneNarrow() && !killed && hit.dealt < 20)) {
+      floater(type * 400 + i, p.x[i], ENEMY[type].y + 0.7, p.z[i], hit.dealt, crit, 1);
+    }
     if (crit) word("!", p.x[i], ENEMY[type].y + 1.35, p.z[i]);
     if (weaponId === "rail" && pFreeN > 8) puff(x0, y0, z0, 10, 4, 3.2, 0.22, 0.42);
     else if (weaponId === "storm" && pFreeN > 8) puff(x0, y0, z0, 5, 3, 2.6, 0.18, 0.24);
@@ -3124,6 +3162,70 @@ export function createPlay(scene, camera, audio) {
     return n > 6 ? 6 : n;
   }
 
+  function contactZ() {
+    return -dist - Math.max(0.4, radius) - 1.15 - 0.75;
+  }
+
+  function packMarch(h) {
+    if (labMode) return;
+    const line = contactZ();
+    const list = [];
+    for (let t = 0; t <= 2; t++) {
+      const p = pools[t];
+      for (let i = 0; i < p.cap; i++) {
+        if (!p.alive[i] || p.freeze[i] > 0 || p.stagT[i] > 0) continue;
+        list.push(t * 1000 + i);
+      }
+    }
+    const cols = 5;
+    const edge = Math.max(0.55, half - 0.5);
+    const xStep = (edge * 2) / (cols - 1);
+    const rowGap = 2.45;
+    list.sort((a, b) => pools[(b / 1000) | 0].z[b % 1000] - pools[(a / 1000) | 0].z[a % 1000]);
+    for (let n = 0; n < list.length; ) {
+      const row = (n / cols) | 0;
+      const end = Math.min(list.length, n + cols);
+      const slice = list.slice(n, end);
+      slice.sort((a, b) => pools[(a / 1000) | 0].x[a % 1000] - pools[(b / 1000) | 0].x[b % 1000]);
+      for (let c = 0; c < slice.length; c++) {
+        const key = slice[c];
+        const t = (key / 1000) | 0;
+        const i = key % 1000;
+        const p = pools[t];
+        const k = ENEMY[t];
+        const slow = p.slowT[i] > 0 ? 0.6 : 1;
+        let targetZ = line - Math.min(row, 4) * rowGap;
+        if (row >= 5) targetZ = line - 4 * rowGap - 26 - (row - 5) * rowGap;
+        const step = k.speed * slow * h;
+        if (p.z[i] < targetZ) p.z[i] = Math.min(targetZ, p.z[i] + step);
+        else if (p.z[i] > targetZ) p.z[i] = Math.max(targetZ, p.z[i] - step);
+        if (p.z[i] > line) p.z[i] = line;
+        const stagger = (row & 1) ? xStep * 0.35 : 0;
+        let tx = -edge + c * xStep + stagger;
+        if (slice.length < cols) tx = -((slice.length - 1) * xStep) * 0.5 + c * xStep;
+        if (tx > edge) tx = edge;
+        if (tx < -edge) tx = -edge;
+        const dx = tx - p.x[i];
+        const maxX = k.lat * slow * h * 1.6;
+        if (dx > maxX) p.x[i] += maxX;
+        else if (dx < -maxX) p.x[i] -= maxX;
+        else p.x[i] = tx;
+        if (p.x[i] > edge) p.x[i] = edge;
+        if (p.x[i] < -edge) p.x[i] = -edge;
+      }
+      n = end;
+    }
+  }
+
+  function updateWaveCam(h) {
+    let n = 0;
+    if (!arenaStarted && !labMode && ended !== "lose") n = counts[0] + counts[1] + counts[2];
+    const want = n >= 6 ? 1 : 0;
+    const k = 1 - Math.exp(-Math.max(0.001, h) * 2.6);
+    waveBlend += (want - waveBlend) * k;
+    if (waveBlend < 0.002) waveBlend = 0;
+  }
+
   function tickOnce(h) {
     decayHits(h);
     clock += h;
@@ -3322,7 +3424,11 @@ export function createPlay(scene, camera, audio) {
             p.foam[i] = hit.foam;
             p.burnT[i] -= h;
             if (Math.floor(prevBurn * 2) !== Math.floor(Math.max(0, p.burnT[i]) * 2)) {
-              floater(t * 400 + i, p.x[i], k.y + 0.7, p.z[i], p.burnD[i] * 0.5, 2);
+              const burnN = p.burnD[i] * 0.5;
+              const burnKill = p.hp[i] <= 0;
+              if (!(phoneNarrow() && !burnKill && burnN < 20)) {
+                floater(t * 400 + i, p.x[i], k.y + 0.7, p.z[i], burnN, 2, 1);
+              }
             }
             if (hit.burst) puff(p.x[i], k.y, p.z[i], 10, 6, 2, 0.35, 0.3);
             if (p.hp[i] <= 0) {
@@ -3398,14 +3504,19 @@ export function createPlay(scene, camera, audio) {
             p.x[i] += p.side[i] * 3 * slow * h;
             p.z[i] += 0.35 * h;
             if (Math.abs(p.x[i]) > half + 1.3) releaseEnemy(t, i);
+          } else if (t <= 2) {
+            // Clogs, Suds and Haulers take a packed slot in packMarch.
           } else {
             const gap = -p.z[i] - dist;
             if (gap < 8) p.x[i] += clamp(squadX - p.x[i], -1, 1) * k.lat * slow * h;
             p.z[i] += k.speed * slow * h;
+            const line = contactZ();
+            if (p.z[i] > line) p.z[i] = line;
           }
           if (p.hit[i] > 0) p.hit[i] = Math.max(0, p.hit[i] - h / 0.06);
         }
       }
+      if (!labMode) packMarch(h);
       rebuildGrid();
       movePool(balls, h, "ball");
       movePool(pellets, h, "pellet");
@@ -3426,6 +3537,7 @@ export function createPlay(scene, camera, audio) {
       if (ended) return;
       if (!ended && !labMode) {
         const blob = formationRadius(Math.max(squadN, 1), half);
+        const line = contactZ();
         for (let t = 0; t < TYPES; t++) {
           const p = pools[t];
           const k = ENEMY[t];
@@ -3439,7 +3551,9 @@ export function createPlay(scene, camera, audio) {
             const dx = p.x[i] - squadX;
             const dz = p.z[i] - (-dist);
             const rr = blob + rad;
-            if (dx * dx + dz * dz >= rr * rr) continue;
+            const atLine = p.z[i] >= line - 0.2 && Math.abs(p.x[i] - squadX) <= blob + rad + 0.4;
+            if (dx * dx + dz * dz >= rr * rr && !atLine) continue;
+            if (p.z[i] > line) p.z[i] = line;
             if (t === 5) {
               if (stuckN < 16) {
                 stuckS[stuckN] = (stuckN * 3) % Math.max(1, shownCount(squadN));
@@ -3457,9 +3571,7 @@ export function createPlay(scene, camera, audio) {
             }
             if (biteLock > 0 && (bot || steered)) continue;
             if (t === 2) {
-              const len = Math.sqrt(dx * dx + dz * dz) || 0.001;
-              p.x[i] = squadX + (dx / len) * rr;
-              p.z[i] = -dist + (dz / len) * rr;
+              if (p.z[i] > line) p.z[i] = line;
               p.biteAcc[i] += h;
               if (p.biteAcc[i] >= 1) {
                 p.biteAcc[i] -= 1;
@@ -3493,7 +3605,10 @@ export function createPlay(scene, camera, audio) {
         const shooters = squadN > RENDER_CAP ? RENDER_CAP : squadN;
         const leafCut = Math.min(0.4, stuckN * 0.05);
         const rateScale = leafCut > 0 ? 1 / (1 - leafCut) : 1;
-        if (mods.pattern === "spin") {
+        if (holdFire) {
+          gunAcc = 2;
+          for (let s = 0; s < shooters; s++) cds[s] = 2;
+        } else if (mods.pattern === "spin") {
           const up = mods.spinUp || 0.6;
           if (cn > 0) spin = Math.min(1, spin + h / up);
           else spin = Math.max(0, spin - h / 0.4);
@@ -3558,6 +3673,7 @@ export function createPlay(scene, camera, audio) {
       flLife[i] -= h;
       if (flLife[i] <= 0) flAlive[i] = 0;
     }
+    updateWaveCam(h);
     publish();
   }
 
@@ -3581,7 +3697,8 @@ export function createPlay(scene, camera, audio) {
     view.squadX = squadX;
     view.squadZ = -dist;
     view.radius = radius;
-    view.bannerY = 2.55 + Math.min(radius, 2.2);
+    view.wave = waveBlend;
+    view.bannerY = 1.72;
     view.ended = ended;
     view.running = running ? 1 : 0;
     view.steered = steered;
@@ -3626,8 +3743,9 @@ export function createPlay(scene, camera, audio) {
     prevZ = 0;
     half = DECK_HALF;
     radius = formationRadius(3, DECK_HALF);
-    weaponId = "bow";
+    weaponId = level.id === "1-1" ? "smg" : (loadoutGun || "bow");
     tier = 1;
+    waveBlend = 0;
     spin = 0;
     kickT = 0;
     gunAcc = 0;
@@ -3647,6 +3765,7 @@ export function createPlay(scene, camera, audio) {
     flyT = 0;
     bot = false;
     bench = 0;
+    holdFire = 0;
     steered = 0;
     labMode = 0;
     invuln = 0;
@@ -3655,6 +3774,7 @@ export function createPlay(scene, camera, audio) {
     firedOnce = 0;
     hitStop = 0;
     boltSerial = 0;
+    shotTag = 1;
     liveN = 0;
     stuckN = 0;
     shotThisTick = false;
@@ -3843,7 +3963,7 @@ export function createPlay(scene, camera, audio) {
     pillar.position.set(squadX, DECK + 3.5, -dist);
     pillar.scale.set(pr, 1, pr);
     pillarMat.uniforms.uTime.value = clock;
-    pillar.visible = shown > 0 && ended !== "lose";
+    pillar.visible = false;
     glow.visible = spin > 0.2;
     if (glow.visible) {
       glow.position.set(squadX + wob, 1.15, -dist + 0.2);
@@ -3866,8 +3986,10 @@ export function createPlay(scene, camera, audio) {
         let yaw = t === 6 ? (p.side[i] < 0 ? Math.PI / 2 : -Math.PI / 2) : Math.PI;
         yaw += p.spinA[i] || 0;
         const roll = t === 3 ? clock * 6 + (p.spinA[i] || 0) : 0;
-        if (t === 3) writeLog(m, w, p.x[i], y, p.z[i], yaw, roll, sc);
-        else writeTRS(m, w, p.x[i], y, p.z[i], yaw, sc * bulk, sc * squash, sc * bulk);
+        let ez = p.z[i];
+        if (!labMode && t <= 2 && ez > contactZ()) ez = contactZ();
+        if (t === 3) writeLog(m, w, p.x[i], y, ez, yaw, roll, sc);
+        else writeTRS(m, w, p.x[i], y, ez, yaw, sc * bulk, sc * squash, sc * bulk);
         ph[w] = p.phase[i] + (t === 5 ? clock : 0);
         ht[w] = p.hit[i];
         w++;
@@ -4346,6 +4468,17 @@ export function createPlay(scene, camera, audio) {
     snap.river = level.river;
     snap.rack = rackStyle;
     snap.banner = rackBanner;
+    snap.wave = waveBlend;
+    let closest = 999;
+    for (let t = 0; t <= 2; t++) {
+      const pool = pools[t];
+      for (let i = 0; i < pool.cap; i++) {
+        if (!pool.alive[i]) continue;
+        const gap = -pool.z[i] - dist;
+        if (gap < closest) closest = gap;
+      }
+    }
+    snap.closest = closest > 900 ? -1 : closest;
     if (!snap.counts) snap.counts = [0, 0, 0, 0, 0, 0, 0];
     for (let i = 0; i < 7; i++) snap.counts[i] = counts[i];
     if (!snap.kinds) snap.kinds = [];
@@ -4566,6 +4699,12 @@ export function createPlay(scene, camera, audio) {
     }
   }
 
+  function setTuned(id, tierN, row) {
+    const key = id + ":" + tierN;
+    if (!row) delete TUNED[key];
+    else TUNED[key] = row;
+  }
+
   function labOnce(gun, tierN, hp, salt) {
     reset();
     seed = 5000 + salt;
@@ -4582,7 +4721,8 @@ export function createPlay(scene, camera, audio) {
     targetX = 0;
     running = true;
     ended = "";
-    for (let i = 0; i < RENDER_CAP; i++) cds[i] = (i % 7) * 0.02;
+    const firstGap = 1 / Math.max(0.05, mods.rate);
+    for (let i = 0; i < RENDER_CAP; i++) cds[i] = ((i * 17) % 20) / 20 * firstGap;
     for (let i = 0; i < crates.length; i++) {
       crates[i].state = "dead";
       crates[i].hp = 0;
@@ -4605,6 +4745,11 @@ export function createPlay(scene, camera, audio) {
       live: liveN,
       fired: labT0 >= 0 ? 1 : 0,
       live0: labLive0,
+      dmg: mods.dmg,
+      rate: mods.rate,
+      range: mods.range,
+      pellets: mods.pellets,
+      coneHits: mods.coneHits,
     };
     labMode = 0;
     invuln = 0;
@@ -4612,70 +4757,112 @@ export function createPlay(scene, camera, audio) {
     return out;
   }
 
-  function gunLab() {
-    for (const key in TUNED) delete TUNED[key];
+  function round1(v) {
+    return Math.round(v * 10) / 10;
+  }
+  function round2(v) {
+    return Math.round(v * 100) / 100;
+  }
+  function measureLab(samples, saltBase, withLevels) {
     const rows = [];
     const order = GUN_ORDER;
-    for (let pass = 0; pass < 3; pass++) {
-      rows.length = 0;
-      for (let g = 0; g < order.length; g++) {
-        for (let tierN = 1; tierN <= 4; tierN++) {
-          let sum = 0;
-          for (let s = 0; s < 3; s++) sum += labOnce(order[g], tierN, 1, pass * 400 + g * 30 + tierN * 5 + s).ttk;
-          rows.push({ gun: order[g], tier: tierN, level: "1-1", hp: 1, ttk: sum / 3 });
-        }
-        let a = 0;
-        let b = 0;
-        for (let s = 0; s < 3; s++) {
-          a += labOnce(order[g], 2, 1.09, 7000 + pass * 100 + g * 8 + s).ttk;
-          b += labOnce(order[g], 2, 1.18, 8000 + pass * 100 + g * 8 + s).ttk;
-        }
-        rows.push({ gun: order[g], tier: 2, level: "1-2", hp: 1.09, ttk: a / 3 });
-        rows.push({ gun: order[g], tier: 2, level: "1-3", hp: 1.18, ttk: b / 3 });
+    for (let g = 0; g < order.length; g++) {
+      for (let tierN = 1; tierN <= 4; tierN++) {
+        let sum = 0;
+        for (let s = 0; s < samples; s++) sum += labOnce(order[g], tierN, 1, saltBase + g * 40 + tierN * 7 + s).ttk;
+        rows.push({ gun: order[g], tier: tierN, level: "1-1", hp: 1, ttk: sum / samples });
       }
-      const means = [0, 0, 0, 0, 0];
-      const counts = [0, 0, 0, 0, 0];
-      let worst = 0;
-      for (let i = 0; i < rows.length; i++) {
-        if (rows[i].level !== "1-1") continue;
-        means[rows[i].tier] += rows[i].ttk;
-        counts[rows[i].tier]++;
+      if (!withLevels) continue;
+      let a = 0;
+      let b = 0;
+      for (let s = 0; s < samples; s++) {
+        a += labOnce(order[g], 2, 1.09, saltBase + 5000 + g * 8 + s).ttk;
+        b += labOnce(order[g], 2, 1.18, saltBase + 9000 + g * 8 + s).ttk;
       }
-      for (let t = 1; t <= 4; t++) means[t] = counts[t] ? means[t] / counts[t] : TIER_TTK[t];
-      let meanOff = 0;
-      for (let t = 1; t <= 4; t++) {
-        const off = Math.abs(means[t] / TIER_TTK[t] - 1);
-        if (off > meanOff) meanOff = off;
-      }
-      for (let i = 0; i < rows.length; i++) {
-        if (rows[i].level !== "1-1") continue;
-        const pct = means[rows[i].tier] ? rows[i].ttk / means[rows[i].tier] : 1;
-        rows[i].pct = pct;
-        rows[i].mean = means[rows[i].tier];
-        if (Math.abs(pct - 1) > worst) worst = Math.abs(pct - 1);
-      }
-      if (worst <= 0.15 && meanOff <= 0.15) break;
-      if (pass === 2) break;
-      for (let i = 0; i < rows.length; i++) {
-        const row = rows[i];
-        if (row.level !== "1-1" || !row.pct) continue;
-        const cur = tunedMods(row.gun, row.tier).dmg;
-        let scale = 1;
-        if (row.pct < 0.85 || row.pct > 1.15) scale *= row.pct;
-        const mean = means[row.tier] || TIER_TTK[row.tier];
-        const target = TIER_TTK[row.tier];
-        if (target && Math.abs(mean / target - 1) > 0.15) scale *= mean / target;
-        if (scale > 3) scale = 3;
-        if (scale < 0.45) scale = 0.45;
-        if (Math.abs(scale - 1) < 0.04) continue;
-        let next = cur * scale;
-        if (row.gun !== "flame" && row.gun !== "beam") next = Math.max(12, next);
-        TUNED[row.gun + ":" + row.tier] = Math.round(next * 10) / 10;
-      }
+      rows.push({ gun: order[g], tier: 2, level: "1-2", hp: 1.09, ttk: a / samples });
+      rows.push({ gun: order[g], tier: 2, level: "1-3", hp: 1.18, ttk: b / samples });
     }
-    let csv = "gun,tier,level,ttk,pct\n";
+    const means = [0, 0, 0, 0, 0];
+    const nAt = [0, 0, 0, 0, 0];
     for (let i = 0; i < rows.length; i++) {
-      const r = rows[i];
+      if (rows[i].level !== "1-1") continue;
+      means[rows[i].tier] += rows[i].ttk;
+      nAt[rows[i].tier]++;
+    }
+    for (let t = 1; t <= 4; t++) means[t] = nAt[t] ? means[t] / nAt[t] : TIER_TTK[t];
+    let outside = 0;
+    for (let i = 0; i < rows.length; i++) {
+      if (rows[i].level !== "1-1") continue;
+      const mean = means[rows[i].tier] || 1;
+      rows[i].pct = mean ? rows[i].ttk / mean : 1;
+      rows[i].mean = mean;
+      const shown = Math.round(rows[i].pct * 1000) / 10;
+      if (shown < 85 || shown > 115) outside++;
+    }
+    return { rows, outside, means };
+  }
+  let lastTune = {};
+  function tuneFrom(rows) {
+    for (let i = 0; i < rows.length; i++) {
+      const row = rows[i];
+      if (row.level !== "1-1" || !row.pct) continue;
+      const shown = Math.round(row.pct * 1000) / 10;
+      if (shown >= 85 && shown <= 115) continue;
+      const base = weaponMods(row.gun, row.tier);
+      const cur = tunedMods(row.gun, row.tier);
+      let rateMul = cur.rate / (base.rate || 1);
+      let dmgMul = cur.dmg / (base.dmg || 1);
+      const key = row.gun + ":" + row.tier;
+      const prev = lastTune[key];
+      const produced = rateMul;
+      let nextPellets = cur.pellets;
+      // Six pellets already one-shot the front rank. Extra rate never
+      // reaches the back. Add a pellet and drop back to a rate that can hit.
+      const fanStuck = row.gun === "shot" && produced >= 6 && row.pct > 1.15 && cur.pellets < 9;
+      if (fanStuck) {
+        nextPellets = cur.pellets + 1;
+        rateMul = Math.min(produced, 3);
+      } else {
+        let nextMul = produced * Math.max(0.85, Math.min(1.18, row.pct));
+        if (prev && (prev.pct - 1) * (row.pct - 1) < 0) nextMul = (prev.produced + produced) * 0.5;
+        rateMul = nextMul;
+        if (rateMul < 0.2) rateMul = 0.2;
+        if (rateMul > 12) rateMul = 12;
+      }
+      lastTune[key] = { pct: row.pct, produced: produced };
+      if (!fanStuck) {
+        if (row.pct < 0.85 && rateMul <= 0.22 && cur.dmg > 9) dmgMul *= 0.75;
+        if (row.pct > 1.15 && row.gun === "flame") dmgMul *= Math.min(1.2, Math.sqrt(row.pct));
+        else if (row.pct > 1.15 && rateMul >= 11 && cur.dmg < 10 && cur.dmg < base.dmg * 3) dmgMul *= Math.min(1.25, Math.sqrt(row.pct));
+      }
+      if (dmgMul < 0.4) dmgMul = 0.4;
+      if (dmgMul > 3.5) dmgMul = 3.5;
+      let nextDmg = base.dmg * dmgMul;
+      if (row.gun !== "flame" && row.gun !== "beam") nextDmg = Math.max(6, nextDmg);
+      const rate = Math.max(0.15, base.rate * rateMul);
+      const rateMax = Math.max(rate, (base.rateMax || base.rate) * rateMul);
+      const tunedRow = { dmg: round1(nextDmg), rate: round2(rate), rateMax: round2(rateMax) };
+      if (nextPellets !== base.pellets) tunedRow.pellets = nextPellets;
+      TUNED[key] = tunedRow;
+    }
+  }
+  function gunLab() {
+    lastTune = {};
+    let measured = null;
+    for (let pass = 0; pass < 16; pass++) {
+      measured = measureLab(3, 8000, false);
+      if (measured.outside === 0) break;
+      tuneFrom(measured.rows);
+    }
+    let finalM = measureLab(3, 8000, true);
+    for (let extra = 0; extra < 8 && finalM.outside > 0; extra++) {
+      tuneFrom(finalM.rows);
+      finalM = measureLab(3, 8000, true);
+    }
+    const finalRows = finalM.rows;
+    let csv = "gun,tier,level,ttk,pct\n";
+    for (let i = 0; i < finalRows.length; i++) {
+      const r = finalRows[i];
       csv += r.gun + "," + r.tier + "," + r.level + "," + r.ttk.toFixed(3) + "," + ((r.pct || 0) * 100).toFixed(1) + "\n";
     }
     console.log(csv);
@@ -4684,7 +4871,22 @@ export function createPlay(scene, camera, audio) {
     reset();
     labMode = 0;
     lockGun = 0;
-    return { rows, csv, tuned };
+    return { rows: finalRows, csv, tuned, outside: finalM.outside };
+  }
+
+  function measureReport() {
+    const finalM = measureLab(3, 8000, true);
+    let csv = "gun,tier,level,ttk,pct\n";
+    for (let i = 0; i < finalM.rows.length; i++) {
+      const r = finalM.rows[i];
+      csv += r.gun + "," + r.tier + "," + r.level + "," + r.ttk.toFixed(3) + "," + ((r.pct || 0) * 100).toFixed(1) + "\n";
+    }
+    const tuned = {};
+    for (const k in TUNED) tuned[k] = TUNED[k];
+    reset();
+    labMode = 0;
+    lockGun = 0;
+    return { csv, tuned, outside: finalM.outside };
   }
 
   function bindVat(mesh, baked, cap) {
@@ -4911,6 +5113,55 @@ export function createPlay(scene, camera, audio) {
       prevZ = -dist;
       publish();
     },
+    setBench(v) {
+      bench = v ? 1 : 0;
+    },
+    setFire(v) {
+      holdFire = v ? 0 : 1;
+      if (v) {
+        gunAcc = 0;
+        for (let s = 0; s < RENDER_CAP; s++) cds[s] = 0;
+      }
+    },
+    debugReel() {
+      const c = crates[0];
+      if (!c) return 0;
+      c.kind = "mystery";
+      c.gun = mysteryPick(unlocked, rnd);
+      c.state = "reel";
+      c.reel = 0.48;
+      c.hp = 0;
+      c.max = 1;
+      c.x = 0;
+      c.z = -dist - 7;
+      c.dirty = 1;
+      c.shake = 0;
+      c.mesh.visible = true;
+      c.top.visible = false;
+      if (c.mesh.material) {
+        c.mesh.material.vertexColors = true;
+        c.mesh.material.color.setHex(0xE8B530);
+        c.mesh.material.needsUpdate = true;
+      }
+      publish();
+      return c.reel;
+    },
+    sealCrates() {
+      let kept = cratesOpened > 0 ? 1 : 0;
+      for (let i = 0; i < crates.length; i++) {
+        const c = crates[i];
+        if (c.state !== "idle") continue;
+        if (c.kind !== "weapon" && c.kind !== "mystery") continue;
+        if (kept < 1) {
+          kept = 1;
+          continue;
+        }
+        c.state = "dead";
+        c.hp = 0;
+        c.mesh.visible = false;
+        c.top.visible = false;
+      }
+    },
     forceRack() {
       const evs = level.events;
       for (let i = 0; i < evs.length; i++) if (evs[i].at < 340) fired[i] = 1;
@@ -4971,6 +5222,8 @@ export function createPlay(scene, camera, audio) {
     },
     gunLab,
     labOnce,
+    setTuned,
+    measureReport,
     adopt,
     equipGun(id, tierN) {
       weaponId = id || "bow";

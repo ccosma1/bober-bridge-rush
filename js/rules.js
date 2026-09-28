@@ -2,7 +2,7 @@
 // br3 gun table. Lab may multiply a tier's DMG; the comment block at the
 // bottom of weaponMods records the numbers that passed the gun lab.
 
-export const BUILD = "br3d";
+export const BUILD = "br4";
 export const SIM_CAP = 300;
 export const RENDER_CAP = 60;
 export const LIVE_CAP = 320;
@@ -465,29 +465,74 @@ export function weaponMods(id, tier) {
   };
 }
 
-// Gun lab writes tuned DMG here when a tier is outside the band.
-// The authored G4 table stays. A 3-pass lab (N=20, 1-1 HP) finished at
-// tier means 4.25 / 3.57 / 3.20 / 2.92 s against 4.0 / 3.0 / 2.25 / 1.7.
-// Past the one-shot line, more DMG did not shorten TTK: the hex is deeper
-// than the old 28 m reach, and a lob volley lands together. The 3x cap
-// was hit without bringing T3 or T4 into band, so those multipliers were
-// not kept.
-export const TUNED = {};
+// Gun lab balance at 1-1 HP. Each entry keeps that tier inside 85-115% of
+// the tier's mean effective TTK. A number still means dmg only.
+export const TUNED = {
+  "beam:1": { dmg: 3.2, rate: 3.41, rateMax: 3.41 },
+  "beam:2": { dmg: 4, rate: 6.08, rateMax: 6.08 },
+  "beam:3": { dmg: 4.8, rate: 7.64, rateMax: 7.64 },
+  "bow:3": { dmg: 17, rate: 3.05, rateMax: 3.05 },
+  "bow:4": { dmg: 23, rate: 2.39, rateMax: 2.39 },
+  "flame:4": { dmg: 12, rate: 8, rateMax: 8 },
+  "frost:1": { dmg: 28, rate: 0.84, rateMax: 0.84 },
+  "frost:2": { dmg: 36, rate: 1.07, rateMax: 1.07 },
+  "frost:3": { dmg: 44, rate: 1.24, rateMax: 1.24 },
+  "frost:4": { dmg: 54, rate: 1.08, rateMax: 1.08 },
+  "log:1": { dmg: 45, rate: 0.7, rateMax: 0.7 },
+  "log:4": { dmg: 129, rate: 0.5, rateMax: 0.5 },
+  "long:1": { dmg: 40, rate: 0.47, rateMax: 0.47 },
+  "long:2": { dmg: 52, rate: 0.45, rateMax: 0.45 },
+  "long:3": { dmg: 67, rate: 0.42, rateMax: 0.42 },
+  "long:4": { dmg: 100, rate: 0.4, rateMax: 0.4 },
+  "party:1": { dmg: 18, rate: 0.5, rateMax: 0.5 },
+  "party:2": { dmg: 23, rate: 0.64, rateMax: 0.64 },
+  "party:3": { dmg: 27, rate: 0.62, rateMax: 0.62 },
+  "party:4": { dmg: 32, rate: 0.54, rateMax: 0.54 },
+  "rail:1": { dmg: 28, rate: 0.18, rateMax: 0.18 },
+  "rail:2": { dmg: 36, rate: 0.17, rateMax: 0.17 },
+  "rail:3": { dmg: 46, rate: 0.15, rateMax: 0.15 },
+  "rail:4": { dmg: 58, rate: 0.16, rateMax: 0.16 },
+  "rocket:1": { dmg: 34, rate: 0.49, rateMax: 0.49 },
+  "rocket:2": { dmg: 45, rate: 0.58, rateMax: 0.58 },
+  "rocket:3": { dmg: 64, rate: 0.52, rateMax: 0.52 },
+  "rocket:4": { dmg: 82, rate: 0.58, rateMax: 0.58 },
+  "sap:1": { dmg: 30, rate: 1.27, rateMax: 1.27 },
+  "sap:2": { dmg: 37, rate: 2.5, rateMax: 2.5 },
+  "sap:3": { dmg: 44, rate: 6.46, rateMax: 6.46 },
+  "sap:4": { dmg: 52, rate: 1.41, rateMax: 1.41 },
+  "shot:1": { dmg: 12, rate: 7.38, rateMax: 7.38 },
+  "shot:2": { dmg: 15, rate: 3.2, rateMax: 3.2, pellets: 8 },
+  "shot:3": { dmg: 18, rate: 4.3, rateMax: 4.3 },
+  "shot:4": { dmg: 23, rate: 5.05, rateMax: 5.05 },
+  "smg:3": { dmg: 21, rate: 3.87, rateMax: 3.87 },
+  "smg:4": { dmg: 25, rate: 4.92, rateMax: 4.92 },
+  "storm:1": { dmg: 16, rate: 1.02, rateMax: 1.02 },
+  "storm:2": { dmg: 20, rate: 1.12, rateMax: 1.12 },
+  "storm:3": { dmg: 24, rate: 1.12, rateMax: 1.12 },
+  "storm:4": { dmg: 30, rate: 1.16, rateMax: 1.16 },
+};
 
 export function tunedMods(id, tier) {
   const mods = weaponMods(id, tier);
-  const key = id + ":" + mods.tier;
-  if (TUNED[key]) mods.dmg = TUNED[key];
+  const row = TUNED[id + ":" + mods.tier];
+  if (!row) return mods;
+  if (typeof row === "number") {
+    mods.dmg = row;
+    return mods;
+  }
+  if (row.dmg) mods.dmg = row.dmg;
+  if (row.rate) mods.rate = row.rate;
+  if (row.rateMax) mods.rateMax = row.rateMax;
+  if (row.range) mods.range = row.range;
+  if (row.pellets) mods.pellets = row.pellets;
+  if (row.coneHits) mods.coneHits = row.coneHits;
   return mods;
 }
 
 export function tierAfterPickup(curId, curTier, nextId, bonus) {
   const cur = WEAPONS[curId] || WEAPONS.bow;
   const next = WEAPONS[nextId] || WEAPONS.bow;
-  let t;
-  if (cur.id === next.id) t = curTier + 1;
-  else if (cur.family === next.family) t = curTier;
-  else t = Math.max(1, curTier - 1);
+  let t = cur.id === next.id ? curTier + 1 : curTier;
   t += bonus || 0;
   return Math.max(1, Math.min(4, t));
 }
@@ -849,7 +894,7 @@ export function selfTestRules() {
   eq(tierAfterPickup("bow", 1, "smg", 0), 1, "swap family");
   eq(tierAfterPickup("smg", 2, "smg", 0), 3, "same tier");
   eq(tierAfterPickup("smg", 3, "shot", 0), 3, "same family");
-  eq(tierAfterPickup("smg", 3, "log", 0), 2, "other family");
+  eq(tierAfterPickup("smg", 3, "log", 0), 3, "other family");
   eq(tierAfterPickup("smg", 1, "bow", 1), 2, "rack bow");
   eq(tierAfterPickup("smg", 4, "smg", 0), 4, "cap t4");
   eq(starsFor(true, 30, 0, 10), 3, "star3");

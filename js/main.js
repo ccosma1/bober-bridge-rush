@@ -1,11 +1,11 @@
 import * as THREE from "three";
-import { BUILD, GUN_COST, GUN_ORDER, WEAPONS, highestPlayable, isUnlockedLevel } from "./rules.js?v=br3d";
-import { createWorld } from "./world.js?v=br3d";
-import { createPlay } from "./play.js?v=br3d";
-import { createAudio } from "./audio.js?v=br3d";
-import { loadSave, rememberWin, rememberGun, writeSave, buyGun } from "./save.js?v=br3d";
-import { drawWeaponIcon, setTime } from "./mats.js?v=br3d";
-import { loadGame, CREDIT_LINES } from "./assets.js?v=br3d";
+import { BUILD, GUN_COST, GUN_ORDER, WEAPONS, highestPlayable, isUnlockedLevel } from "./rules.js?v=br4";
+import { createWorld } from "./world.js?v=br4";
+import { createPlay } from "./play.js?v=br4";
+import { createAudio } from "./audio.js?v=br4";
+import { loadSave, rememberWin, rememberGun, writeSave, buyGun } from "./save.js?v=br4";
+import { drawWeaponIcon, setTime } from "./mats.js?v=br4";
+import { loadGame, CREDIT_LINES } from "./assets.js?v=br4";
 
 const save = loadSave();
 const canvas = document.getElementById("c");
@@ -357,6 +357,16 @@ function toggleDbg() {
   if (labBtn) labBtn.classList.toggle("hidden", !showDbg);
 }
 
+function showLab(out) {
+  const panel = document.getElementById("lab-panel");
+  const pre = document.getElementById("lab-csv");
+  const title = document.getElementById("lab-title");
+  if (!panel || !pre) return;
+  pre.textContent = out && out.csv ? out.csv : "";
+  if (title) title.textContent = "GUN LAB " + (out && out.outside === 0 ? "PASS" : "FAIL " + ((out && out.outside) || "?"));
+  panel.classList.remove("hidden");
+}
+
 function frame(now) {
   requestAnimationFrame(frame);
   const real = Math.min(0.05, Math.max(0, (now - last) / 1000));
@@ -394,10 +404,13 @@ function frame(now) {
   }
   const v = play.view;
   const camX = v.squadX * 0.25;
-  const lift = 13;
-  const back = 16;
-  const ahead = 10;
-  const lookY = 0.3;
+  const wave = Math.max(0, Math.min(1, v.wave || 0));
+  // Raised and pulled back just enough that the squad sits in the bottom quarter
+  // and about five clog rows fill the view above them. fov stays 30.
+  const lift = 13 + wave * 13;
+  const back = 16 + wave * 2;
+  const ahead = 10 - wave * 4;
+  const lookY = 0.3 + wave * 2.6;
   let jx = 0;
   let jy = 0;
   const sh = v.shake || 0;
@@ -650,10 +663,21 @@ if (labBtn) {
   labBtn.addEventListener("click", () => {
     labBtn.disabled = true;
     const out = play.gunLab();
-    showDbg = true;
-    dbg.classList.remove("hidden");
-    dbg.textContent = out.csv;
+    showLab(out);
     labBtn.disabled = false;
+  });
+}
+const labCopy = document.getElementById("lab-copy");
+if (labCopy) {
+  labCopy.addEventListener("click", () => {
+    const text = document.getElementById("lab-csv").textContent || "";
+    if (navigator.clipboard && navigator.clipboard.writeText) navigator.clipboard.writeText(text);
+  });
+}
+const labClose = document.getElementById("lab-close");
+if (labClose) {
+  labClose.addEventListener("click", () => {
+    document.getElementById("lab-panel").classList.add("hidden");
   });
 }
 
@@ -681,12 +705,18 @@ window.__bridge = {
   setAuto: play.setAuto,
   gunLab() { return play.gunLab(); },
   labOnce(gun, tier, hp, salt) { return play.labOnce(gun, tier, hp, salt); },
+  setTuned(id, tier, row) { play.setTuned(id, tier, row); },
+  measureReport() { return play.measureReport(); },
   equipGun: play.equipGun,
   setLevel(id) { queuedLevel = id; play.setLevel(id); },
   setLoadout(data) { play.setLoadout(data); },
   cycleGun() { play.cycleGun(); },
   bumpTier() { play.bumpTier(); },
   openCrate(i) { return play.openCrate(i); },
+  setBench: play.setBench,
+  setFire: play.setFire,
+  debugReel: play.debugReel,
+  sealCrates: play.sealCrates,
   setAxis: play.setAxis,
   drag(px) { play.drag(px * play.view.mPerPx); },
   mpp() { return play.view.mPerPx; },
@@ -716,9 +746,7 @@ assets.done.then((pack) => {
   const params = new URLSearchParams(location.search);
   if (params.get("lab") === "guns") {
     const out = play.gunLab();
-    showDbg = true;
-    dbg.classList.remove("hidden");
-    dbg.textContent = out.csv;
+    showLab(out);
     console.log(out.csv);
   } else if (params.get("lab") === "run") {
     play.equipGun(params.get("gun") || "bow", Number(params.get("tier") || 2));
