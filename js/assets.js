@@ -2,9 +2,9 @@ import * as THREE from "three";
 import { GLTFLoader } from "three/addons/loaders/GLTFLoader.js";
 import { MeshoptDecoder } from "three/addons/libs/meshopt_decoder.module.js";
 import { RGBELoader } from "three/addons/loaders/RGBELoader.js";
-import { bakeCrowd, staticMerge, mountRig, boxGeo } from "./vat.js?v=br3c";
+import { bakeCrowd, staticMerge, mountRig, boxGeo } from "./vat.js?v=br3d";
 
-const V = "br3c";
+const V = "br3d";
 const warned = {};
 
 function url(path) {
@@ -200,21 +200,47 @@ function chunkyGun(color, len, shape) {
     parts.push(boxGeo(0.28, 0.04, 0.04, 0, 0.12, -L * 0.7));
     parts.push(boxGeo(0.04, 0.16, 0.04, -0.12, 0.12, -L * 0.7));
     parts.push(boxGeo(0.04, 0.16, 0.04, 0.12, 0.12, -L * 0.7));
+  } else if (shape === "smg") {
+    parts.push(boxGeo(0.16, 0.1, 0.14, 0, -0.02, 0.02));
+    parts.push(boxGeo(0.05, 0.05, L * 0.9, 0, 0.12, -L * 0.2));
   } else if (shape === "shot") {
-    parts.push(boxGeo(0.05, 0.05, L * 0.5, -0.04, 0.12, -L * 0.55));
-    parts.push(boxGeo(0.05, 0.05, L * 0.5, 0.04, 0.12, -L * 0.55));
+    parts.push(boxGeo(0.07, 0.07, L * 0.85, -0.06, 0.14, -L * 0.35));
+    parts.push(boxGeo(0.07, 0.07, L * 0.85, 0.06, 0.14, -L * 0.35));
   } else if (shape === "gerald") {
-    parts.push(boxGeo(0.04, 0.04, L * 0.48, -0.05, 0.12, -L * 0.5));
-    parts.push(boxGeo(0.04, 0.04, L * 0.48, 0.05, 0.12, -L * 0.5));
-    parts.push(boxGeo(0.04, 0.04, L * 0.48, 0, 0.16, -L * 0.5));
+    parts.push(boxGeo(0.035, 0.035, L, -0.07, 0.14, -L * 0.35));
+    parts.push(boxGeo(0.035, 0.035, L, 0.07, 0.14, -L * 0.35));
+    parts.push(boxGeo(0.035, 0.035, L * 0.8, 0, 0.2, -L * 0.3));
+    parts.push(boxGeo(0.14, 0.04, 0.16, 0, 0.08, 0.08));
+  } else if (shape === "log") {
+    parts.push(boxGeo(0.2, 0.2, L, 0, 0.16, -L * 0.2));
+  } else if (shape === "rocket") {
+    parts.push(boxGeo(0.08, 0.08, L * 1.1, 0, 0.16, -L * 0.45));
+    parts.push(boxGeo(0.14, 0.04, 0.16, 0, 0.16, -L * 0.9));
+    parts.push(boxGeo(0.04, 0.14, 0.16, 0, 0.16, -L * 0.9));
+  } else if (shape === "hat") {
+    parts.push(boxGeo(0.22, 0.06, 0.22, 0, 0.18, -L * 0.2));
+    parts.push(boxGeo(0.1, 0.14, 0.1, 0, 0.28, -L * 0.2));
+  } else if (shape === "tank") {
+    parts.push(boxGeo(0.18, 0.14, 0.22, -0.02, -0.02, 0.04));
+    parts.push(boxGeo(0.04, 0.04, L * 0.9, 0.08, 0.12, -L * 0.35));
+  } else if (shape === "sap") {
+    parts.push(boxGeo(0.16, 0.2, 0.16, 0, 0.02, 0.06));
+    parts.push(boxGeo(0.05, 0.05, L * 0.55, 0, 0.16, -L * 0.35));
+  } else if (shape === "beam") {
+    parts.push(boxGeo(0.04, 0.04, L * 1.3, 0, 0.12, -L * 0.4));
+    parts.push(boxGeo(0.12, 0.12, 0.08, 0, 0.12, -L * 1.05));
+  } else if (shape === "storm") {
+    parts.push(boxGeo(0.05, 0.22, 0.05, -0.08, 0.2, -L * 0.45));
+    parts.push(boxGeo(0.05, 0.22, 0.05, 0.08, 0.2, -L * 0.45));
+    parts.push(boxGeo(0.18, 0.04, 0.06, 0, 0.3, -L * 0.45));
+  } else if (shape === "frost") {
+    parts.push(boxGeo(0.16, 0.16, 0.16, 0, 0.14, -L * 0.15));
+    parts.push(boxGeo(0.06, 0.06, 0.2, 0, 0.14, -L * 0.55));
+  } else if (shape === "rail") {
+    parts.push(boxGeo(0.06, 0.06, L * 1.35, 0, 0.14, -L * 0.45));
+    parts.push(boxGeo(0.16, 0.08, 0.22, 0, 0.04, 0.02));
   } else if (shape === "tube") {
     parts.push(boxGeo(0.12, 0.12, L * 0.8, 0, 0.14, -L * 0.45));
-  } else if (shape === "hat") {
-    parts.push(boxGeo(0.16, 0.08, 0.16, 0, 0.16, -L * 0.35));
-    parts.push(boxGeo(0.08, 0.1, 0.08, 0, 0.22, -L * 0.35));
-  } else if (shape === "tank") {
-    parts.push(boxGeo(0.16, 0.12, 0.18, 0, 0.02, 0.02));
-    parts.push(boxGeo(0.04, 0.04, L * 0.7, 0, 0.1, -L * 0.4));
   } else {
     parts.push(boxGeo(0.08, 0.14, 0.1, 0, -0.01, -L * 0.35));
   }
@@ -307,9 +333,9 @@ function bakeAll(got) {
     recolor: paintClog,
     decorate: (api) => clogBits(api, kind),
   });
-  pack.clog = safeBake(got.zombie, clogOpt("clog", 1.5), "clog");
-  pack.suds = safeBake(got.zombie, clogOpt("suds", 1.8), "suds");
-  pack.spit = safeBake(got.zombie, clogOpt("spit", 1.7), "spit");
+  pack.clog = safeBake(got.zombie, clogOpt("clog", 1.6), "clog");
+  pack.suds = safeBake(got.zombie, clogOpt("suds", 2.0), "suds");
+  pack.spit = safeBake(got.zombie, clogOpt("spit", 1.8), "spit");
   pack.hauler = safeBake(got.yetiCrowd || got.yeti, {
     height: 2.6,
     fps: 8,
@@ -323,14 +349,18 @@ function bakeAll(got) {
   pack.duck = got.duck ? propOf(got.duck, 0xffd23a, 1.0) : null;
   pack.guns.bow = gunOf(got.crossbow, 0xc9a36a, 0.55, "bow");
   pack.guns.long = { geo: longbowGeo(), mat: new THREE.MeshStandardMaterial({ color: 0x7d9a45, roughness: 0.65 }), tris: 32 };
-  pack.guns.smg = gunOf(got.smg, 0x8a5a32, 0.5, "smg");
-  pack.guns.shot = gunOf(got.shot, 0xd07a32, 0.58, "shot");
-  pack.guns.gerald = gunOf(got.gerald, 0x6d7344, 0.62, "gerald");
-  pack.guns.log = gunOf(got.rocket, 0x8b5a2b, 0.6, "tube");
-  pack.guns.rocket = gunOf(got.rocket, 0xd23a3a, 0.58, "tube");
-  pack.guns.party = gunOf(got.party, 0xf27ab5, 0.55, "hat");
-  pack.guns.flame = gunOf(got.flame, 0xe07a28, 0.55, "tank");
-  pack.guns.sap = gunOf(got.sap, 0xe0a030, 0.5, "tank");
+  pack.guns.smg = chunkyGun(0xf5c400, 0.42, "smg");
+  pack.guns.shot = chunkyGun(0xe86a1a, 0.62, "shot");
+  pack.guns.gerald = chunkyGun(0x3ddc6a, 0.7, "gerald");
+  pack.guns.log = chunkyGun(0x8b5a2b, 0.72, "log");
+  pack.guns.rocket = chunkyGun(0xff2e63, 0.78, "rocket");
+  pack.guns.party = chunkyGun(0xc86bff, 0.5, "hat");
+  pack.guns.flame = chunkyGun(0xff6a1a, 0.58, "tank");
+  pack.guns.sap = chunkyGun(0xe0a030, 0.48, "sap");
+  pack.guns.beam = chunkyGun(0xff2430, 0.85, "beam");
+  pack.guns.storm = chunkyGun(0x3a6bff, 0.55, "storm");
+  pack.guns.frost = chunkyGun(0x7debff, 0.5, "frost");
+  pack.guns.rail = chunkyGun(0xfff6d8, 1.05, "rail");
   pack.wrench = got.wrench ? propOf(got.wrench, 0xb8b2a6, 3.0) : null;
   for (let i = 0; i < CITY.length; i++) {
     if (got["city" + i]) pack.city.push(got["city" + i]);

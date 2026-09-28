@@ -393,8 +393,39 @@ export function drawWeaponIcon(ctx, id, cx, cy, s) {
     ctx.moveTo(0, s * 0.16);
     ctx.lineTo(0, -s * 0.34);
     ctx.stroke();
+  } else if (id === "beam") {
+    ctx.strokeStyle = "#FF2430";
+    ctx.lineWidth = Math.max(4, s * 0.1);
+    ctx.beginPath();
+    ctx.moveTo(0, s * 0.36);
+    ctx.lineTo(0, -s * 0.42);
+    ctx.stroke();
+    ctx.fillStyle = "#FF2430";
+    ctx.fillRect(-s * 0.16, -s * 0.08, s * 0.32, s * 0.16);
+  } else if (id === "storm") {
+    ctx.strokeStyle = "#3A6BFF";
+    ctx.lineWidth = Math.max(3, s * 0.08);
+    ctx.beginPath();
+    ctx.moveTo(-s * 0.2, s * 0.32);
+    ctx.lineTo(0, 0);
+    ctx.lineTo(-s * 0.08, 0);
+    ctx.lineTo(s * 0.22, -s * 0.36);
+    ctx.stroke();
+  } else if (id === "frost") {
+    ctx.fillStyle = "#7DEBFF";
+    ctx.beginPath();
+    ctx.moveTo(0, -s * 0.4);
+    ctx.lineTo(s * 0.22, 0);
+    ctx.lineTo(0, s * 0.4);
+    ctx.lineTo(-s * 0.22, 0);
+    ctx.fill();
+  } else if (id === "rail") {
+    ctx.fillStyle = "#FFF6D8";
+    ctx.fillRect(-s * 0.06, -s * 0.42, s * 0.12, s * 0.84);
+    ctx.fillStyle = "#8B5A2B";
+    ctx.fillRect(-s * 0.16, s * 0.12, s * 0.32, s * 0.16);
   } else if (id === "gerald") {
-    ctx.fillStyle = "#FF8A2A";
+    ctx.fillStyle = "#3DDC6A";
     for (let i = 0; i < 4; i++) {
       ctx.beginPath();
       ctx.arc(-s * 0.18 + i * s * 0.12, s * 0.08, s * 0.1, 0, Math.PI * 2);
@@ -507,29 +538,22 @@ export function paintGateSign(ctx, canvas, text, blue) {
   const w = canvas.width;
   const h = canvas.height;
   ctx.clearRect(0, 0, w, h);
-  if (blue) hatIcon(ctx, w * 0.5, h * 0.16, w * 0.34);
-  else {
-    sealIcon(ctx, w * 0.5, h * 0.16, w * 0.42);
-    ctx.font = "700 18px Arial, sans-serif";
-    ctx.textAlign = "center";
-    ctx.textBaseline = "middle";
-    ctx.fillStyle = "#FF4F5E";
-    ctx.fillText("BY ORDER OF THE DRAIN", w * 0.5, h * 0.34);
-  }
-  let size = 132;
+  ctx.fillStyle = blue ? "rgba(47,123,255,0.92)" : "rgba(229,57,53,0.92)";
+  ctx.fillRect(0, 0, w, h);
+  let size = 210;
   ctx.textAlign = "center";
   ctx.textBaseline = "middle";
   ctx.lineJoin = "round";
   ctx.font = "900 " + size + "px Arial Black, Arial, sans-serif";
-  while (size > 64 && ctx.measureText(text).width > w * 0.86) {
-    size -= 8;
+  while (size > 96 && ctx.measureText(text).width > w * 0.9) {
+    size -= 10;
     ctx.font = "900 " + size + "px Arial Black, Arial, sans-serif";
   }
-  ctx.lineWidth = Math.max(10, size * 0.12);
+  ctx.lineWidth = Math.max(14, size * 0.1);
   ctx.strokeStyle = "#1E1410";
-  ctx.strokeText(text, w / 2, h * 0.68);
+  ctx.strokeText(text, w / 2, h * 0.52);
   ctx.fillStyle = "#FFFFFF";
-  ctx.fillText(text, w / 2, h * 0.68);
+  ctx.fillText(text, w / 2, h * 0.52);
 }
 
 export function paintCrateFace(ctx, canvas, kind, id, hp, extra) {
@@ -547,10 +571,11 @@ export function paintCrateFace(ctx, canvas, kind, id, hp, extra) {
   } else if (kind === "tier") {
     ctx.fillStyle = "#8E99A4";
     ctx.fillRect(0, 0, w, h);
-    ctx.fillStyle = "#F5C400";
-    ctx.font = "900 92px Arial Black, Arial, sans-serif";
+    ctx.fillStyle = "#FFFFFF";
+    ctx.font = "900 72px Arial Black, Arial, sans-serif";
     ctx.textAlign = "center";
-    ctx.fillText("+1", w * 0.5, h * 0.36);
+    ctx.textBaseline = "middle";
+    ctx.fillText("TIER UP", w * 0.5, h * 0.38);
   } else if (kind === "mystery") {
     ctx.fillStyle = "#5A3E86";
     ctx.fillRect(0, 0, w, h);
@@ -572,7 +597,7 @@ export function paintCrateFace(ctx, canvas, kind, id, hp, extra) {
     ctx.lineTo(w * 0.62, h * 0.4);
     ctx.fill();
   } else {
-    ctx.fillStyle = kind === "forged" ? "#6A4038" : "#A56B3C";
+    ctx.fillStyle = kind === "forged" ? "#6A4038" : "#E8B530";
     ctx.fillRect(0, 0, w, h);
     if (id) drawWeaponIcon(ctx, id, w * 0.5, h * 0.3, w * 0.36);
     if (kind === "forged") sealIcon(ctx, w * 0.82, h * 0.18, w * 0.28);

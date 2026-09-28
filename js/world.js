@@ -1,6 +1,6 @@
 import * as THREE from "three";
-import { toon, pineTexture, skyTexture, writeTRS } from "./mats.js?v=br3c";
-import { buildTile } from "./build.js?v=br3c";
+import { toon, pineTexture, skyTexture, writeTRS } from "./mats.js?v=br3d";
+import { buildTile } from "./build.js?v=br3d";
 
 const TILE = 20;
 const TILES = 10;
@@ -221,7 +221,7 @@ export function createWorld(scene) {
       const side = i % 2 === 0 ? -1 : 1;
       const index = pBase - 1 + ((i / 2) | 0);
       const pz = -index * 25;
-      const px = side * (7.4 + (half - 5) * 0.3);
+      const px = side * (half + 2.15);
       writeTRS(pyM, i, px, -0.2 + drop, pz, 0, 1, 1, 1);
       writeTRS(foM, i, px, -0.85 + drop, pz, 0, 1, 1, 1);
     }
@@ -374,6 +374,6 @@ export function createWorld(scene) {
     }
   }
 
-  follow(0, 0, 5, 0);
+  follow(0, 0, 3, 0);
   return { follow, applyArt, setShadow };
 }

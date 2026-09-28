@@ -446,7 +446,7 @@ h2 {
 
 #toast b {
   display: block;
-  font: 900 14px/1.2 "Arial Black", Arial, sans-serif;
+  font: 900 22px/1.15 "Arial Black", Arial, sans-serif;
   color: var(--yellow);
 }
 
@@ -487,6 +487,26 @@ h2 {
 }
 
 .word.bad { color: #ff4a4a; }
+.word.big { font-size: 46px; -webkit-text-stroke-width: 6px; }
+
+#armory {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  justify-content: center;
+  margin-top: 8px;
+  max-height: 92px;
+  overflow: auto;
+}
+#armory button {
+  font: 800 11px/1.2 Arial, sans-serif;
+  color: var(--ink);
+  background: var(--cream);
+  border: 2px solid var(--ink);
+  border-radius: 10px;
+  padding: 4px 6px;
+}
+#armory button:disabled { opacity: 0.45; }
 
 @media (min-width: 900px) {
   #level-name { font-size: 20px; }

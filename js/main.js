@@ -1,11 +1,11 @@
 import * as THREE from "three";
-import { BUILD, highestPlayable, isUnlockedLevel } from "./rules.js?v=br3c";
-import { createWorld } from "./world.js?v=br3c";
-import { createPlay } from "./play.js?v=br3c";
-import { createAudio } from "./audio.js?v=br3c";
-import { loadSave, rememberWin, rememberGun, writeSave } from "./save.js?v=br3c";
-import { drawWeaponIcon, setTime } from "./mats.js?v=br3c";
-import { loadGame, CREDIT_LINES } from "./assets.js?v=br3c";
+import { BUILD, GUN_COST, GUN_ORDER, WEAPONS, highestPlayable, isUnlockedLevel } from "./rules.js?v=br3d";
+import { createWorld } from "./world.js?v=br3d";
+import { createPlay } from "./play.js?v=br3d";
+import { createAudio } from "./audio.js?v=br3d";
+import { loadSave, rememberWin, rememberGun, writeSave, buyGun } from "./save.js?v=br3d";
+import { drawWeaponIcon, setTime } from "./mats.js?v=br3d";
+import { loadGame, CREDIT_LINES } from "./assets.js?v=br3d";
 
 const save = loadSave();
 const canvas = document.getElementById("c");
@@ -24,7 +24,7 @@ renderer.shadowMap.enabled = true;
 renderer.shadowMap.type = THREE.PCFSoftShadowMap;
 
 const scene = new THREE.Scene();
-const camera = new THREE.PerspectiveCamera(58, 1, 0.2, 360);
+const camera = new THREE.PerspectiveCamera(30, 1, 0.2, 360);
 const world = createWorld(scene);
 const audio = createAudio();
 const play = createPlay(scene, camera, audio);
@@ -86,6 +86,7 @@ const bannerV = new THREE.Vector3();
 
 document.getElementById("build-tag").textContent = BUILD;
 boberTotal.textContent = "$BOBER " + save.bober;
+paintArmory();
 boberRun.textContent = "$BOBER " + save.bober;
 audio.setMuted(save.settings.mute);
 muteBtn.textContent = save.settings.mute ? "Muted" : "Sound";
@@ -151,6 +152,31 @@ function showResult(won, info) {
   }
   boberTotal.textContent = "$BOBER " + save.bober;
   boberRun.textContent = "$BOBER " + save.bober;
+  paintArmory();
+}
+
+function paintArmory() {
+  const root = document.getElementById("armory");
+  if (!root) return;
+  root.innerHTML = "";
+  const have = save.unlocked || [];
+  for (let i = 0; i < GUN_ORDER.length; i++) {
+    const id = GUN_ORDER[i];
+    const cost = GUN_COST[id];
+    if (!cost || have.indexOf(id) >= 0) continue;
+    const btn = document.createElement("button");
+    btn.type = "button";
+    btn.textContent = (WEAPONS[id] ? WEAPONS[id].name : id) + " $" + cost;
+    btn.disabled = (save.bober | 0) < cost;
+    btn.addEventListener("click", () => {
+      save = buyGun(save, id);
+      boberTotal.textContent = "$BOBER " + save.bober;
+      boberRun.textContent = "$BOBER " + save.bober;
+      play.setLoadout(save);
+      paintArmory();
+    });
+    root.appendChild(btn);
+  }
 }
 
 function starBits(n) {
@@ -219,7 +245,7 @@ function resize() {
   renderer.setPixelRatio(dpr);
   renderer.setSize(w, h, false);
   camera.aspect = w / Math.max(1, h);
-  camera.fov = h >= w ? 46 : 42;
+  camera.fov = 30;
   camera.updateProjectionMatrix();
   world.setShadow(w);
 }
@@ -317,6 +343,7 @@ function placeWords() {
     el.classList.remove("hidden");
     el.textContent = item.text;
     el.classList.toggle("bad", !!item.bad);
+    el.classList.toggle("big", !!item.big);
     el.style.left = (bannerV.x * 0.5 + 0.5) * w + "px";
     el.style.top = (-bannerV.y * 0.5 + 0.5) * h + "px";
     el.style.opacity = String(Math.max(0.15, Math.min(1, item.life)));
@@ -366,12 +393,11 @@ function frame(now) {
     }
   }
   const v = play.view;
-  const portrait = (camera.userData.viewH || 1) >= (camera.userData.viewW || 1);
   const camX = v.squadX * 0.25;
-  const lift = portrait ? 11 : 11.5;
-  const back = portrait ? 13 : 16;
-  const ahead = portrait ? 11 : 12;
-  const lookY = portrait ? 0.3 : 0.35;
+  const lift = 13;
+  const back = 16;
+  const ahead = 10;
+  const lookY = 0.3;
   let jx = 0;
   let jy = 0;
   const sh = v.shake || 0;
@@ -646,6 +672,7 @@ window.__bridge = {
   hurtCrate: play.hurtCrate,
   damageGate: play.damageGate,
   forceRack: play.forceRack,
+  setDist(d) { play.setDist(d); },
   debugWin() { play.debugWin(); },
   debugLose() { play.debugLose(); },
   killBoss() { play.killBoss(); },

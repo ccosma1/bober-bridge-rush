@@ -525,20 +525,20 @@ export function buildTile() {
 }
 
 export function buildCrateGeo() {
-  const parts = [place(box(3.3, 2.6, 1.5), "#E8B530", 0, null, 0, 1.3, 0)];
-  parts.push(place(box(3.38, 0.28, 1.58), "#C4922A", 0, null, 0, 1.85, 0));
-  parts.push(place(box(3.38, 0.16, 1.58), "#A97820", 0, null, 0, 0.18, 0));
-  parts.push(place(box(1.4, 0.08, 0.08), "#F3D27A", 0, null, 0, 2.15, 0.76));
+  const parts = [place(box(2.15, 2.15, 1.15), "#E8B530", 0, null, 0, 1.08, 0)];
+  parts.push(place(box(2.22, 0.22, 1.22), "#C4922A", 0, null, 0, 1.55, 0));
+  parts.push(place(box(2.22, 0.14, 1.22), "#A97820", 0, null, 0, 0.14, 0));
+  parts.push(place(box(0.9, 0.06, 0.06), "#F3D27A", 0, null, 0, 1.78, 0.6));
   return mergeParts(parts);
 }
 
 export function buildGateFrame() {
-  const post = box(0.18, 3.5, 0.18);
-  const beam = box(4.7, 0.22, 0.18);
+  const post = box(0.22, 3.8, 0.22);
+  const beam = box(3.05, 0.28, 0.22);
   return mergeParts([
-    place(post, "#E7EEF8", 0, null, -2.25, 1.75, 0),
-    place(post, "#E7EEF8", 0, null, 2.25, 1.75, 0),
-    place(beam, "#E7EEF8", 0, null, 0, 3.5, 0),
+    place(post, "#E7EEF8", 0, null, -1.5, 1.9, 0),
+    place(post, "#E7EEF8", 0, null, 1.5, 1.9, 0),
+    place(beam, "#E7EEF8", 0, null, 0, 3.8, 0),
   ]);
 }
 

@@ -90,6 +90,10 @@ export function createAudio() {
       flame: [140, 48, 0.85, "sawtooth"],
       party: [660, 330, 0.35, "square"],
       sap: [200, 60, 0.75, "triangle"],
+      beam: [1800, 740, 0.22, "sine"],
+      storm: [90, 40, 0.9, "sawtooth"],
+      frost: [980, 520, 0.3, "triangle"],
+      rail: [70, 36, 0.95, "square"],
     };
     const row = tune[id] || tune.bow;
     filter.frequency.value = row[0];
@@ -121,7 +125,7 @@ export function createAudio() {
           if (current && loops[current]) loops[current].gain.setTargetAtTime(0, ctx.currentTime, 0.03);
           current = id;
         }
-        const level = id === "smg" || id === "gerald" ? 0.18 : id === "shot" || id === "party" ? 0.2 : id === "log" || id === "rocket" ? 0.24 : id === "flame" ? 0.16 : id === "sap" ? 0.14 : 0.11;
+        const level = id === "smg" || id === "gerald" ? 0.18 : id === "shot" || id === "party" ? 0.2 : id === "log" || id === "rocket" ? 0.24 : id === "flame" ? 0.16 : id === "sap" ? 0.14 : id === "beam" ? 0.1 : id === "storm" ? 0.22 : id === "rail" ? 0.28 : id === "frost" ? 0.16 : 0.11;
         g.gain.setTargetAtTime(level, ctx.currentTime, 0.02);
         if (id === "gerald" && oscs[id]) {
           const f = 70 + Math.max(0, Math.min(1, spin || 0)) * 210;

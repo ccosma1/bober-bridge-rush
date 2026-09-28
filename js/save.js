@@ -1,6 +1,6 @@
 // Versioned save. Key stays bober_bridge_v1. v1 migrates; anything else starts clean.
 
-import { STARTERS, UNLOCKS } from "./rules.js?v=br3c";
+import { GUN_COST, STARTERS, UNLOCKS } from "./rules.js?v=br3d";
 
 const KEY = "bober_bridge_v1";
 
@@ -100,6 +100,16 @@ export function rememberWin(data, levelId, stars) {
   const prev = Number(data.stars[id]) || 0;
   data.stars[id] = Math.max(prev, stars | 0);
   if (UNLOCKS[id]) data.unlocked = uniqGuns((data.unlocked || []).concat(UNLOCKS[id]));
+  return writeSave(data);
+}
+
+export function buyGun(data, id) {
+  const cost = GUN_COST[id] || 0;
+  const have = data.unlocked || [];
+  if (!cost || have.indexOf(id) >= 0) return data;
+  if ((data.bober | 0) < cost) return data;
+  data.bober -= cost;
+  data.unlocked = uniqGuns(have.concat([id]));
   return writeSave(data);
 }
 
