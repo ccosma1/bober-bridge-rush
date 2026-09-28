@@ -218,19 +218,28 @@ vGlow = aGlow;
 vPart = aPart;
 vFoam = aFoam;
 `;
+const VAT_VERT_CHILL = `
+vatFrame();
+vChill = aChill;
+vec3 transformed = mix(vatFetch(tVatPos, gF0, gVid), vatFetch(tVatPos, gF1, gVid), gFt);
+vGlow = aGlow;
+vPart = aPart;
+vFoam = aFoam;
+`;
 
 function patchVat(shader, uniforms) {
   shader.uniforms.tVatPos = uniforms.tVatPos;
   shader.uniforms.tVatNrm = uniforms.tVatNrm;
   shader.uniforms.uTime = uniforms.uTime;
   shader.uniforms.uVatInfo = uniforms.uVatInfo;
+  const colorPass = shader.fragmentShader.indexOf("color_fragment") >= 0;
   shader.vertexShader = shader.vertexShader
-    .replace("#include <common>", VAT_HEAD + "\n#include <common>")
-    .replace("#include <begin_vertex>", VAT_VERT)
+    .replace("#include <common>", VAT_HEAD + (colorPass ? "\nattribute float aChill;\nvarying float vChill;\n" : "\n") + "#include <common>")
+    .replace("#include <begin_vertex>", colorPass ? VAT_VERT_CHILL : VAT_VERT)
     .replace("#include <beginnormal_vertex>", VAT_NORM);
   shader.fragmentShader = shader.fragmentShader
-    .replace("#include <common>", "varying float vGlow;\nvarying float vPart;\nvarying float vFoam;\n#include <common>\n")
-    .replace("#include <color_fragment>", "#include <color_fragment>\nif (vPart > 1.5 && vPart < 2.5) diffuseColor.rgb *= mix(0.42, 1.0, smoothstep(0.0, 0.55, vFoam));\n")
+    .replace("#include <common>", "varying float vGlow;\nvarying float vPart;\nvarying float vFoam;\n" + (colorPass ? "varying float vChill;\n" : "") + "#include <common>\n")
+    .replace("#include <color_fragment>", "#include <color_fragment>\nif (vPart > 1.5 && vPart < 2.5) diffuseColor.rgb *= mix(0.42, 1.0, smoothstep(0.0, 0.55, vFoam));\nif (vChill > 0.5) diffuseColor.rgb = mix(diffuseColor.rgb, vec3(0.55, 0.84, 1.0), 0.94);\n")
     .replace("#include <opaque_fragment>", "outgoingLight += vec3(0.72, 0.22, 1.0) * vGlow * 1.15;\n#include <opaque_fragment>");
 }
 

@@ -1,0 +1,16 @@
+Honest bot. setBot on, the squad fires, no crate seal, no debug win, no gun lock, no invulnerability. Seeds change which crate the bot opens. Stars: 3 only when the boss dies under the star time and no crate was rammed; 2 when the squad is still at least the star size; otherwise 1.
+
+Targets for this pass: 1-1 usually won with 1-2 stars and a final squad of 40-120. 1-3 won about 2 of 3. A perfect run can reach 3 stars. Standing still loses.
+
+1-1 seed 12345: WIN squad 113, stars 2, boss 37.6s, ram 0, beam t2, crates 3, kills 376
+1-1 seed 24001: WIN squad 109, stars 2, boss 37.8s, ram 0, beam t2
+1-1 seed 88021: WIN squad 106, stars 2, boss 38.1s, ram 0, beam t2
+
+1-3 seed 12345: LOSE squad 0, stars 0, dist 860, kills 512, storm t1, ram 1, boss 331.6s, crates 3
+1-3 seed 24001: WIN squad 85, stars 2, boss 34.6s, ram 1, bow t2, crates 6, kills 537
+1-3 seed 88021: WIN squad 77, stars 2, boss 39.7s, ram 1, bow t2, crates 6
+
+Still stand, 1-1 seed 12345, bot off: LOSE squad 0, dist 700, kills 337, beam t2, ram 1, boss 1.8s
+
+1-1 was 3 of 3 wins, all 2 stars, squads 106-113.
+1-3 was 2 of 3 wins. The loss stayed on Storm Acorn tier 1 and never opened the later crate. The wins finished on the bow at tier 2. Seed 24001 killed the boss in 34.6s, under the 35s three-star line, and a rammed crate held it at 2 stars, so a clean tier-up can still reach 3.

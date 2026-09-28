@@ -96,10 +96,14 @@ export function animToon(amp) {
   mat.onBeforeCompile = (shader) => {
     shader.uniforms.uTime = timeU;
     shader.vertexShader = shader.vertexShader
-      .replace("#include <common>", "varying float vFlash;\n" + ANIM_ATTRS + "\n#include <common>")
-      .replace("#include <begin_vertex>", begin);
+      .replace("#include <common>", "attribute float aChill;\nvarying float vFlash;\nvarying float vChill;\n" + ANIM_ATTRS + "\n#include <common>")
+      .replace("#include <begin_vertex>", "vChill = aChill;\n" + begin);
     shader.fragmentShader = shader.fragmentShader
-      .replace("#include <common>", "varying float vFlash;\n#include <common>")
+      .replace("#include <common>", "varying float vFlash;\nvarying float vChill;\n#include <common>")
+      .replace(
+        "#include <color_fragment>",
+        "#include <color_fragment>\nif (vChill > 0.5) diffuseColor.rgb = mix(diffuseColor.rgb, vec3(0.55, 0.84, 1.0), 0.94);\n"
+      )
       .replace(
         "#include <opaque_fragment>",
         "outgoingLight = mix(outgoingLight, vec3(1.0), vFlash);\n#include <opaque_fragment>"
@@ -569,13 +573,31 @@ export function paintCrateFace(ctx, canvas, kind, id, hp, extra) {
     ctx.fillStyle = "#F4E6C3";
     ctx.fillText(extra || "+8", w * 0.5, h * 0.5);
   } else if (kind === "tier") {
-    ctx.fillStyle = "#8E99A4";
+    const grd = ctx.createLinearGradient(0, 0, 0, h);
+    grd.addColorStop(0, "#F7FCFF");
+    grd.addColorStop(0.42, "#9EC8EA");
+    grd.addColorStop(1, "#1A4F90");
+    ctx.fillStyle = grd;
     ctx.fillRect(0, 0, w, h);
-    ctx.fillStyle = "#FFFFFF";
-    ctx.font = "900 72px Arial Black, Arial, sans-serif";
-    ctx.textAlign = "center";
-    ctx.textBaseline = "middle";
-    ctx.fillText("TIER UP", w * 0.5, h * 0.38);
+    ctx.strokeStyle = "#EAF6FF";
+    ctx.lineWidth = 16;
+    ctx.strokeRect(12, 12, w - 24, h - 24);
+    ctx.save();
+    ctx.shadowColor = "#8FD0FF";
+    ctx.shadowBlur = 26;
+    ctx.fillStyle = "#F4FBFF";
+    ctx.beginPath();
+    const cx = w * 0.5;
+    ctx.moveTo(cx, h * 0.1);
+    ctx.lineTo(cx + w * 0.2, h * 0.46);
+    ctx.lineTo(cx + w * 0.08, h * 0.46);
+    ctx.lineTo(cx + w * 0.08, h * 0.86);
+    ctx.lineTo(cx - w * 0.08, h * 0.86);
+    ctx.lineTo(cx - w * 0.08, h * 0.46);
+    ctx.lineTo(cx - w * 0.2, h * 0.46);
+    ctx.closePath();
+    ctx.fill();
+    ctx.restore();
   } else if (kind === "mystery") {
     ctx.fillStyle = "#5A3E86";
     ctx.fillRect(0, 0, w, h);
@@ -613,6 +635,27 @@ function roundRect(ctx, x, y, w, h, r) {
   ctx.arcTo(x, y + h, x, y, rr);
   ctx.arcTo(x, y, x + w, y, rr);
   ctx.closePath();
+}
+
+export function paintTierTag(ctx, canvas) {
+  const w = canvas.width;
+  const h = canvas.height;
+  ctx.clearRect(0, 0, w, h);
+  const text = "TIER UP";
+  let size = 210;
+  ctx.textAlign = "center";
+  ctx.textBaseline = "middle";
+  ctx.lineJoin = "round";
+  ctx.font = "900 " + size + "px Arial Black, Arial, sans-serif";
+  while (size > 120 && ctx.measureText(text).width > w * 0.9) {
+    size -= 8;
+    ctx.font = "900 " + size + "px Arial Black, Arial, sans-serif";
+  }
+  ctx.lineWidth = Math.max(22, size * 0.16);
+  ctx.strokeStyle = "#1E1410";
+  ctx.strokeText(text, w / 2, h * 0.52);
+  ctx.fillStyle = "#FFFFFF";
+  ctx.fillText(text, w / 2, h * 0.52);
 }
 
 export function paintCrateHp(ctx, canvas, hp) {

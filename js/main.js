@@ -1,11 +1,11 @@
 import * as THREE from "three";
-import { BUILD, GUN_COST, GUN_ORDER, WEAPONS, highestPlayable, isUnlockedLevel } from "./rules.js?v=br4";
-import { createWorld } from "./world.js?v=br4";
-import { createPlay } from "./play.js?v=br4";
-import { createAudio } from "./audio.js?v=br4";
-import { loadSave, rememberWin, rememberGun, writeSave, buyGun } from "./save.js?v=br4";
-import { drawWeaponIcon, setTime } from "./mats.js?v=br4";
-import { loadGame, CREDIT_LINES } from "./assets.js?v=br4";
+import { BUILD, GUN_COST, GUN_ORDER, WEAPONS, highestPlayable, isUnlockedLevel, rhythmText } from "./rules.js?v=br5";
+import { createWorld } from "./world.js?v=br5";
+import { createPlay } from "./play.js?v=br5";
+import { createAudio } from "./audio.js?v=br5";
+import { loadSave, rememberWin, rememberGun, writeSave, buyGun } from "./save.js?v=br5";
+import { drawWeaponIcon, setTime } from "./mats.js?v=br5";
+import { loadGame, CREDIT_LINES } from "./assets.js?v=br5";
 
 const save = loadSave();
 const canvas = document.getElementById("c");
@@ -305,7 +305,7 @@ function paintHud() {
 
 function placeBanner() {
   const v = play.view;
-  bannerV.set(v.squadX, v.bannerY, v.squadZ);
+  bannerV.set(v.squadX, v.bannerY, v.bannerZ == null ? v.squadZ : v.bannerZ);
   bannerV.project(camera);
   if (mode === "lose") {
     banner.textContent = "0";
@@ -702,6 +702,8 @@ window.__bridge = {
   killBoss() { play.killBoss(); },
   setBot: play.setBot,
   setLock: play.setLock,
+  setSeed: play.setSeed,
+  rhythm() { return rhythmText(); },
   setAuto: play.setAuto,
   gunLab() { return play.gunLab(); },
   labOnce(gun, tier, hp, salt) { return play.labOnce(gun, tier, hp, salt); },

@@ -1,0 +1,91 @@
+LEVEL 1-1
+distance m | time s | type
+0.0 | 0.00 | start
+32.0 | 4.00 | gate
+52.0 | 6.50 | crate smg
+78.0 | 9.75 | gate
+90.0 | 11.25 | gate
+112.0 | 14.00 | wave end 140.4
+164.0 | 20.50 | gate
+188.0 | 23.50 | crate shot
+214.0 | 26.75 | gate
+226.0 | 28.25 | gate
+248.0 | 31.00 | wave end 291.6
+310.0 | 38.75 | gate
+336.0 | 42.00 | crate beam
+364.0 | 45.50 | crate tier
+376.0 | 47.00 | gate
+392.0 | 49.00 | gate
+406.0 | 50.75 | gate
+428.0 | 53.50 | wave end 477.1
+490.0 | 61.25 | gate
+538.0 | 67.25 | gate
+586.0 | 73.25 | gate
+634.0 | 79.25 | gate
+682.0 | 85.25 | gate
+700.0 | 87.50 | boss
+
+LEVEL 1-2
+distance m | time s | type
+0.0 | 0.00 | start
+30.0 | 3.75 | gate
+54.0 | 6.75 | crate long+gerald
+70.0 | 8.75 | gate
+86.0 | 10.75 | gate
+100.0 | 12.50 | gate
+122.0 | 15.25 | wave end 153.5
+176.0 | 22.00 | gate
+204.0 | 25.50 | crate log
+214.0 | 26.75 | gate
+232.0 | 29.00 | gate
+246.0 | 30.75 | gate
+270.0 | 33.75 | wave end 313.2
+340.0 | 42.50 | gate
+368.0 | 46.00 | crate rocket+flame
+384.0 | 48.00 | gate
+400.0 | 50.00 | crate tier
+418.0 | 52.25 | gate
+448.0 | 56.00 | gate
+470.0 | 58.75 | wave end 526.4
+540.0 | 67.50 | gate
+588.0 | 73.50 | gate
+636.0 | 79.50 | gate
+684.0 | 85.50 | gate
+732.0 | 91.50 | gate
+780.0 | 97.50 | boss
+
+LEVEL 1-3
+distance m | time s | type
+0.0 | 0.00 | start
+30.0 | 3.75 | gate
+52.0 | 6.50 | crate party+sap
+64.0 | 8.00 | gate
+78.0 | 9.75 | gate
+92.0 | 11.50 | gate
+118.0 | 14.75 | wave end 150.3
+170.0 | 21.25 | gate
+204.0 | 25.50 | crate storm+frost
+220.0 | 27.50 | gate
+240.0 | 30.00 | gate
+252.0 | 31.50 | gate
+278.0 | 34.75 | wave end 325.9
+350.0 | 43.75 | gate
+380.0 | 47.50 | crate rail+bow
+396.0 | 49.50 | gate
+412.0 | 51.50 | crate tier
+430.0 | 53.75 | gate
+452.0 | 56.50 | gate
+470.0 | 58.75 | gate
+492.0 | 61.50 | wave end 557.1
+570.0 | 71.25 | gate
+618.0 | 77.25 | gate
+666.0 | 83.25 | gate
+714.0 | 89.25 | gate
+762.0 | 95.25 | gate
+810.0 | 101.25 | gate
+858.0 | 107.25 | gate
+860.0 | 107.50 | boss
+
+RHYTHM PASS
+empty stretch: no more than 48 m of road outside a wave body without a gate or crate
+wave clearance: no gate within 20 m of a wave start
