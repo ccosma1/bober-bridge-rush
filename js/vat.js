@@ -225,30 +225,150 @@ vec3 transformed = mix(vatFetch(tVatPos, gF0, gVid), vatFetch(tVatPos, gF1, gVid
 vGlow = aGlow;
 vPart = aPart;
 vFoam = aFoam;
+vLocal = transformed;
+vObjN = objectNormal;
 `;
+
+const COLOR_FRAG = `#include <color_fragment>
+if (vGlow < 0.5 && vPart < 0.5) {
+  float nlen = dot(vObjN, vObjN);
+  vec3 on = nlen > 0.0001 ? normalize(vObjN) : vec3(0.0, 1.0, 0.0);
+  vec3 bn = abs(on);
+  float bs = bn.x + bn.y + bn.z;
+  bn = bs > 0.001 ? bn / bs : vec3(0.0, 1.0, 0.0);
+  vec3 mud = texture2D(tMud, vLocal.yz * 1.45).rgb * bn.x
+    + texture2D(tMud, vLocal.xz * 1.45).rgb * bn.y
+    + texture2D(tMud, vLocal.xy * 1.45).rgb * bn.z;
+  diffuseColor.rgb *= mud;
+}
+if (vPart > 1.5 && vPart < 2.5) diffuseColor.rgb *= mix(0.42, 1.0, smoothstep(0.0, 0.55, vFoam));
+if (vChill > 0.5) diffuseColor.rgb = mix(diffuseColor.rgb, vec3(0.55, 0.84, 1.0), 0.94);
+if (vChill > 0.5) {
+  vec3 cell = floor(vLocal * 6.5);
+  float fh = fract(sin(dot(cell, vec3(127.1, 311.7, 74.7))) * 43758.5453);
+  if (fh > 0.94) diffuseColor.rgb = mix(diffuseColor.rgb, vec3(0.94, 0.98, 1.0), 0.92);
+}
+if (vPart > 1.5 && vPart < 2.5) diffuseColor.a *= mix(0.2, 0.62, smoothstep(0.0, 0.55, vFoam));
+if (vPart > 4.5 && vPart < 5.5) { diffuseColor.rgb *= 0.07; diffuseColor.a *= 0.45; }
+if (vPart > 6.5 && vPart < 7.5) diffuseColor.rgb *= vec3(1.05, 1.08, 0.92);
+`;
+
+const ROUGH_FRAG = `#include <roughnessmap_fragment>
+if (vGlow < 0.5 && vPart < 0.5) {
+  float rg = texture2D(tRough, vLocal.xz * 2.6 + vLocal.yy * 0.17).g;
+  float pore = texture2D(tRough, vLocal.xy * 9.0).g;
+  roughnessFactor = mix(0.5, 1.0, rg);
+  roughnessFactor = mix(roughnessFactor, pore, 0.38);
+} else if (vPart > 1.5 && vPart < 2.5) {
+  roughnessFactor = 0.12;
+} else if (vGlow > 0.5 || (vPart > 6.5 && vPart < 7.5)) {
+  roughnessFactor = 0.22;
+}
+`;
+
+const OPAQUE_FRAG = `
+float rimNd = saturate(dot(normalize(normal), normalize(vViewPosition)));
+float rim = pow(1.0 - rimNd, 2.6);
+outgoingLight *= mix(1.0, 0.2, rim);
+outgoingLight += vec3(0.72, 0.22, 1.0) * vGlow * 1.15;
+#include <opaque_fragment>
+`;
+
+function hideCanvas(size, paint) {
+  const canvas = document.createElement("canvas");
+  canvas.width = size;
+  canvas.height = size;
+  const ctx = canvas.getContext("2d");
+  paint(ctx, size);
+  const tex = new THREE.CanvasTexture(canvas);
+  tex.wrapS = tex.wrapT = THREE.RepeatWrapping;
+  tex.needsUpdate = true;
+  return tex;
+}
+
+function hideTextures() {
+  if (hideTextures.cache) return hideTextures.cache;
+  const map = hideCanvas(128, (ctx, s) => {
+    ctx.fillStyle = "#c4a07a";
+    ctx.fillRect(0, 0, s, s);
+    for (let i = 0; i < 22; i++) {
+      ctx.strokeStyle = i % 2 ? "#6b4a30" : "#efe0cc";
+      ctx.globalAlpha = 0.55;
+      ctx.lineWidth = 1 + (i % 3);
+      ctx.beginPath();
+      const x = (i * 19) % s;
+      ctx.moveTo(x, 0);
+      ctx.bezierCurveTo(x + 12, s * 0.33, x - 14, s * 0.66, x + 6, s);
+      ctx.stroke();
+    }
+    ctx.globalAlpha = 0.7;
+    for (let i = 0; i < 48; i++) {
+      const x = (i * 37) % s;
+      const y = (i * 53) % s;
+      ctx.fillStyle = i % 6 === 0 ? "#7d9a55" : i % 3 === 0 ? "#4a3424" : "#e6d0b4";
+      ctx.beginPath();
+      ctx.ellipse(x, y, 5 + (i % 8), 3 + (i % 5), i * 0.4, 0, Math.PI * 2);
+      ctx.fill();
+    }
+    ctx.globalAlpha = 1;
+  });
+  map.colorSpace = THREE.SRGBColorSpace;
+  const rough = hideCanvas(128, (ctx, s) => {
+    ctx.fillStyle = "#9a9a9a";
+    ctx.fillRect(0, 0, s, s);
+    for (let i = 0; i < 90; i++) {
+      const v = 40 + ((i * 47) % 200);
+      ctx.fillStyle = "rgb(" + v + "," + v + "," + v + ")";
+      ctx.fillRect((i * 17) % s, (i * 29) % s, 3 + (i % 10), 2 + (i % 7));
+    }
+    ctx.strokeStyle = "#2a2a2a";
+    ctx.lineWidth = 1;
+    for (let i = 0; i < 14; i++) {
+      ctx.beginPath();
+      ctx.moveTo((i * 13) % s, 0);
+      ctx.lineTo((i * 13 + 40) % s, s);
+      ctx.stroke();
+    }
+  });
+  rough.colorSpace = THREE.NoColorSpace;
+  hideTextures.cache = { map: map, rough: rough };
+  return hideTextures.cache;
+}
 
 function patchVat(shader, uniforms) {
   shader.uniforms.tVatPos = uniforms.tVatPos;
   shader.uniforms.tVatNrm = uniforms.tVatNrm;
   shader.uniforms.uTime = uniforms.uTime;
   shader.uniforms.uVatInfo = uniforms.uVatInfo;
+  if (uniforms.tMud) shader.uniforms.tMud = uniforms.tMud;
+  if (uniforms.tRough) shader.uniforms.tRough = uniforms.tRough;
   const colorPass = shader.fragmentShader.indexOf("color_fragment") >= 0;
+  const vertVary = colorPass
+    ? "\nattribute float aChill;\nvarying float vChill;\nvarying vec3 vLocal;\nvarying vec3 vObjN;\n"
+    : "\n";
   shader.vertexShader = shader.vertexShader
-    .replace("#include <common>", VAT_HEAD + (colorPass ? "\nattribute float aChill;\nvarying float vChill;\n" : "\n") + "#include <common>")
+    .replace("#include <common>", VAT_HEAD + vertVary + "#include <common>")
     .replace("#include <begin_vertex>", colorPass ? VAT_VERT_CHILL : VAT_VERT)
     .replace("#include <beginnormal_vertex>", VAT_NORM);
+  const fragVary = "varying float vGlow;\nvarying float vPart;\nvarying float vFoam;\n" + (colorPass
+    ? "varying float vChill;\nvarying vec3 vLocal;\nvarying vec3 vObjN;\nuniform sampler2D tMud;\nuniform sampler2D tRough;\n"
+    : "") + "#include <common>\n";
   shader.fragmentShader = shader.fragmentShader
-    .replace("#include <common>", "varying float vGlow;\nvarying float vPart;\nvarying float vFoam;\n" + (colorPass ? "varying float vChill;\n" : "") + "#include <common>\n")
-    .replace("#include <color_fragment>", "#include <color_fragment>\nif (vPart > 1.5 && vPart < 2.5) diffuseColor.rgb *= mix(0.42, 1.0, smoothstep(0.0, 0.55, vFoam));\nif (vChill > 0.5) diffuseColor.rgb = mix(diffuseColor.rgb, vec3(0.55, 0.84, 1.0), 0.94);\n")
-    .replace("#include <opaque_fragment>", "outgoingLight += vec3(0.72, 0.22, 1.0) * vGlow * 1.15;\n#include <opaque_fragment>");
+    .replace("#include <common>", fragVary)
+    .replace("#include <color_fragment>", colorPass ? COLOR_FRAG : "#include <color_fragment>")
+    .replace("#include <roughnessmap_fragment>", colorPass ? ROUGH_FRAG : "#include <roughnessmap_fragment>")
+    .replace("#include <opaque_fragment>", colorPass ? OPAQUE_FRAG : "#include <opaque_fragment>");
 }
 
 let vatKeyN = 1;
 function makeMat(uniforms, color) {
   const key = "bbr-vat-" + (vatKeyN++);
+  const hide = hideTextures();
+  uniforms.tMud = uniforms.tMud || { value: hide.map };
+  uniforms.tRough = uniforms.tRough || { value: hide.rough };
   const mat = new THREE.MeshStandardMaterial({
     color: color || 0xffffff,
-    roughness: 0.7,
+    roughness: 0.86,
     metalness: 0.04,
     vertexColors: true,
   });
@@ -465,8 +585,11 @@ export function bakeCrowd(gltf, opt) {
     for (let i = 0; i < spans[s].src.length; i++) {
       const o = (spans[s].offset + i) * 3;
       const yNorm = (positions[o + 1] - yMin) / spanY;
-      const z = positions[o + 2];
-      if (opt.recolor) opt.recolor(col, name, yNorm, z, positions[o]);
+      const nx = normals[o];
+      const ny = normals[o + 1];
+      const nz = normals[o + 2];
+      const nl = Math.hypot(nx, ny, nz) || 1;
+      if (opt.recolor) opt.recolor(col, name, yNorm, positions[o], positions[o + 1], positions[o + 2], nx / nl, ny / nl, nz / nl);
       else col.set("#888888");
       colors[o] = col.r;
       colors[o + 1] = col.g;

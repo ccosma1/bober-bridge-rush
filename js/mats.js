@@ -501,17 +501,108 @@ export function drawWeaponIcon(ctx, id, cx, cy, s) {
     ctx.strokeStyle = "#5A3818";
     ctx.lineWidth = 2;
     ctx.strokeRect(-s * 0.42, -s * 0.16, s * 0.84, s * 0.32);
-  } else {
-    ctx.strokeStyle = "#6B4224";
-    ctx.lineWidth = Math.max(3, s * 0.14);
+  } else if (id === "mini") {
+    ctx.fillStyle = "#F5C400";
+    for (let i = 0; i < 6; i++) {
+      const a = (i / 6) * Math.PI * 2;
+      ctx.beginPath();
+      ctx.arc(Math.cos(a) * s * 0.16, Math.sin(a) * s * 0.16 - s * 0.02, s * 0.07, 0, Math.PI * 2);
+      ctx.fill();
+    }
+    ctx.fillRect(-s * 0.05, s * 0.14, s * 0.1, s * 0.2);
+  } else if (id === "dambust") {
+    ctx.strokeStyle = "#E86A1A";
+    ctx.lineWidth = Math.max(3, s * 0.08);
     ctx.beginPath();
-    ctx.moveTo(-s * 0.36, s * 0.2);
-    ctx.lineTo(s * 0.28, -s * 0.08);
+    for (let i = -2; i <= 2; i++) {
+      ctx.moveTo(0, s * 0.28);
+      ctx.lineTo(i * s * 0.16, -s * 0.32);
+    }
     ctx.stroke();
-    ctx.fillStyle = "#F4E6C3";
+  } else if (id === "burst") {
+    ctx.fillStyle = "#4FC3FF";
+    ctx.fillRect(-s * 0.06, -s * 0.4, s * 0.12, s * 0.55);
+    ctx.fillRect(-s * 0.04, s * 0.08, s * 0.22, s * 0.08);
+    ctx.fillRect(-s * 0.1, s * 0.18, s * 0.16, s * 0.14);
+    for (let i = 0; i < 3; i++) {
+      ctx.beginPath();
+      ctx.arc(-s * 0.2 + i * s * 0.14, -s * 0.28, s * 0.04, 0, Math.PI * 2);
+      ctx.fill();
+    }
+  } else if (id === "saw") {
+    ctx.fillStyle = "#D8DDE6";
     ctx.beginPath();
-    ctx.arc(s * 0.32, -s * 0.12, s * 0.12, 0, Math.PI * 2);
+    ctx.arc(0, 0, s * 0.28, 0, Math.PI * 2);
     ctx.fill();
+    ctx.strokeStyle = "#8E96A0";
+    ctx.lineWidth = Math.max(2, s * 0.06);
+    ctx.beginPath();
+    ctx.arc(0, 0, s * 0.36, 0, Math.PI * 2);
+    ctx.stroke();
+    ctx.fillStyle = "#1E1410";
+    ctx.beginPath();
+    ctx.arc(0, 0, s * 0.08, 0, Math.PI * 2);
+    ctx.fill();
+  } else if (id === "glacier") {
+    ctx.fillStyle = "#7DEBFF";
+    ctx.beginPath();
+    ctx.moveTo(0, -s * 0.42);
+    ctx.lineTo(s * 0.14, s * 0.2);
+    ctx.lineTo(-s * 0.14, s * 0.2);
+    ctx.fill();
+    ctx.beginPath();
+    ctx.moveTo(-s * 0.22, -s * 0.16);
+    ctx.lineTo(-s * 0.06, s * 0.3);
+    ctx.lineTo(-s * 0.34, s * 0.3);
+    ctx.fill();
+    ctx.beginPath();
+    ctx.moveTo(s * 0.24, -s * 0.08);
+    ctx.lineTo(s * 0.38, s * 0.32);
+    ctx.lineTo(s * 0.08, s * 0.32);
+    ctx.fill();
+  } else if (id === "barrage") {
+    ctx.fillStyle = "#FF2E63";
+    for (let i = 0; i < 3; i++) {
+      const x = (i - 1) * s * 0.22;
+      ctx.beginPath();
+      ctx.moveTo(x, -s * 0.36);
+      ctx.lineTo(x + s * 0.07, s * 0.08);
+      ctx.lineTo(x - s * 0.07, s * 0.08);
+      ctx.fill();
+      ctx.fillRect(x - s * 0.025, s * 0.08, s * 0.05, s * 0.12);
+    }
+  } else if (id === "cone") {
+    ctx.fillStyle = "#6BCB3D";
+    ctx.beginPath();
+    ctx.moveTo(0, -s * 0.38);
+    ctx.lineTo(s * 0.22, s * 0.3);
+    ctx.lineTo(-s * 0.22, s * 0.3);
+    ctx.fill();
+    ctx.strokeStyle = "#1E1410";
+    ctx.lineWidth = Math.max(1.5, s * 0.04);
+    ctx.beginPath();
+    ctx.moveTo(-s * 0.12, -s * 0.02);
+    ctx.lineTo(s * 0.12, -s * 0.02);
+    ctx.moveTo(-s * 0.16, s * 0.12);
+    ctx.lineTo(s * 0.16, s * 0.12);
+    ctx.stroke();
+  } else if (id === "aurora") {
+    ctx.strokeStyle = "#3DFFB0";
+    ctx.lineWidth = Math.max(2, s * 0.06);
+    ctx.beginPath();
+    ctx.ellipse(0, 0, s * 0.32, s * 0.14, 0, 0, Math.PI * 2);
+    ctx.stroke();
+    ctx.fillStyle = "#3DFFB0";
+    ctx.beginPath();
+    ctx.arc(0, 0, s * 0.14, 0, Math.PI * 2);
+    ctx.fill();
+  } else {
+    ctx.fillStyle = "#C8C2B4";
+    ctx.fillRect(-s * 0.07, -s * 0.4, s * 0.14, s * 0.52);
+    ctx.fillRect(-s * 0.035, -s * 0.46, s * 0.07, s * 0.1);
+    ctx.fillStyle = "#8A8274";
+    ctx.fillRect(-s * 0.02, s * 0.02, s * 0.2, s * 0.08);
+    ctx.fillRect(-s * 0.1, s * 0.14, s * 0.18, s * 0.16);
   }
   ctx.restore();
 }

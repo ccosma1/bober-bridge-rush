@@ -1,0 +1,41 @@
+Bober Bridge Rush br6 balance runs
+Measured with the charge movement (squad eases to 2 m/s during a wave, Clogs run down the bridge).
+Autopilot is ?lab=run&gun=<id>&tier=2&auto=1 (locked gun, skips gate aim).
+Sensible bot is setBot only: it takes the better gate and shoots it first. It is not locked and not autoPick.
+Standing still is neither bot.
+
+Gun lab, 12 guns x T1-T4 versus TIER_TTK [4.0, 3.0, 2.25, 1.7], 1-1 row, three samples:
+All inside 85-115%. Closest T1 rows after the bake: Incisor 108.1%, Lodge Barrage 99.2%, Cone Grenadier 94.4%.
+selfTest fails: none. Soldier 320 tris, Bober 332, boss mesh report 5875.
+
+Locked T2 autopilot, seed 11, crossHits 0 on every run. All 12 win 1-1, 1-2 and 1-3.
+End squad / boss seconds:
+  mini     1-1 n 75 sec 10    1-2 n 124 sec 6    1-3 n 92 sec 6
+  dambust  1-1 n 76 sec 6     1-2 n 121 sec 6    1-3 n 100 sec 6
+  burst    1-1 n 58 sec 14    1-2 n 124 sec 6    1-3 n 100 sec 6
+  saw      1-1 n 61 sec 10    1-2 n 123 sec 7    1-3 n 127 sec 16
+  rail     1-1 n 76 sec 6     1-2 n 119 sec 6    1-3 n 85 sec 6
+  beam     1-1 n 50 sec 17    1-2 n 124 sec 6    1-3 n 92 sec 6
+  storm    1-1 n 49 sec 31    1-2 n 115 sec 8    1-3 n 21 sec 68
+  flame    1-1 n 196 sec 21   1-2 n 265 sec 7    1-3 n 231 sec 25
+  glacier  1-1 n 72 sec 14    1-2 n 104 sec 17   1-3 n 81 sec 53
+  barrage  1-1 n 90 sec 6     1-2 n 198 sec 7    1-3 n 178 sec 6
+  cone     1-1 n 40 sec 7     1-2 n 104 sec 7    1-3 n 79 sec 6
+  aurora   1-1 n 78 sec 7     1-2 n 183 sec 7    1-3 n 131 sec 8
+
+Locked T4 autopilot, same seed, crossHits 0 on every gun through 1-1, 1-2 and 1-3. All 12 win.
+
+Sensible 1-1 (natural tier, rams the skipped beam crate so the clear is 2 stars):
+  seed 11  win  n 150  gun mini T2  ram 1  boss 8s   marks n at 112/248/428/690 = 20/54/90/197
+  seed 22  win  n 144  gun mini T2  ram 1  boss 9s   marks 20/54/90/197
+  seed 33  win  n 151  gun mini T2  ram 1  boss 6s   marks 20/54/90/197
+  3 of 3 wins. Finish squad 144-151, under the 300 cap. 2 stars each (a ram blocks the third star).
+  Waves 1-3 are on the road before the 690 m mark. Lost soldiers on the three runs: the boss then trims the pumped squad from 197 down to about 150.
+
+Standing still, 1-1 seed 7: lose at 38 m, squad 0, Incisor Rifle T1, no ram.
+
+Sensible 1-3:
+  seed 11  win  n 198  burst T3  ram 1  boss 6s   n at 118/278/492/850 = 6/24/72/230
+  seed 22  win  n 187  burst T3  ram 1  boss 6s   6/24/72/230
+  seed 33  win  n 184  burst T3  ram 1  boss 6s   6/24/72/230
+  3 of 3 wins. The 492 m wave is cleared from 72 soldiers.

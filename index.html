@@ -6,7 +6,7 @@
   <meta name="theme-color" content="#3A2A6A" />
   <meta name="description" content="Bober Bridge Rush. Hold the pine bridge. Fan game. Unofficial." />
   <title>Bober Bridge Rush</title>
-  <link rel="stylesheet" href="css/game.css?v=br5" />
+  <link rel="stylesheet" href="css/game.css?v=br6" />
 </head>
 <body>
   <canvas id="c"></canvas>
@@ -41,10 +41,10 @@
   <div id="chip" class="hidden">
     <canvas id="chip-icon" width="64" height="64"></canvas>
     <div>
-      <div id="chip-name">Twig Crossbow</div>
+      <div id="chip-name">Incisor Rifle</div>
       <div class="chip-row">
         <span id="chip-tier" class="t1">T1 Wood</span>
-        <span id="chip-family">ARROWS</span>
+        <span id="chip-family">BULLETS</span>
       </div>
     </div>
   </div>
@@ -79,9 +79,7 @@
 
   <section id="title">
     <div class="sheet">
-      <p class="eyebrow">THE DAM RUNS DRY</p>
       <h1>BOBER<br />BRIDGE RUSH</h1>
-      <p id="tagline">Plug the Drain.</p>
       <div id="level-row">
         <button type="button" class="level-tile" data-level="1-1" id="lv-1-1"><b>1-1</b><span>PINE BRIDGE</span><i class="lv-stars"></i></button>
         <button type="button" class="level-tile" data-level="1-2" id="lv-1-2"><b>1-2</b><span>SPILLWAY</span><i class="lv-stars"></i></button>
@@ -92,13 +90,19 @@
       <div class="meta">
         <span id="bober-total">$BOBER 0</span>
         <button id="btn-mute" type="button" aria-pressed="false">Sound</button>
+        <button id="btn-notes" type="button" aria-expanded="false" aria-controls="notes">NOTES</button>
       </div>
+    </div>
+    <div id="notes" class="hidden">
+      <button id="notes-close" type="button">Close</button>
+      <p class="eyebrow">THE DAM RUNS DRY</p>
+      <p id="tagline">Plug the Drain.</p>
       <div id="armory"></div>
       <p id="fan-line">Fan game. Unofficial.</p>
       <button id="btn-credits" type="button">3D models: Quaternius, Kenney, CreativeTrio, Armory_3D via poly.pizza. Textures and HDRI: Poly Haven. All CC0.</button>
       <div id="credits" class="hidden"></div>
       <a id="btn-home" href="https://ccosma1.github.io/green-home-games/">Back to Green Home Games</a>
-      <span id="build-tag">br5</span>
+      <span id="build-tag"></span>
     </div>
   </section>
 
@@ -142,6 +146,6 @@
     }
   }
   </script>
-  <script type="module" src="js/main.js?v=br5"></script>
+  <script type="module" src="js/main.js?v=br6"></script>
 </body>
 </html>

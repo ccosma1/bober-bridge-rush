@@ -2,9 +2,9 @@ import * as THREE from "three";
 import { GLTFLoader } from "three/addons/loaders/GLTFLoader.js";
 import { MeshoptDecoder } from "three/addons/libs/meshopt_decoder.module.js";
 import { RGBELoader } from "three/addons/loaders/RGBELoader.js";
-import { bakeCrowd, staticMerge, mountRig, boxGeo } from "./vat.js?v=br5";
+import { bakeCrowd, staticMerge, mountRig, boxGeo } from "./vat.js?v=br6";
 
-const V = "br5";
+const V = "br6";
 const warned = {};
 
 function url(path) {
@@ -42,16 +42,59 @@ function withTimeout(run, ms) {
   });
 }
 
-const MUD = new THREE.Color("#5A4128");
-const MUD2 = new THREE.Color("#7B5A3A");
+const MUD = new THREE.Color("#3e2c1c");
+const MUD2 = new THREE.Color("#6d5136");
+const BARK = new THREE.Color("#4e3826");
+const BARK2 = new THREE.Color("#8a6844");
 const MOSS = new THREE.Color("#4E6B2E");
 const LEAF = new THREE.Color("#6E9440");
+const REED_DK = new THREE.Color("#3f5a28");
+const REED_LT = new THREE.Color("#8eac58");
 const FOAM = new THREE.Color("#F7FBFA");
+const FOAM2 = new THREE.Color("#e7f4ff");
 const RUST = new THREE.Color("#8A4B32");
+const SAC = new THREE.Color("#9aaf6a");
+const EYE = new THREE.Color("#b060ff");
+const REEDS = [MOSS, LEAF, REED_DK, REED_LT];
 
-function paintClog(col, name, yNorm) {
-  if (yNorm > 0.45) col.copy(yNorm > 0.7 ? MUD2 : MUD);
-  else col.copy(MOSS);
+function vhash(x, y, z) {
+  const n = Math.sin(x * 127.1 + y * 311.7 + z * 74.7) * 43758.5453;
+  return n - Math.floor(n);
+}
+
+function paintClog(col, name, yNorm, x, y, z, nx, ny) {
+  const salt = (name ? name.length : 1) * 0.17;
+  const blot = vhash(Math.floor(x * 7 + salt), Math.floor(y * 7), Math.floor(z * 7));
+  const fine = vhash(x * 19 + salt, y * 19, z * 17);
+  if (blot > 0.58) col.copy(BARK).lerp(BARK2, fine);
+  else col.copy(MUD).lerp(MUD2, fine);
+  const up = ny > 0 ? ny : 0;
+  if (up > 0.42) col.lerp(MOSS, Math.min(0.72, (up - 0.42) * 1.35) * (0.4 + fine * 0.6));
+  if (yNorm < 0.18) col.multiplyScalar(0.78 + fine * 0.12);
+}
+
+function sphereGeo(r, x, y, z, w, h) {
+  const g = new THREE.SphereGeometry(r, w || 8, h || 6);
+  g.translate(x, y, z);
+  return g;
+}
+
+function strandGeo(r, h, x, y, z, lean, cone) {
+  const g = cone
+    ? new THREE.ConeGeometry(r, h, 4, 1, true)
+    : new THREE.CylinderGeometry(r * 0.4, r, h, 5, 1, true);
+  g.translate(0, h * 0.5, 0);
+  g.rotateZ(lean || 0);
+  g.rotateX((lean || 0) * 0.45);
+  g.translate(x, y, z);
+  return g;
+}
+
+function shellGeo(rx, ry, rz, x, y, z) {
+  const g = new THREE.SphereGeometry(1, 8, 6);
+  g.scale(rx, ry, rz);
+  g.translate(x, y, z);
+  return g;
 }
 
 function clogBits(api, kind) {
@@ -60,55 +103,83 @@ function clogBits(api, kind) {
   if (!head) return;
   const p = new THREE.Vector3();
   head.getWorldPosition(p);
-  const eye = new THREE.Color("#B04CFF");
-  api.add("Head", boxGeo(0.2, 0.16, 0.12, p.x - 0.14, p.y + 0.22, p.z - 0.55), 0, eye, 1);
-  api.add("Head", boxGeo(0.2, 0.16, 0.12, p.x + 0.14, p.y + 0.22, p.z - 0.55), 0, eye, 1);
-  for (let i = 0; i < 5; i++) {
-    api.add("Head", boxGeo(0.12, 0.28, 0.08, p.x + (i - 2) * 0.1, p.y + 0.62, p.z - 0.05), 0, LEAF, 0);
+  // Mounted crowd faces -Z; eyes, mane root, and the spout use that side.
+  const ey = p.y + 0.22;
+  const ez = p.z - 0.55;
+  api.add("Head", sphereGeo(0.09, p.x - 0.14, ey, ez), 0, EYE, 1);
+  api.add("Head", sphereGeo(0.09, p.x + 0.14, ey, ez), 0, EYE, 1);
+  api.add("Head", sphereGeo(0.14, p.x - 0.14, ey, ez + 0.06, 6, 5), 5, EYE, 2.5);
+  api.add("Head", sphereGeo(0.14, p.x + 0.14, ey, ez + 0.06, 6, 5), 5, EYE, 2.5);
+  for (let i = 0; i < 8; i++) {
+    const len = 0.16 + (i % 5) * 0.055;
+    const ang = (i / 8) * Math.PI * 2;
+    const lean = (i % 2 ? 0.42 : -0.36) * (0.65 + (i % 3) * 0.2);
+    api.add("Head", strandGeo(
+      0.016 + (i % 3) * 0.006,
+      len,
+      p.x + Math.cos(ang) * 0.11,
+      p.y + 0.36,
+      p.z + Math.sin(ang) * 0.07,
+      lean,
+      i % 2 === 0
+    ), 6, REEDS[i % 4], 0);
   }
   if (kind === "suds") {
     const s = torso || head;
     const q = new THREE.Vector3();
     s.getWorldPosition(q);
-    api.add(s.name, boxGeo(0.55, 0.4, 0.4, q.x, q.y + 0.1, q.z), 2, FOAM, 0);
-    api.add("Head", boxGeo(0.36, 0.28, 0.3, p.x, p.y, p.z), 2, FOAM, 0);
+    const bubbles = [
+      [0.2, 0.16, 0.02, 0.13],
+      [-0.18, 0.14, -0.02, 0.11],
+      [0.04, 0.28, -0.1, 0.1],
+      [-0.08, 0.22, 0.12, 0.12],
+      [0.14, 0.08, -0.14, 0.08],
+      [0, 0.12, 0.1, 0.14],
+      [0.22, 0.24, 0.06, 0.07],
+    ];
+    for (let i = 0; i < bubbles.length; i++) {
+      const b = bubbles[i];
+      api.add(s.name, sphereGeo(b[3], q.x + b[0], q.y + b[1], q.z + b[2], 7, 5), 2, i % 2 ? FOAM : FOAM2, 0);
+    }
+    api.add("Head", sphereGeo(0.15, p.x, p.y + 0.16, p.z + 0.02, 7, 5), 2, FOAM, 0);
+    api.add("Head", sphereGeo(0.1, p.x + 0.12, p.y + 0.06, p.z - 0.08, 6, 5), 2, FOAM2, 0);
+    api.add("Head", sphereGeo(0.09, p.x - 0.1, p.y + 0.1, p.z + 0.06, 6, 5), 2, FOAM, 0);
   }
   if (kind === "spit") {
+    const bone = torso || head;
     const q = new THREE.Vector3();
-    (torso || head).getWorldPosition(q);
-    api.add((torso || head).name, boxGeo(0.1, 0.1, 0.55, q.x + 0.18, q.y + 0.15, q.z - 0.15), 3, RUST, 0);
+    bone.getWorldPosition(q);
+    api.add(bone.name, sphereGeo(0.2, q.x, q.y + 0.06, q.z - 0.26, 8, 6), 7, SAC, 0);
+    const spout = new THREE.ConeGeometry(0.07, 0.3, 6, 1, false);
+    spout.rotateX(-Math.PI / 2);
+    spout.translate(q.x, q.y + 0.08, q.z - 0.5);
+    api.add(bone.name, spout, 7, RUST, 0);
   }
 }
 
 function haulerBits(api) {
   const hand = api.bone("Wrist.R") || api.bone("LowerArm.R") || api.bone("Head");
-  if (!hand) return;
-  const p = new THREE.Vector3();
-  hand.getWorldPosition(p);
-  api.add(hand.name, boxGeo(0.7, 0.45, 0.35, p.x, p.y + 0.1, p.z - 0.25), 4, new THREE.Color("#E7EEF2"), 0);
-}
-
-function longbowGeo() {
-  const positions = [];
-  const indices = [];
-  const segs = 8;
-  for (let i = 0; i <= segs; i++) {
-    const t = i / segs;
-    const y = (t - 0.5) * 0.9;
-    const z = -Math.sin(t * Math.PI) * 0.16;
-    const w = 0.035;
-    const b = positions.length / 3;
-    positions.push(-w, y, z, w, y, z, 0, y, z - w);
-    if (i) {
-      const p = b - 3;
-      indices.push(p, b, p + 1, p + 1, b, b + 1, p, p + 2, b + 2, p + 2, b, b + 2);
-    }
+  if (hand) {
+    const p = new THREE.Vector3();
+    hand.getWorldPosition(p);
+    api.add(hand.name, shellGeo(0.3, 0.2, 0.24, p.x, p.y + 0.04, p.z - 0.2), 4, new THREE.Color("#c5ced6"), 0);
+    api.add(hand.name, shellGeo(0.16, 0.12, 0.14, p.x + 0.14, p.y + 0.14, p.z - 0.08), 4, new THREE.Color("#d5dde3"), 0);
+    api.add(hand.name, shellGeo(0.1, 0.08, 0.1, p.x - 0.12, p.y + 0.1, p.z - 0.28), 4, new THREE.Color("#aeb8c0"), 0);
   }
-  const g = new THREE.BufferGeometry();
-  g.setAttribute("position", new THREE.Float32BufferAttribute(positions, 3));
-  g.setIndex(indices);
-  g.computeVertexNormals();
-  return g;
+  const torso = api.bone("Torso") || api.bone("Abdomen");
+  if (torso) {
+    const q = new THREE.Vector3();
+    torso.getWorldPosition(q);
+    api.add(torso.name, shellGeo(0.34, 0.2, 0.26, q.x, q.y + 0.14, q.z + 0.16), 0, new THREE.Color("#5c4030"), 0);
+  }
+  const shoulders = [api.bone("Shoulder.L"), api.bone("Shoulder.R")];
+  for (let i = 0; i < shoulders.length; i++) {
+    const bone = shoulders[i];
+    if (!bone) continue;
+    const q = new THREE.Vector3();
+    bone.getWorldPosition(q);
+    api.add(bone.name, shellGeo(0.16, 0.12, 0.15, q.x, q.y + 0.05, q.z + 0.05), 0, new THREE.Color("#4a3428"), 0);
+  }
 }
 
 const FILES = {
@@ -189,79 +260,235 @@ export function loadGame(onStep) {
   return { critical, done };
 }
 
-function chunkyGun(color, len, shape) {
-  const L = len || 0.55;
-  const parts = [
-    boxGeo(0.09, 0.11, L * 0.72, 0, 0.06, -L * 0.28),
-    boxGeo(0.07, 0.07, L * 0.55, 0, 0.1, -L * 0.55),
-    boxGeo(0.1, 0.12, 0.12, 0, -0.02, -0.04),
-  ];
-  if (shape === "bow") {
-    parts.push(boxGeo(0.28, 0.04, 0.04, 0, 0.12, -L * 0.7));
-    parts.push(boxGeo(0.04, 0.16, 0.04, -0.12, 0.12, -L * 0.7));
-    parts.push(boxGeo(0.04, 0.16, 0.04, 0.12, 0.12, -L * 0.7));
-  } else if (shape === "smg") {
-    parts.push(boxGeo(0.16, 0.1, 0.14, 0, -0.02, 0.02));
-    parts.push(boxGeo(0.05, 0.05, L * 0.9, 0, 0.12, -L * 0.2));
-  } else if (shape === "shot") {
-    parts.push(boxGeo(0.07, 0.07, L * 0.85, -0.06, 0.14, -L * 0.35));
-    parts.push(boxGeo(0.07, 0.07, L * 0.85, 0.06, 0.14, -L * 0.35));
-  } else if (shape === "gerald") {
-    parts.push(boxGeo(0.035, 0.035, L, -0.07, 0.14, -L * 0.35));
-    parts.push(boxGeo(0.035, 0.035, L, 0.07, 0.14, -L * 0.35));
-    parts.push(boxGeo(0.035, 0.035, L * 0.8, 0, 0.2, -L * 0.3));
-    parts.push(boxGeo(0.14, 0.04, 0.16, 0, 0.08, 0.08));
-  } else if (shape === "log") {
-    parts.push(boxGeo(0.2, 0.2, L, 0, 0.16, -L * 0.2));
-  } else if (shape === "rocket") {
-    parts.push(boxGeo(0.08, 0.08, L * 1.1, 0, 0.16, -L * 0.45));
-    parts.push(boxGeo(0.14, 0.04, 0.16, 0, 0.16, -L * 0.9));
-    parts.push(boxGeo(0.04, 0.14, 0.16, 0, 0.16, -L * 0.9));
-  } else if (shape === "hat") {
-    parts.push(boxGeo(0.22, 0.06, 0.22, 0, 0.18, -L * 0.2));
-    parts.push(boxGeo(0.1, 0.14, 0.1, 0, 0.28, -L * 0.2));
-  } else if (shape === "tank") {
-    parts.push(boxGeo(0.18, 0.14, 0.22, -0.02, -0.02, 0.04));
-    parts.push(boxGeo(0.04, 0.04, L * 0.9, 0.08, 0.12, -L * 0.35));
-  } else if (shape === "sap") {
-    parts.push(boxGeo(0.16, 0.2, 0.16, 0, 0.02, 0.06));
-    parts.push(boxGeo(0.05, 0.05, L * 0.55, 0, 0.16, -L * 0.35));
-  } else if (shape === "beam") {
-    parts.push(boxGeo(0.04, 0.04, L * 1.3, 0, 0.12, -L * 0.4));
-    parts.push(boxGeo(0.12, 0.12, 0.08, 0, 0.12, -L * 1.05));
-  } else if (shape === "storm") {
-    parts.push(boxGeo(0.05, 0.22, 0.05, -0.08, 0.2, -L * 0.45));
-    parts.push(boxGeo(0.05, 0.22, 0.05, 0.08, 0.2, -L * 0.45));
-    parts.push(boxGeo(0.18, 0.04, 0.06, 0, 0.3, -L * 0.45));
-  } else if (shape === "frost") {
-    parts.push(boxGeo(0.16, 0.16, 0.16, 0, 0.14, -L * 0.15));
-    parts.push(boxGeo(0.06, 0.06, 0.2, 0, 0.14, -L * 0.55));
+const STEEL = new THREE.Color("#3a4048");
+const GRIP_C = new THREE.Color("#6b4a32");
+const BRASS = new THREE.Color("#c9a15a");
+const LENS = new THREE.Color("#ff2430");
+const ORB = new THREE.Color("#d5e6ff");
+
+function triCount(geo) {
+  if (!geo) return 0;
+  if (geo.index) return geo.index.count / 3;
+  return geo.attributes.position.count / 3;
+}
+
+function tubeGeo(r, len, seg, x, y, z, open) {
+  const g = new THREE.CylinderGeometry(r, r, len, seg, 1, !!open);
+  g.rotateX(Math.PI / 2);
+  g.translate(x, y, z);
+  return g;
+}
+
+function addP(parts, geo, col) {
+  parts.push({ geo: geo, color: col });
+}
+
+function addBoxP(parts, w, h, d, x, y, z, col) {
+  addP(parts, boxGeo(w, h, d, x, y, z), col);
+}
+
+function addGrip(parts, x, y, z) {
+  addBoxP(parts, 0.07, 0.16, 0.085, x, y, z, GRIP_C);
+}
+
+function addBand(parts, r, x, y, z) {
+  addP(parts, tubeGeo(r, 0.034, 8, x, y, z, true), BRASS);
+}
+
+function plainParts() {
+  const parts = [];
+  addBoxP(parts, 0.08, 0.09, 0.36, 0, 0.06, -0.22, STEEL);
+  addBoxP(parts, 0.06, 0.06, 0.22, 0, 0.07, -0.48, STEEL);
+  addGrip(parts, 0, -0.06, -0.02);
+  addBand(parts, 0.055, 0, 0.07, -0.28);
+  return parts;
+}
+
+function gunParts(shape) {
+  const parts = [];
+  if (shape === "mini") {
+    for (let i = 0; i < 6; i++) {
+      const a = (i / 6) * Math.PI * 2;
+      addP(parts, tubeGeo(0.018, 0.38, 5, Math.cos(a) * 0.048, 0.07 + Math.sin(a) * 0.048, -0.4, true), STEEL);
+    }
+    addP(parts, tubeGeo(0.09, 0.14, 8, 0, 0.07, -0.14, false), STEEL);
+    addBoxP(parts, 0.1, 0.08, 0.12, 0, 0.04, -0.02, STEEL);
+    addGrip(parts, 0, -0.08, 0.02);
+    addBand(parts, 0.078, 0, 0.07, -0.22);
+  } else if (shape === "dambust") {
+    addP(parts, tubeGeo(0.058, 0.48, 8, 0, 0.07, -0.32, false), STEEL);
+    addP(parts, tubeGeo(0.02, 0.36, 6, 0, 0.01, -0.28, true), STEEL);
+    addBoxP(parts, 0.1, 0.055, 0.14, 0, 0.02, -0.2, STEEL);
+    addBoxP(parts, 0.1, 0.1, 0.16, 0, 0.05, -0.02, STEEL);
+    addBoxP(parts, 0.06, 0.08, 0.22, 0, 0.08, 0.16, STEEL);
+    addGrip(parts, 0, -0.08, 0.0);
+    addBand(parts, 0.072, 0, 0.07, -0.12);
+  } else if (shape === "burst") {
+    addP(parts, tubeGeo(0.016, 0.5, 6, 0, 0.08, -0.42, true), STEEL);
+    addBoxP(parts, 0.055, 0.07, 0.28, 0, 0.06, -0.08, STEEL);
+    addP(parts, tubeGeo(0.02, 0.12, 6, 0, 0.13, -0.16, false), STEEL);
+    addBoxP(parts, 0.02, 0.04, 0.04, 0, 0.1, -0.16, STEEL);
+    const mag = new THREE.TorusGeometry(0.078, 0.018, 3, 6, Math.PI * 0.85);
+    mag.rotateY(Math.PI / 2);
+    mag.rotateZ(-0.9);
+    mag.translate(0, -0.02, 0.02);
+    addP(parts, mag, STEEL);
+    addBoxP(parts, 0.04, 0.06, 0.18, 0, 0.07, 0.16, STEEL);
+    addGrip(parts, 0, -0.06, 0.02);
+    addBand(parts, 0.045, 0, 0.08, -0.24);
+  } else if (shape === "saw") {
+    addBoxP(parts, 0.16, 0.1, 0.34, 0, 0.05, -0.12, STEEL);
+    addBoxP(parts, 0.18, 0.08, 0.1, 0, 0.06, -0.32, STEEL);
+    const disc = new THREE.CylinderGeometry(0.15, 0.15, 0.028, 10, 1, false);
+    disc.translate(0, 0.16, -0.14);
+    addP(parts, disc, STEEL);
+    addBoxP(parts, 0.08, 0.06, 0.08, 0, 0.02, 0.08, STEEL);
+    addGrip(parts, 0, -0.08, 0.02);
+    addBand(parts, 0.09, 0, 0.06, -0.22);
   } else if (shape === "rail") {
-    parts.push(boxGeo(0.06, 0.06, L * 1.35, 0, 0.14, -L * 0.45));
-    parts.push(boxGeo(0.16, 0.08, 0.22, 0, 0.04, 0.02));
-  } else if (shape === "tube") {
-    parts.push(boxGeo(0.12, 0.12, L * 0.8, 0, 0.14, -L * 0.45));
+    addBoxP(parts, 0.02, 0.02, 0.72, -0.04, 0.1, -0.36, STEEL);
+    addBoxP(parts, 0.02, 0.02, 0.72, 0.04, 0.1, -0.36, STEEL);
+    addP(parts, tubeGeo(0.045, 0.08, 8, 0, 0.1, -0.22, false), STEEL);
+    addP(parts, tubeGeo(0.045, 0.08, 8, 0, 0.1, -0.48, false), STEEL);
+    addBoxP(parts, 0.1, 0.08, 0.2, 0, 0.04, -0.02, STEEL);
+    addBoxP(parts, 0.06, 0.05, 0.14, 0, 0.06, 0.14, STEEL);
+    addGrip(parts, 0, -0.08, 0.02);
+    addBand(parts, 0.06, 0, 0.08, -0.12);
+  } else if (shape === "beam") {
+    addBoxP(parts, 0.1, 0.08, 0.2, 0, 0.05, -0.06, STEEL);
+    addBoxP(parts, 0.06, 0.06, 0.12, 0, 0.05, -0.2, STEEL);
+    addP(parts, tubeGeo(0.04, 0.03, 8, 0, 0.05, -0.3, false), LENS);
+    addBoxP(parts, 0.012, 0.1, 0.14, 0.07, 0.08, -0.08, STEEL);
+    addBoxP(parts, 0.012, 0.1, 0.14, -0.07, 0.08, -0.08, STEEL);
+    addGrip(parts, 0, -0.08, 0.0);
+    addBand(parts, 0.055, 0, 0.05, -0.14);
+  } else if (shape === "storm") {
+    addP(parts, tubeGeo(0.02, 0.78, 6, 0, 0.09, -0.32, false), STEEL);
+    const coil = new THREE.TorusGeometry(0.05, 0.013, 3, 8);
+    coil.translate(0, 0.09, -0.3);
+    addP(parts, coil, STEEL);
+    const orb = new THREE.IcosahedronGeometry(0.065, 0);
+    orb.translate(0, 0.09, -0.74);
+    addP(parts, orb, ORB);
+    addBoxP(parts, 0.04, 0.04, 0.05, 0, 0.09, 0.1, STEEL);
+    addGrip(parts, 0, -0.02, 0.04);
+    addBand(parts, 0.04, 0, 0.09, -0.16);
+  } else if (shape === "flame") {
+    const nozzle = new THREE.ConeGeometry(0.07, 0.22, 8, 1, false);
+    nozzle.rotateX(-Math.PI / 2);
+    nozzle.translate(0, 0.06, -0.36);
+    addP(parts, nozzle, STEEL);
+    addBoxP(parts, 0.1, 0.09, 0.18, 0, 0.05, -0.1, STEEL);
+    addBoxP(parts, 0.03, 0.03, 0.16, -0.08, 0.08, 0.04, STEEL);
+    const tank = new THREE.CylinderGeometry(0.09, 0.09, 0.22, 8, 1, false);
+    tank.translate(-0.02, 0.1, 0.16);
+    addP(parts, tank, STEEL);
+    addBoxP(parts, 0.02, 0.02, 0.2, -0.08, 0.16, 0.08, STEEL);
+    addBoxP(parts, 0.02, 0.02, 0.2, 0.06, 0.16, 0.08, STEEL);
+    addGrip(parts, 0, -0.08, -0.04);
+    addBand(parts, 0.055, 0, 0.06, -0.26);
+  } else if (shape === "glacier") {
+    addP(parts, tubeGeo(0.07, 0.46, 8, 0, 0.07, -0.32, false), STEEL);
+    addBoxP(parts, 0.14, 0.12, 0.18, 0, 0.06, -0.02, STEEL);
+    addP(parts, tubeGeo(0.045, 0.28, 7, 0.12, 0.08, -0.18, false), STEEL);
+    addBoxP(parts, 0.05, 0.04, 0.08, 0, 0.14, -0.08, STEEL);
+    addBoxP(parts, 0.07, 0.08, 0.16, 0, 0.07, 0.14, STEEL);
+    addGrip(parts, 0, -0.08, 0.02);
+    addBand(parts, 0.085, 0, 0.07, -0.14);
+  } else if (shape === "barrage") {
+    for (let row = 0; row < 2; row++) {
+      for (let col = 0; col < 3; col++) {
+        addP(parts, tubeGeo(0.028, 0.4, 5, (col - 1) * 0.07, 0.05 + row * 0.06, -0.28, true), STEEL);
+      }
+    }
+    addBoxP(parts, 0.24, 0.16, 0.1, 0, 0.08, -0.06, STEEL);
+    addBoxP(parts, 0.22, 0.03, 0.08, 0, 0.0, -0.2, STEEL);
+    addGrip(parts, 0, -0.08, 0.0);
+    addBand(parts, 0.13, 0, 0.08, -0.14);
+  } else if (shape === "cone") {
+    addP(parts, tubeGeo(0.09, 0.16, 10, 0, 0.06, -0.16, false), STEEL);
+    addP(parts, tubeGeo(0.03, 0.22, 6, 0, 0.06, -0.34, false), STEEL);
+    addBoxP(parts, 0.08, 0.08, 0.12, 0, 0.04, -0.02, STEEL);
+    addBoxP(parts, 0.03, 0.06, 0.04, 0, 0.12, -0.02, STEEL);
+    for (let i = 0; i < 6; i++) {
+      const a = (i / 6) * Math.PI * 2;
+      addBoxP(parts, 0.028, 0.028, 0.03, Math.cos(a) * 0.055, 0.06 + Math.sin(a) * 0.055, -0.25, STEEL);
+    }
+    addGrip(parts, 0, -0.08, 0.02);
+    addBand(parts, 0.07, 0, 0.06, -0.08);
+  } else if (shape === "aurora") {
+    addP(parts, tubeGeo(0.06, 0.4, 8, 0, 0.07, -0.4, false), STEEL);
+    addP(parts, tubeGeo(0.09, 0.16, 8, 0, 0.07, -0.12, false), STEEL);
+    const corners = [[-0.1, 0.14], [0.1, 0.14], [-0.1, 0.0], [0.1, 0.0]];
+    for (let i = 0; i < 4; i++) addBoxP(parts, 0.016, 0.016, 0.22, corners[i][0], corners[i][1], -0.12, STEEL);
+    addP(parts, tubeGeo(0.11, 0.02, 8, 0, 0.07, -0.04, true), STEEL);
+    addP(parts, tubeGeo(0.11, 0.02, 8, 0, 0.07, -0.2, true), STEEL);
+    addBoxP(parts, 0.12, 0.1, 0.1, 0, 0.05, 0.02, STEEL);
+    addGrip(parts, 0, -0.08, 0.02);
+    addBand(parts, 0.08, 0, 0.07, -0.26);
   } else {
-    parts.push(boxGeo(0.08, 0.14, 0.1, 0, -0.01, -L * 0.35));
+    return plainParts();
   }
-  const geo = parts[0];
-  const pos = [geo.getAttribute("position")];
-  let count = pos[0].count;
-  for (let i = 1; i < parts.length; i++) {
-    pos.push(parts[i].getAttribute("position"));
-    count += pos[i].count;
+  return parts;
+}
+
+function mergeGun(parts) {
+  let verts = 0;
+  let inds = 0;
+  for (let i = 0; i < parts.length; i++) {
+    const pos = parts[i].geo.attributes.position;
+    verts += pos.count;
+    inds += parts[i].geo.index ? parts[i].geo.index.count : pos.count;
   }
-  const arr = new Float32Array(count * 3);
-  let o = 0;
-  for (let i = 0; i < pos.length; i++) {
-    arr.set(pos[i].array, o);
-    o += pos[i].array.length;
+  const positions = new Float32Array(verts * 3);
+  const colors = new Float32Array(verts * 3);
+  const indices = new Uint32Array(inds);
+  let vBase = 0;
+  let iBase = 0;
+  for (let p = 0; p < parts.length; p++) {
+    const geo = parts[p].geo;
+    const pos = geo.attributes.position;
+    const col = parts[p].color;
+    for (let i = 0; i < pos.count; i++) {
+      const o = (vBase + i) * 3;
+      positions[o] = pos.getX(i);
+      positions[o + 1] = pos.getY(i);
+      positions[o + 2] = pos.getZ(i);
+      colors[o] = col.r;
+      colors[o + 1] = col.g;
+      colors[o + 2] = col.b;
+    }
+    const idx = geo.index;
+    if (idx) {
+      for (let i = 0; i < idx.count; i++) indices[iBase++] = idx.getX(i) + vBase;
+    } else {
+      for (let i = 0; i < pos.count; i++) indices[iBase++] = vBase + i;
+    }
+    vBase += pos.count;
   }
   const merged = new THREE.BufferGeometry();
-  merged.setAttribute("position", new THREE.BufferAttribute(arr, 3));
+  merged.setAttribute("position", new THREE.BufferAttribute(positions, 3));
+  merged.setAttribute("color", new THREE.BufferAttribute(colors, 3));
+  merged.setIndex(new THREE.BufferAttribute(indices, 1));
   merged.computeVertexNormals();
-  const mat = new THREE.MeshStandardMaterial({ color, roughness: 0.42, metalness: 0.28 });
-  return { geo: merged, mat, tris: Math.floor(count / 3) };
+  const mat = new THREE.MeshStandardMaterial({
+    color: 0xffffff,
+    roughness: 0.42,
+    metalness: 0.48,
+    vertexColors: true,
+  });
+  return { geo: merged, mat: mat, tris: inds / 3 };
+}
+
+function chunkyGun(color, len, shape) {
+  let parts = gunParts(shape || "plain");
+  let tris = 0;
+  for (let i = 0; i < parts.length; i++) tris += triCount(parts[i].geo);
+  if (tris > 220) {
+    warnOnce("gun-tris", (shape || "") + " " + tris);
+    parts = plainParts();
+  }
+  return mergeGun(parts);
 }
 
 function gunOf(gltf, color, len, shape) {
@@ -269,7 +496,7 @@ function gunOf(gltf, color, len, shape) {
   try {
     const geo = staticMerge(gltf.scene, len || 0.55);
     const tris = geo && geo.index ? Math.floor(geo.index.count / 3) : 0;
-    if (!geo || tris > 180) return chunkyGun(color, len, shape);
+    if (!geo || tris > 220) return chunkyGun(color, len, shape);
     const mat = new THREE.MeshStandardMaterial({ color, roughness: 0.42, metalness: 0.28 });
     return { geo, mat, tris };
   } catch (err) {
@@ -335,6 +562,11 @@ function bakeAll(got) {
   });
   pack.clog = safeBake(got.zombie, clogOpt("clog", 1.6), "clog");
   pack.suds = safeBake(got.zombie, clogOpt("suds", 2.0), "suds");
+  if (pack.suds && pack.suds.mat) {
+    pack.suds.mat.transparent = true;
+    pack.suds.mat.depthWrite = true;
+    pack.suds.mat.opacity = 1;
+  }
   pack.spit = safeBake(got.zombie, clogOpt("spit", 1.8), "spit");
   pack.hauler = safeBake(got.yetiCrowd || got.yeti, {
     height: 2.6,
@@ -347,20 +579,8 @@ function bakeAll(got) {
     decorate: haulerBits,
   }, "hauler");
   pack.duck = got.duck ? propOf(got.duck, 0xffd23a, 1.0) : null;
-  pack.guns.bow = gunOf(got.crossbow, 0xc9a36a, 0.55, "bow");
-  pack.guns.long = { geo: longbowGeo(), mat: new THREE.MeshStandardMaterial({ color: 0x7d9a45, roughness: 0.65 }), tris: 32 };
-  pack.guns.smg = chunkyGun(0xf5c400, 0.42, "smg");
-  pack.guns.shot = chunkyGun(0xe86a1a, 0.62, "shot");
-  pack.guns.gerald = chunkyGun(0x3ddc6a, 0.7, "gerald");
-  pack.guns.log = chunkyGun(0x8b5a2b, 0.72, "log");
-  pack.guns.rocket = chunkyGun(0xff2e63, 0.78, "rocket");
-  pack.guns.party = chunkyGun(0xc86bff, 0.5, "hat");
-  pack.guns.flame = chunkyGun(0xff6a1a, 0.58, "tank");
-  pack.guns.sap = chunkyGun(0xe0a030, 0.48, "sap");
-  pack.guns.beam = chunkyGun(0xff2430, 0.85, "beam");
-  pack.guns.storm = chunkyGun(0x3a6bff, 0.55, "storm");
-  pack.guns.frost = chunkyGun(0x7debff, 0.5, "frost");
-  pack.guns.rail = chunkyGun(0xfff6d8, 1.05, "rail");
+  const gunIds = ["mini", "dambust", "burst", "saw", "rail", "beam", "storm", "flame", "glacier", "barrage", "cone", "aurora"];
+  for (let i = 0; i < gunIds.length; i++) pack.guns[gunIds[i]] = chunkyGun(0x3a4048, 0.7, gunIds[i]);
   pack.wrench = got.wrench ? propOf(got.wrench, 0xb8b2a6, 3.0) : null;
   for (let i = 0; i < CITY.length; i++) {
     if (got["city" + i]) pack.city.push(got["city" + i]);
@@ -378,7 +598,7 @@ function bakeAll(got) {
 
 export const CREDIT_LINES = [
   "Zombie, Yeti, Rocket Launcher — Quaternius, CC0, poly.pizza",
-  "Rubber Duck, Crossbow — CreativeTrio, CC0, poly.pizza",
+  "Rubber Duck — CreativeTrio, CC0, poly.pizza",
   "Wrench — Armory_3D, CC0, poly.pizza",
   "Blaster Kit, City Kit (Commercial) — Kenney, CC0, kenney.nl",
   "concrete_floor_02, metal_plate, shanghai_riverside — Poly Haven, CC0",

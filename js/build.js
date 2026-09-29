@@ -533,12 +533,12 @@ export function buildCrateGeo() {
 }
 
 export function buildGateFrame() {
-  const post = box(0.22, 3.8, 0.22);
-  const beam = box(3.05, 0.28, 0.22);
+  const post = box(0.18, 3.6, 0.22);
+  const beam = box(2.05, 0.26, 0.2);
   return mergeParts([
-    place(post, "#E7EEF8", 0, null, -1.5, 1.9, 0),
-    place(post, "#E7EEF8", 0, null, 1.5, 1.9, 0),
-    place(beam, "#E7EEF8", 0, null, 0, 3.8, 0),
+    place(post, "#E7EEF8", 0, null, -1.0, 1.8, 0),
+    place(post, "#E7EEF8", 0, null, 1.0, 1.8, 0),
+    place(beam, "#E7EEF8", 0, null, 0, 3.55, 0),
   ]);
 }
 

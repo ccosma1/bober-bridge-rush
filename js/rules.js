@@ -2,11 +2,12 @@
 // br3 gun table. Lab may multiply a tier's DMG; the comment block at the
 // bottom of weaponMods records the numbers that passed the gun lab.
 
-export const BUILD = "br5";
+export const BUILD = "br6";
 export const SIM_CAP = 300;
 export const RENDER_CAP = 60;
 export const LIVE_CAP = 320;
 export const ADVANCE = 8;
+export const WAVE_ADVANCE = 2;
 export const STEER_MAX = 14;
 export const RANGE = 28;
 export const DECK_HALF = 3;
@@ -14,187 +15,186 @@ export const BOSS_HALF = 3.6;
 export const FORM_GAP = 0.46;
 export const LANE_BLOB = 2.15;
 export const LANE_X = 1.5;
+export const GATE_X = 1.75;
+export const PANEL_W = 2;
+export const DIVIDER_W = 0.35;
+export const CHARGE_LEAD = 34;
+export const PINCH_BLOB = 1.2;
 
 const DEG = Math.PI / 180;
 
-export const GUN_ORDER = ["bow", "long", "smg", "shot", "gerald", "log", "rocket", "flame", "party", "sap", "beam", "storm", "frost", "rail"];
+export const GUN_ORDER = ["mini", "dambust", "burst", "saw", "rail", "beam", "storm", "flame", "glacier", "barrage", "cone", "aurora"];
+
+const GUN_MIGRATE = {
+  bow: "rail", long: "rail", smg: "burst", gerald: "mini", shot: "dambust",
+  log: "cone", rocket: "barrage", party: "barrage", sap: "flame", flame: "flame",
+  frost: "glacier", beam: "beam", storm: "storm", rail: "rail",
+};
+
+export function migrateGun(id) {
+  if (WEAPONS[id]) return id;
+  return GUN_MIGRATE[id] || "";
+}
 
 export const WEAPONS = {
-  bow: {
-    id: "bow", name: "Twig Crossbow", family: "ARROWS", pattern: "arrow",
-    color: "#F4E6C3", pellets: 1, spread: 0, shove: 0.3, len: 1.6, thick: 0.2, heavy: 0, line: "",
+  mini: {
+    id: "mini", name: "Gnasher Minigun", family: "BULLETS", pattern: "spin",
+    color: "#F5C400", pellets: 1, spread: 2.2 * DEG, shove: 0.35, len: 1.8, thick: 0.18, heavy: 0,
+    spinUp: 0.6, line: "Six barrels. It finds a rhythm.",
     tiers: [
-      { dmg: 14, rate: 3.43 },
-      { dmg: 17, rate: 3.94 },
-      { dmg: 17, rate: 3.94, every: 2, pierce: 1 },
-      { dmg: 23, rate: 3.94, every: 2, pierce: 1, splash: 0.6 },
+      { dmg: 8.59, rate: 3, rateMax: 6.3 },
+      { dmg: 9.67, rate: 3.45, rateMax: 7.3 },
+      { dmg: 15, rate: 3.45, rateMax: 7.3, spinUp: 0.3 },
+      { dmg: 17.72, rate: 4.1, rateMax: 8.7, spinUp: 0.3 },
     ],
   },
-  long: {
-    id: "long", name: "Reed's Longbow", family: "ARROWS", pattern: "pierce",
-    color: "#F7F7FF", pellets: 1, spread: 0, shove: 0.5, len: 3, thick: 0.25, heavy: 0,
-    line: "Long legs, long shots, rounded numbers.",
+  dambust: {
+    id: "dambust", name: "Dam Buster", family: "BULLETS", pattern: "fan",
+    color: "#E86A1A", pellets: 9, spread: 26 * DEG, falloff: 14, shove: 1.5, len: 1.2, thick: 0.28, heavy: 1,
+    line: "Close range flips a Clog.",
     tiers: [
-      { dmg: 40, rate: 0.65, pierce: 3 },
-      { dmg: 52, rate: 0.75, pierce: 3 },
-      { dmg: 67, rate: 0.75, pierce: 4 },
-      { dmg: 100, rate: 0.75, pierce: 5 },
+      { dmg: 5.82, rate: 0.97, pellets: 9 },
+      { dmg: 7.5, rate: 1.12, pellets: 9 },
+      { dmg: 9.52, rate: 1.12, pellets: 10 },
+      { dmg: 10.48, rate: 1.12, pellets: 12 },
     ],
   },
-  smg: {
-    id: "smg", name: "Acorn SMG", family: "BULLETS", pattern: "spread",
-    color: "#F5C400", pellets: 1, spread: 3 * DEG, shove: 0.12, len: 1.5, thick: 0.18, heavy: 0, line: "",
+  burst: {
+    id: "burst", name: "Incisor Rifle", family: "BULLETS", pattern: "burst",
+    color: "#4FC3FF", pellets: 3, spread: 0, shove: 0.2, len: 2.6, thick: 0.16, heavy: 0,
+    line: "Three rounds. The third bites deeper.",
     tiers: [
-      { dmg: 12, rate: 4.22 },
-      { dmg: 15, rate: 4.85 },
-      { dmg: 21, rate: 4.85, spread: 1.5 * DEG },
-      { dmg: 25, rate: 5.82, spread: 1.5 * DEG },
+      { dmg: 8.7, rate: 1.6, pellets: 3 },
+      { dmg: 11.17, rate: 1.84, pellets: 3 },
+      { dmg: 12.13, rate: 1.84, pellets: 4 },
+      { dmg: 15.44, rate: 2.1, pellets: 4, pierce: 1 },
     ],
   },
-  shot: {
-    id: "shot", name: "Pinecone Shotgun", family: "BULLETS", pattern: "fan",
-    color: "#E86A1A", pellets: 6, spread: 25 * DEG, falloff: 14, shove: 0.25, len: 1.2, thick: 0.22, heavy: 1, line: "",
+  saw: {
+    id: "saw", name: "Buzzblade", family: "BLADES", pattern: "disc",
+    color: "#D8DDE6", pellets: 1, spread: 0, shove: 0.4, len: 0.5, thick: 0.5, heavy: 1,
+    line: "It bounces. A kill splits it.",
     tiers: [
-      { dmg: 12, rate: 0.97, pellets: 6 },
-      { dmg: 15, rate: 1.12, pellets: 6 },
-      { dmg: 18, rate: 1.12, pellets: 7 },
-      { dmg: 23, rate: 1.12, pellets: 8 },
-    ],
-  },
-  gerald: {
-    id: "gerald", name: "Gerald Jr.", family: "BULLETS", pattern: "spin",
-    color: "#3DDC6A", pellets: 1, spread: 4 * DEG, shove: 0.1, len: 1.8, thick: 0.2, heavy: 0,
-    spinUp: 0.6, line: "Gerald says hold the line.",
-    tiers: [
-      { dmg: 12, rate: 3, rateMax: 6.33 },
-      { dmg: 15, rate: 3.45, rateMax: 7.28 },
-      { dmg: 18, rate: 3.45, rateMax: 7.28, spinUp: 0.3 },
-      { dmg: 21, rate: 4.14, rateMax: 8.74, spinUp: 0.3 },
-    ],
-  },
-  log: {
-    id: "log", name: "Log Launcher", family: "ROCKETS", pattern: "lob",
-    color: "#8B5A2B", pellets: 1, spread: 0, splash: 1.6, shove: 1.5, len: 1.4, thick: 0.35, heavy: 1, line: "",
-    tiers: [
-      { dmg: 45, rate: 0.49, splash: 1.6 },
-      { dmg: 64, rate: 0.56, splash: 1.6 },
-      { dmg: 95, rate: 0.56, splash: 1.8 },
-      { dmg: 129, rate: 0.56, splash: 2.0 },
-    ],
-  },
-  rocket: {
-    id: "rocket", name: "Firework Rockets", family: "ROCKETS", pattern: "home",
-    color: "#FF2E63", pellets: 1, spread: 0, splash: 1.2, shove: 1.0, turn: 180, len: 2.2, thick: 0.28, heavy: 1,
-    line: "Small splash, big joy.",
-    tiers: [
-      { dmg: 34, rate: 0.81, splash: 1.2 },
-      { dmg: 45, rate: 0.93, splash: 1.2 },
-      { dmg: 64, rate: 0.93, splash: 1.4 },
-      { dmg: 82, rate: 0.93, splash: 1.6 },
-    ],
-  },
-  party: {
-    id: "party", name: "Party Yeet", family: "ROCKETS", pattern: "party",
-    color: "#C86BFF", pellets: 5, spread: 0, splash: 0.9, shove: 0.7, len: 2.4, thick: 0.32, heavy: 1,
-    line: "Confetti, but make it hurt.",
-    tiers: [
-      { dmg: 18, rate: 0.39, pellets: 5, splash: 0.9 },
-      { dmg: 23, rate: 0.45, pellets: 5, splash: 0.9 },
-      { dmg: 27, rate: 0.45, pellets: 6, splash: 0.9 },
-      { dmg: 32, rate: 0.45, pellets: 6, splash: 1.1 },
-    ],
-  },
-  flame: {
-    id: "flame", name: "Maple Flamer", family: "FLAME", pattern: "cone",
-    color: "#FF6A1A", pellets: 1, spread: 30 * DEG, shove: 0, range: 10, coneHits: 3, len: 1.4, thick: 0.22, heavy: 0,
-    line: "Washes off Suds Knights.",
-    tiers: [
-      { dmg: 3.5, rate: 3.0, burn: 4.2, spread: 30 * DEG, coneHits: 3, range: 10 },
-      { dmg: 4.5, rate: 3.45, burn: 5.4, spread: 30 * DEG, coneHits: 3, range: 10 },
-      { dmg: 4.6, rate: 3.45, burn: 5.6, spread: 36 * DEG, coneHits: 4, range: 10 },
-      { dmg: 4.9, rate: 3.45, burn: 6.0, spread: 36 * DEG, coneHits: 5, range: 12 },
-    ],
-  },
-  sap: {
-    id: "sap", name: "Sap Burner", family: "FLAME", pattern: "glob",
-    color: "#E0A030", pellets: 1, spread: 0, splash: 1.3, shove: 0.8, puddle: 1.3, len: 1.3, thick: 0.3, heavy: 1,
-    line: "Sticky. Hot. Clogs hate it.",
-    tiers: [
-      { dmg: 30, rate: 0.51, burn: 4.5, splash: 1.3, puddle: 1.3 },
-      { dmg: 37, rate: 0.59, burn: 5.6, splash: 1.3, puddle: 1.3 },
-      { dmg: 44, rate: 0.59, burn: 6.6, splash: 1.5, puddle: 1.5 },
-      { dmg: 52, rate: 0.59, burn: 7.7, splash: 1.7, puddle: 1.7 },
-    ],
-  },
-  beam: {
-    id: "beam", name: "Beaver Beam", family: "LASER", pattern: "beam",
-    color: "#FF2430", pellets: 1, spread: 0, shove: 0, len: 2.4, thick: 0.08, heavy: 0,
-    line: "A red line. It does not stop.",
-    tiers: [
-      { dmg: 3.2, rate: 8 },
-      { dmg: 4.0, rate: 9 },
-      { dmg: 4.8, rate: 9 },
-      { dmg: 6.0, rate: 10 },
-    ],
-  },
-  storm: {
-    id: "storm", name: "Storm Acorn", family: "TESLA", pattern: "chain",
-    color: "#3A6BFF", pellets: 1, spread: 0, shove: 0.4, len: 1.6, thick: 0.16, heavy: 0, chain: 3,
-    line: "One bolt. Three Clogs.",
-    tiers: [
-      { dmg: 16, rate: 1.2, chain: 3 },
-      { dmg: 20, rate: 1.35, chain: 3 },
-      { dmg: 24, rate: 1.35, chain: 3 },
-      { dmg: 30, rate: 1.5, chain: 3 },
-    ],
-  },
-  frost: {
-    id: "frost", name: "Frost Nut", family: "CRYO", pattern: "frost",
-    color: "#7DEBFF", pellets: 1, spread: 0, splash: 1.7, shove: 0.6, len: 1.2, thick: 0.28, heavy: 1,
-    line: "Icy nuts. Clogs go pale and slow.",
-    tiers: [
-      { dmg: 28, rate: 0.62, splash: 1.7, slow: 2 },
-      { dmg: 36, rate: 0.7, splash: 1.8, slow: 2 },
-      { dmg: 44, rate: 0.7, splash: 2.0, slow: 2 },
-      { dmg: 54, rate: 0.75, splash: 2.2, slow: 2 },
+      { dmg: 12.99, rate: 0.9, bounces: 3 },
+      { dmg: 15.34, rate: 1.04, bounces: 3 },
+      { dmg: 17.14, rate: 1.04, bounces: 4, burn: 3 },
+      { dmg: 15.19, rate: 1.2, bounces: 5 },
     ],
   },
   rail: {
-    id: "rail", name: "Pine Rail", family: "SNIPER", pattern: "rail",
-    color: "#FFF6D8", pellets: 1, spread: 0, shove: 1.2, len: 3.4, thick: 0.22, heavy: 1,
-    line: "One shot. The whole line.",
+    id: "rail", name: "Pine Rail", family: "ENERGY", pattern: "rail",
+    color: "#FFF6D8", pellets: 1, spread: 0, shove: 1.2, len: 2.8, thick: 0.3, heavy: 1,
+    charge: 0.45, line: "Coils light. Then the whole line.",
     tiers: [
-      { dmg: 28, rate: 0.42, pierce: 40 },
-      { dmg: 36, rate: 0.48, pierce: 40 },
-      { dmg: 46, rate: 0.48, pierce: 40 },
-      { dmg: 58, rate: 0.55, pierce: 40 },
+      { dmg: 15.35, rate: 0.42, pierce: 40 },
+      { dmg: 18.41, rate: 0.48, pierce: 40 },
+      { dmg: 29.5, rate: 0.48, pierce: 40 },
+      { dmg: 14.6, rate: 0.55, pierce: 40 },
+    ],
+  },
+  beam: {
+    id: "beam", name: "Beaver Beam", family: "ENERGY", pattern: "bolt",
+    color: "#FF2430", pellets: 1, spread: 0.8 * DEG, shove: 0, len: 0.9, thick: 0.12, heavy: 0,
+    line: "Red bolts. They do not sit still.",
+    tiers: [
+      { dmg: 4.82, rate: 10 },
+      { dmg: 5.09, rate: 11.3 },
+      { dmg: 5.47, rate: 11.3 },
+      { dmg: 5.5, rate: 12.5 },
+    ],
+  },
+  storm: {
+    id: "storm", name: "Storm Tail", family: "ENERGY", pattern: "spark",
+    color: "#3A6BFF", pellets: 1, spread: 0, shove: 0.4, len: 0.35, thick: 0.35, heavy: 0, chain: 3,
+    line: "A spark ball. Then it leaps.",
+    tiers: [
+      { dmg: 12.91, rate: 1.2, chain: 3 },
+      { dmg: 16.36, rate: 1.35, chain: 3 },
+      { dmg: 17.62, rate: 1.35, chain: 4 },
+      { dmg: 21, rate: 1.5, chain: 5 },
+    ],
+  },
+  flame: {
+    id: "flame", name: "Maple Flamer", family: "ELEMENT", pattern: "stream",
+    color: "#FF6A1A", pellets: 1, spread: 12 * DEG, shove: 0, range: 10, len: 0.4, thick: 0.25, heavy: 0,
+    line: "Washes off Suds Knights.",
+    tiers: [
+      { dmg: 1.33, rate: 14, burn: 4.2, range: 10 },
+      { dmg: 1.8, rate: 14, burn: 5.4, range: 10 },
+      { dmg: 2.67, rate: 14, burn: 5.6, range: 13 },
+      { dmg: 3.78, rate: 14, burn: 6.0, range: 13 },
+    ],
+  },
+  glacier: {
+    id: "glacier", name: "Glacier Gun", family: "ELEMENT", pattern: "spike",
+    color: "#7DEBFF", pellets: 1, spread: 0, splash: 1.7, shove: 0.4, len: 1.1, thick: 0.28, heavy: 1,
+    line: "Three freezes and they shatter.",
+    tiers: [
+      { dmg: 2.07, rate: 0.62, splash: 1.7, slow: 2.4 },
+      { dmg: 6.15, rate: 0.7, splash: 1.8, slow: 2.4 },
+      { dmg: 9.35, rate: 0.7, splash: 2.0, slow: 2.4 },
+      { dmg: 16.41, rate: 0.75, splash: 2.2, slow: 2.4 },
+    ],
+  },
+  barrage: {
+    id: "barrage", name: "Lodge Barrage", family: "EXPLOSIVE", pattern: "salvo",
+    color: "#FF2E63", pellets: 6, spread: 0, splash: 1.1, shove: 1.1, turn: 90, len: 1.4, thick: 0.22, heavy: 1,
+    line: "Six tubes. Soft homing.",
+    tiers: [
+      { dmg: 3.6, rate: 0.71, pellets: 6, splash: 1.1 },
+      { dmg: 5.09, rate: 0.82, pellets: 6, splash: 1.1 },
+      { dmg: 6.38, rate: 0.82, pellets: 8, splash: 1.1 },
+      { dmg: 7.37, rate: 0.9, pellets: 10, splash: 1.1 },
+    ],
+  },
+  cone: {
+    id: "cone", name: "Cone Grenadier", family: "EXPLOSIVE", pattern: "grenade",
+    color: "#6BCB3D", pellets: 1, spread: 0, splash: 1.8, shove: 1.4, len: 0.42, thick: 0.42, heavy: 1,
+    line: "It bounces. Then the deck rings.",
+    tiers: [
+      { dmg: 23.2, rate: 0.49, splash: 1.8 },
+      { dmg: 26.5, rate: 0.56, splash: 1.8 },
+      { dmg: 38.6, rate: 0.56, splash: 1.8 },
+      { dmg: 67.8, rate: 0.6, splash: 1.8 },
+    ],
+  },
+  aurora: {
+    id: "aurora", name: "Aurora Cannon", family: "ENERGY", pattern: "orb",
+    color: "#3DFFB0", pellets: 1, spread: 0, splash: 2.4, shove: 0.6, len: 0.7, thick: 0.7, heavy: 1,
+    line: "It walks the bridge, then it pops.",
+    tiers: [
+      { dmg: 25, rate: 0.4, splash: 2.4 },
+      { dmg: 30.2, rate: 0.46, splash: 2.4 },
+      { dmg: 60.7, rate: 0.46, splash: 2.4 },
+      { dmg: 66.5, rate: 0.5, splash: 2.4 },
     ],
   },
 };
 
 export const TIER_TTK = [0, 4.0, 3.0, 2.25, 1.7];
 
-export const STARTERS = ["bow", "smg", "shot", "log"];
+export const STARTERS = ["burst"];
 export const UNLOCKS = {
-  "1-1": ["long", "gerald", "sap", "party", "beam", "storm"],
-  "1-2": ["rocket", "flame", "frost", "rail"],
+  "1-1": ["mini", "dambust", "saw", "beam", "storm", "cone"],
+  "1-2": ["rail", "flame", "glacier", "barrage", "aurora"],
 };
 
 export const GUN_COST = {
-  long: 90,
-  gerald: 110,
-  rocket: 130,
-  flame: 120,
-  party: 100,
-  sap: 100,
+  mini: 90,
+  dambust: 100,
+  saw: 110,
+  rail: 180,
   beam: 150,
   storm: 160,
-  frost: 140,
-  rail: 180,
+  flame: 120,
+  glacier: 140,
+  barrage: 130,
+  cone: 100,
+  aurora: 170,
 };
 
 export const FAMILY_WEIGHT = {
-  ARROWS: 16, BULLETS: 22, ROCKETS: 22, FLAME: 14, LASER: 8, TESLA: 6, CRYO: 6, SNIPER: 6,
+  BULLETS: 1, BLADES: 1, ENERGY: 1, ELEMENT: 1, EXPLOSIVE: 1,
 };
 
 export const ENEMY = [
@@ -227,32 +227,29 @@ export const LEVELS = {
     starN: 30,
     starSec: 20,
     boss: "baron",
-    bossHp: 3000,
+    bossHp: 3800,
     bossName: "BARON CLOG",
     win: "BRIDGE HELD!",
     events: [
-      { at: 32, kind: "gate", pair: [{ op: "add", k: 5 }, { op: "sub", k: 3 }] },
-      { at: 52, kind: "crate", layout: "single", items: [{ type: "weapon", gun: "smg", hp: 360, x: -1.5 }] },
-      { at: 78, kind: "gate", pair: [{ op: "mul", k: 2 }, { op: "add", k: 4 }] },
-      { at: 90, kind: "gate", pair: [{ op: "add", k: 6 }, { op: "sub", k: 3 }] },
+      { at: 36, kind: "gate", pair: [{ op: "add", k: 5 }, { op: "sub", k: 3 }] },
+      { at: 52, kind: "crate", layout: "single", items: [{ type: "weapon", gun: "dambust", hp: 360, x: -1.5 }] },
+      { at: 76, kind: "gate", pair: [{ op: "mul", k: 2 }, { op: "add", k: 4 }] },
       { at: 112, kind: "wave", clog: 40 },
-      { at: 164, kind: "gate", pair: [{ op: "add", k: 8 }, { op: "sub", k: 4 }] },
-      { at: 188, kind: "crate", layout: "single", items: [{ type: "weapon", gun: "shot", hp: 620, x: 1.5 }] },
-      { at: 214, kind: "gate", pair: [{ op: "add", k: 4 }, { op: "sub", k: 3 }] },
-      { at: 226, kind: "gate", pair: [{ op: "add", k: 8 }, { op: "sub", k: 5 }] },
+      { at: 184, kind: "gate", pair: [{ op: "add", k: 8 }, { op: "sub", k: 4 }] },
+      { at: 200, kind: "crate", layout: "single", items: [{ type: "weapon", gun: "mini", hp: 620, x: 1.5 }] },
+      { at: 220, kind: "gate", pair: [{ op: "add", k: 4 }, { op: "sub", k: 3 }] },
       { at: 248, kind: "wave", clog: 72, suds: 22 },
-      { at: 310, kind: "gate", pair: [{ op: "add", k: 12 }, { op: "div", k: 2 }] },
-      { at: 336, kind: "crate", layout: "single", items: [{ type: "weapon", gun: "beam", hp: 880, x: -1.5 }] },
-      { at: 364, kind: "crate", layout: "single", items: [{ type: "tier", hp: 520, x: 1.5 }] },
-      { at: 376, kind: "gate", pair: [{ op: "mul", k: 2 }, { op: "add", k: 6 }] },
-      { at: 392, kind: "gate", pair: [{ op: "add", k: 6 }, { op: "sub", k: 4 }] },
-      { at: 406, kind: "gate", pair: [{ op: "add", k: 8 }, { op: "sub", k: 4 }] },
+      { at: 320, kind: "gate", pair: [{ op: "add", k: 6 }, { op: "div", k: 2 }] },
+      { at: 340, kind: "crate", layout: "single", items: [{ type: "weapon", gun: "beam", hp: 880, x: -1.5 }] },
+      { at: 364, kind: "gate", pair: [{ op: "add", k: 6 }, { op: "sub", k: 4 }] },
+      { at: 384, kind: "crate", layout: "single", items: [{ type: "tier", hp: 520, x: 1.5 }] },
+      { at: 400, kind: "gate", pair: [{ op: "add", k: 8 }, { op: "sub", k: 4 }] },
       { at: 428, kind: "wave", clog: 80, suds: 24, hauler: 2, duck: 1 },
-      { at: 490, kind: "gate", pair: [{ op: "add", k: 10 }, { op: "sub", k: 6 }] },
-      { at: 538, kind: "gate", pair: [{ op: "mul", k: 2 }, { op: "add", k: 8 }] },
-      { at: 586, kind: "gate", pair: [{ op: "add", k: 6 }, { op: "sub", k: 3 }] },
-      { at: 634, kind: "gate", pair: [{ op: "add", k: 6 }, { op: "div", k: 2 }] },
-      { at: 682, kind: "gate", pair: [{ op: "add", k: 4 }, { op: "sub", k: 2 }] },
+      { at: 508, kind: "gate", pair: [{ op: "add", k: 10 }, { op: "sub", k: 6 }] },
+      { at: 544, kind: "gate", pair: [{ op: "add", k: 8 }, { op: "sub", k: 4 }] },
+      { at: 588, kind: "gate", pair: [{ op: "add", k: 6 }, { op: "sub", k: 3 }] },
+      { at: 632, kind: "gate", pair: [{ op: "add", k: 6 }, { op: "div", k: 2 }] },
+      { at: 676, kind: "gate", pair: [{ op: "add", k: 4 }, { op: "sub", k: 2 }] },
       { at: 700, kind: "boss" },
     ],
   },
@@ -276,35 +273,31 @@ export const LEVELS = {
     win: "BRIDGE HELD!",
     events: [
       { at: 30, kind: "gate", pair: [{ op: "add", k: 6 }, { op: "sub", k: 4 }] },
-      { at: 54, kind: "crate", layout: "pair", items: [
-        { type: "weapon", gun: "long", hp: 640, x: -1.5 },
-        { type: "weapon", gun: "gerald", hp: 640, x: 1.5 },
+      { at: 48, kind: "crate", layout: "pair", items: [
+        { type: "weapon", gun: "rail", hp: 640, x: -1.5 },
+        { type: "weapon", gun: "flame", hp: 640, x: 1.5 },
       ] },
-      { at: 70, kind: "gate", pair: [{ op: "mul", k: 2 }, { op: "add", k: 5 }] },
-      { at: 86, kind: "gate", pair: [{ op: "add", k: 6 }, { op: "sub", k: 4 }] },
-      { at: 100, kind: "gate", pair: [{ op: "add", k: 8 }, { op: "sub", k: 5 }] },
+      { at: 76, kind: "gate", pair: [{ op: "mul", k: 2 }, { op: "add", k: 5 }] },
       { at: 122, kind: "wave", clog: 52 },
-      { at: 176, kind: "gate", pair: [{ op: "add", k: 5 }, { op: "sub", k: 3 }] },
-      { at: 204, kind: "crate", layout: "single", items: [{ type: "weapon", gun: "log", hp: 860, x: -1.5 }] },
-      { at: 214, kind: "gate", pair: [{ op: "add", k: 6 }, { op: "sub", k: 3 }] },
-      { at: 232, kind: "gate", pair: [{ op: "add", k: 8 }, { op: "sub", k: 4 }] },
-      { at: 246, kind: "gate", pair: [{ op: "mul", k: 2 }, { op: "add", k: 8 }] },
+      { at: 196, kind: "gate", pair: [{ op: "add", k: 5 }, { op: "sub", k: 3 }] },
+      { at: 210, kind: "crate", layout: "single", items: [{ type: "weapon", gun: "glacier", hp: 860, x: -1.5 }] },
+      { at: 232, kind: "gate", pair: [{ op: "add", k: 6 }, { op: "sub", k: 3 }] },
       { at: 270, kind: "wave", clog: 74, suds: 16, hair: 2 },
-      { at: 340, kind: "gate", pair: [{ op: "add", k: 10 }, { op: "sub", k: 6 }] },
-      { at: 368, kind: "crate", layout: "pair", items: [
-        { type: "weapon", gun: "rocket", hp: 980, x: -1.5 },
-        { type: "weapon", gun: "flame", hp: 980, x: 1.5 },
+      { at: 348, kind: "gate", pair: [{ op: "add", k: 10 }, { op: "sub", k: 6 }] },
+      { at: 368, kind: "crate", layout: "single", items: [{ type: "tier", hp: 700, x: 0 }] },
+      { at: 392, kind: "gate", pair: [{ op: "add", k: 8 }, { op: "sub", k: 4 }] },
+      { at: 410, kind: "crate", layout: "pair", items: [
+        { type: "weapon", gun: "barrage", hp: 980, x: -1.5 },
+        { type: "weapon", gun: "aurora", hp: 980, x: 1.5 },
       ] },
-      { at: 384, kind: "gate", pair: [{ op: "mul", k: 2 }, { op: "add", k: 6 }] },
-      { at: 400, kind: "crate", layout: "single", items: [{ type: "tier", hp: 700, x: 0 }] },
-      { at: 418, kind: "gate", pair: [{ op: "add", k: 8 }, { op: "sub", k: 5 }] },
-      { at: 448, kind: "gate", pair: [{ op: "add", k: 6 }, { op: "sub", k: 3 }] },
-      { at: 470, kind: "wave", clog: 96, suds: 28, hauler: 2, spit: 4, duck: 1 },
-      { at: 540, kind: "gate", pair: [{ op: "add", k: 12 }, { op: "div", k: 2 }] },
-      { at: 588, kind: "gate", pair: [{ op: "mul", k: 2 }, { op: "add", k: 6 }] },
-      { at: 636, kind: "gate", pair: [{ op: "add", k: 8 }, { op: "sub", k: 4 }] },
-      { at: 684, kind: "gate", pair: [{ op: "add", k: 8 }, { op: "sub", k: 4 }] },
-      { at: 732, kind: "gate", pair: [{ op: "mul", k: 3 }, { op: "add", k: 10 }] },
+      { at: 436, kind: "gate", pair: [{ op: "add", k: 8 }, { op: "sub", k: 5 }] },
+      { at: 470, kind: "wave", clog: 70, suds: 18, hauler: 1, spit: 1, duck: 1 },
+      { at: 552, kind: "gate", pair: [{ op: "add", k: 8 }, { op: "div", k: 2 }] },
+      { at: 596, kind: "gate", pair: [{ op: "add", k: 8 }, { op: "sub", k: 4 }] },
+      { at: 636, kind: "gate", pair: [{ op: "add", k: 6 }, { op: "sub", k: 3 }] },
+      { at: 676, kind: "gate", pair: [{ op: "add", k: 8 }, { op: "sub", k: 4 }] },
+      { at: 720, kind: "gate", pair: [{ op: "add", k: 10 }, { op: "sub", k: 5 }] },
+      { at: 764, kind: "gate", pair: [{ op: "add", k: 6 }, { op: "sub", k: 4 }] },
       { at: 780, kind: "boss" },
     ],
   },
@@ -323,46 +316,36 @@ export const LEVELS = {
     starN: 50,
     starSec: 35,
     boss: "grunk",
-    bossHp: 5000,
+    bossHp: 2000,
     bossName: "GRUNK THE PLUMBER",
     win: "DAM HELD!",
     events: [
-      { at: 30, kind: "gate", pair: [{ op: "add", k: 8 }, { op: "sub", k: 6 }] },
-      { at: 52, kind: "crate", layout: "pair", items: [
-        { type: "weapon", gun: "party", hp: 900, x: -1.5 },
-        { type: "weapon", gun: "sap", hp: 900, x: 1.5 },
+      { at: 30, kind: "gate", pair: [{ op: "add", k: 6 }, { op: "sub", k: 4 }] },
+      { at: 44, kind: "crate", layout: "pair", items: [
+        { type: "weapon", gun: "storm", hp: 900, x: -1.5 },
+        { type: "weapon", gun: "cone", hp: 900, x: 1.5 },
       ] },
-      { at: 64, kind: "gate", pair: [{ op: "mul", k: 2 }, { op: "add", k: 6 }] },
-      { at: 78, kind: "gate", pair: [{ op: "add", k: 6 }, { op: "sub", k: 4 }] },
-      { at: 92, kind: "gate", pair: [{ op: "add", k: 10 }, { op: "sub", k: 5 }] },
-      { at: 118, kind: "wave", clog: 48, leafN: 2 },
-      { at: 170, kind: "gate", pair: [{ op: "add", k: 6 }, { op: "sub", k: 4 }] },
-      { at: 204, kind: "crate", layout: "pair", items: [
-        { type: "weapon", gun: "storm", hp: 1100, x: -1.5 },
-        { type: "weapon", gun: "frost", hp: 1100, x: 1.5 },
+      { at: 74, kind: "gate", pair: [{ op: "mul", k: 2 }, { op: "add", k: 6 }] },
+      { at: 118, kind: "wave", clog: 22, leafN: 1 },
+      { at: 196, kind: "gate", pair: [{ op: "add", k: 6 }, { op: "sub", k: 4 }] },
+      { at: 210, kind: "crate", layout: "pair", items: [
+        { type: "weapon", gun: "saw", hp: 520, x: -1.5 },
+        { type: "weapon", gun: "burst", hp: 520, x: 1.5 },
       ] },
-      { at: 220, kind: "gate", pair: [{ op: "add", k: 6 }, { op: "sub", k: 4 }] },
-      { at: 240, kind: "gate", pair: [{ op: "add", k: 8 }, { op: "sub", k: 5 }] },
-      { at: 252, kind: "gate", pair: [{ op: "add", k: 6 }, { op: "sub", k: 3 }] },
-      { at: 278, kind: "wave", clog: 84, suds: 20, leaf: 1, duck: 1 },
-      { at: 350, kind: "gate", pair: [{ op: "mul", k: 2 }, { op: "add", k: 10 }] },
-      { at: 380, kind: "crate", layout: "pair", items: [
-        { type: "weapon", gun: "rail", hp: 1280, x: -1.5 },
-        { type: "weapon", gun: "bow", hp: 1280, x: 1.5 },
-      ] },
-      { at: 396, kind: "gate", pair: [{ op: "add", k: 12 }, { op: "sub", k: 8 }] },
-      { at: 412, kind: "crate", layout: "single", items: [{ type: "tier", hp: 900, x: 0 }] },
-      { at: 430, kind: "gate", pair: [{ op: "add", k: 8 }, { op: "sub", k: 5 }] },
-      { at: 452, kind: "gate", pair: [{ op: "add", k: 10 }, { op: "sub", k: 6 }] },
-      { at: 470, kind: "gate", pair: [{ op: "add", k: 8 }, { op: "sub", k: 4 }] },
-      { at: 492, kind: "wave", clog: 110, suds: 36, hauler: 3, spit: 6, hair: 2, leaf: 2 },
-      { at: 570, kind: "gate", pair: [{ op: "add", k: 14 }, { op: "div", k: 2 }] },
-      { at: 618, kind: "gate", pair: [{ op: "add", k: 6 }, { op: "sub", k: 3 }] },
-      { at: 666, kind: "gate", pair: [{ op: "mul", k: 2 }, { op: "add", k: 8 }] },
-      { at: 714, kind: "gate", pair: [{ op: "add", k: 8 }, { op: "sub", k: 4 }] },
-      { at: 762, kind: "gate", pair: [{ op: "add", k: 10 }, { op: "sub", k: 6 }] },
-      { at: 810, kind: "gate", pair: [{ op: "add", k: 8 }, { op: "sub", k: 5 }] },
-      { at: 858, kind: "gate", pair: [{ op: "mul", k: 3 }, { op: "add", k: 12 }] },
+      { at: 232, kind: "gate", pair: [{ op: "add", k: 8 }, { op: "sub", k: 5 }] },
+      { at: 278, kind: "wave", clog: 36, suds: 8, leaf: 1, duck: 1 },
+      { at: 360, kind: "gate", pair: [{ op: "add", k: 10 }, { op: "sub", k: 6 }] },
+      { at: 380, kind: "crate", layout: "single", items: [{ type: "tier", hp: 900, x: 0 }] },
+      { at: 404, kind: "gate", pair: [{ op: "add", k: 8 }, { op: "sub", k: 5 }] },
+      { at: 448, kind: "gate", pair: [{ op: "add", k: 10 }, { op: "sub", k: 6 }] },
+      { at: 492, kind: "wave", clog: 36, suds: 6, hauler: 1, spit: 1, hair: 1, leaf: 1 },
+      { at: 572, kind: "gate", pair: [{ op: "add", k: 8 }, { op: "div", k: 2 }] },
+      { at: 616, kind: "gate", pair: [{ op: "add", k: 6 }, { op: "sub", k: 3 }] },
+      { at: 656, kind: "gate", pair: [{ op: "add", k: 8 }, { op: "sub", k: 4 }] },
+      { at: 696, kind: "gate", pair: [{ op: "add", k: 8 }, { op: "sub", k: 4 }] },
+      { at: 740, kind: "gate", pair: [{ op: "add", k: 10 }, { op: "sub", k: 6 }] },
+      { at: 780, kind: "gate", pair: [{ op: "add", k: 8 }, { op: "sub", k: 5 }] },
+      { at: 816, kind: "gate", pair: [{ op: "add", k: 8 }, { op: "sub", k: 4 }] },
       { at: 860, kind: "boss" },
     ],
   },
@@ -424,11 +407,24 @@ export function squadDmgMul(n) {
   return 1 + Math.max(0, n - RENDER_CAP) * 0.015;
 }
 
+// Visible shots in one volley. Big squads fire fewer, fatter shots.
+export function volleyPlan(n) {
+  const count = Math.max(0, n | 0);
+  const shown = Math.min(count, RENDER_CAP);
+  let m = 1;
+  if (count > 150) m = 5;
+  else if (count > 60) m = 3;
+  else if (count > 20) m = 2;
+  const vis = shown <= 0 ? 0 : Math.max(1, Math.round(shown / m));
+  return { m, vis, thick: Math.min(1.8, Math.sqrt(m)) };
+}
+
 export function weaponMods(id, tier) {
-  const w = WEAPONS[id] || WEAPONS.bow;
+  const w = WEAPONS[id] || WEAPONS.burst;
   const t = Math.max(1, Math.min(4, tier | 0));
   const row = w.tiers[t - 1];
   const spread = row.spread != null ? row.spread : (w.spread || 0);
+  const size = t >= 4 ? 1.35 : t >= 2 ? 1.15 : 1;
   return {
     id: w.id,
     name: w.name,
@@ -451,66 +447,24 @@ export function weaponMods(id, tier) {
     burn: row.burn || 0,
     slow: row.slow || 0,
     chain: row.chain || w.chain || 0,
+    bounces: row.bounces || w.bounces || 0,
+    charge: w.charge || 0,
     stagger: 0,
     crit: 0.08,
     color: w.color,
     gold: t >= 4 ? 1 : 0,
     heavy: w.heavy ? 1 : 0,
-    spinUp: row.spinUp || w.spinUp || 0.6,
-    coneHits: row.coneHits || w.coneHits || 3,
-    range: row.range || w.range || 10,
+    spinUp: row.spinUp != null ? row.spinUp : (w.spinUp || 0),
+    coneHits: row.coneHits || w.coneHits || 2,
+    range: row.range || w.range || RANGE,
     puddle: row.puddle != null ? row.puddle : (w.puddle || 0),
-    len: w.len || 1.6,
-    thick: w.thick || 0.2,
+    len: (w.len || 1.6) * size,
+    thick: (w.thick || 0.2) * size,
   };
 }
 
-// Gun lab balance at 1-1 HP. Each entry keeps that tier inside 85-115% of
-// the tier's mean effective TTK. A number still means dmg only.
-export const TUNED = {
-  "beam:1": { dmg: 3.2, rate: 3.41, rateMax: 3.41 },
-  "beam:2": { dmg: 4, rate: 6.08, rateMax: 6.08 },
-  "beam:3": { dmg: 4.8, rate: 7.64, rateMax: 7.64 },
-  "bow:3": { dmg: 17, rate: 3.05, rateMax: 3.05 },
-  "bow:4": { dmg: 23, rate: 2.39, rateMax: 2.39 },
-  "flame:4": { dmg: 12, rate: 8, rateMax: 8 },
-  "frost:1": { dmg: 28, rate: 0.84, rateMax: 0.84 },
-  "frost:2": { dmg: 36, rate: 1.07, rateMax: 1.07 },
-  "frost:3": { dmg: 44, rate: 1.24, rateMax: 1.24 },
-  "frost:4": { dmg: 54, rate: 1.08, rateMax: 1.08 },
-  "log:1": { dmg: 45, rate: 0.7, rateMax: 0.7 },
-  "log:4": { dmg: 129, rate: 0.5, rateMax: 0.5 },
-  "long:1": { dmg: 40, rate: 0.47, rateMax: 0.47 },
-  "long:2": { dmg: 52, rate: 0.45, rateMax: 0.45 },
-  "long:3": { dmg: 67, rate: 0.42, rateMax: 0.42 },
-  "long:4": { dmg: 100, rate: 0.4, rateMax: 0.4 },
-  "party:1": { dmg: 18, rate: 0.5, rateMax: 0.5 },
-  "party:2": { dmg: 23, rate: 0.64, rateMax: 0.64 },
-  "party:3": { dmg: 27, rate: 0.62, rateMax: 0.62 },
-  "party:4": { dmg: 32, rate: 0.54, rateMax: 0.54 },
-  "rail:1": { dmg: 28, rate: 0.18, rateMax: 0.18 },
-  "rail:2": { dmg: 36, rate: 0.17, rateMax: 0.17 },
-  "rail:3": { dmg: 46, rate: 0.15, rateMax: 0.15 },
-  "rail:4": { dmg: 58, rate: 0.16, rateMax: 0.16 },
-  "rocket:1": { dmg: 34, rate: 0.49, rateMax: 0.49 },
-  "rocket:2": { dmg: 45, rate: 0.58, rateMax: 0.58 },
-  "rocket:3": { dmg: 64, rate: 0.52, rateMax: 0.52 },
-  "rocket:4": { dmg: 82, rate: 0.58, rateMax: 0.58 },
-  "sap:1": { dmg: 30, rate: 1.27, rateMax: 1.27 },
-  "sap:2": { dmg: 37, rate: 2.5, rateMax: 2.5 },
-  "sap:3": { dmg: 44, rate: 6.46, rateMax: 6.46 },
-  "sap:4": { dmg: 52, rate: 1.41, rateMax: 1.41 },
-  "shot:1": { dmg: 12, rate: 7.38, rateMax: 7.38 },
-  "shot:2": { dmg: 15, rate: 3.2, rateMax: 3.2, pellets: 8 },
-  "shot:3": { dmg: 18, rate: 4.3, rateMax: 4.3 },
-  "shot:4": { dmg: 23, rate: 5.05, rateMax: 5.05 },
-  "smg:3": { dmg: 21, rate: 3.87, rateMax: 3.87 },
-  "smg:4": { dmg: 25, rate: 4.92, rateMax: 4.92 },
-  "storm:1": { dmg: 16, rate: 1.02, rateMax: 1.02 },
-  "storm:2": { dmg: 20, rate: 1.12, rateMax: 1.12 },
-  "storm:3": { dmg: 24, rate: 1.12, rateMax: 1.12 },
-  "storm:4": { dmg: 30, rate: 1.16, rateMax: 1.16 },
-};
+// Lab rescales damage only. Rate and pattern stay on the weapon row.
+export const TUNED = {};
 
 export function tunedMods(id, tier) {
   const mods = weaponMods(id, tier);
@@ -521,17 +475,12 @@ export function tunedMods(id, tier) {
     return mods;
   }
   if (row.dmg) mods.dmg = row.dmg;
-  if (row.rate) mods.rate = row.rate;
-  if (row.rateMax) mods.rateMax = row.rateMax;
-  if (row.range) mods.range = row.range;
-  if (row.pellets) mods.pellets = row.pellets;
-  if (row.coneHits) mods.coneHits = row.coneHits;
   return mods;
 }
 
 export function tierAfterPickup(curId, curTier, nextId, bonus) {
-  const cur = WEAPONS[curId] || WEAPONS.bow;
-  const next = WEAPONS[nextId] || WEAPONS.bow;
+  const cur = WEAPONS[curId] || WEAPONS.burst;
+  const next = WEAPONS[nextId] || WEAPONS.burst;
   let t = cur.id === next.id ? curTier + 1 : curTier;
   t += bonus || 0;
   return Math.max(1, Math.min(4, t));
@@ -652,35 +601,8 @@ export function hairGrowth(age) {
 }
 
 export function mysteryPick(unlocked, rnd) {
-  const fams = ["ARROWS", "BULLETS", "ROCKETS", "FLAME", "LASER", "TESLA", "CRYO", "SNIPER"];
-  let total = 0;
-  const counts = [0, 0, 0, 0, 0, 0, 0, 0];
-  for (let i = 0; i < unlocked.length; i++) {
-    const w = WEAPONS[unlocked[i]];
-    if (!w) continue;
-    const fi = fams.indexOf(w.family);
-    if (fi < 0) continue;
-    if (counts[fi] === 0) total += FAMILY_WEIGHT[w.family];
-    counts[fi]++;
-  }
-  if (total <= 0) return "bow";
-  let r = rnd() * total;
-  let fam = fams[0];
-  for (let i = 0; i < fams.length; i++) {
-    if (!counts[i]) continue;
-    r -= FAMILY_WEIGHT[fams[i]];
-    if (r <= 0) {
-      fam = fams[i];
-      break;
-    }
-  }
-  const bucket = [];
-  for (let i = 0; i < unlocked.length; i++) {
-    const w = WEAPONS[unlocked[i]];
-    if (w && w.family === fam) bucket.push(w.id);
-  }
-  if (!bucket.length) return "bow";
-  return bucket[Math.min(bucket.length - 1, (rnd() * bucket.length) | 0)];
+  const i = Math.min(GUN_ORDER.length - 1, Math.max(0, (rnd() * GUN_ORDER.length) | 0));
+  return GUN_ORDER[i];
 }
 
 export function formationOffsets(n, radius, outX, outZ) {
@@ -731,30 +653,18 @@ export function packAdvance(type, count, half) {
   return Math.ceil(n / cols) * enemyGap(type) * 0.86;
 }
 
-export function waveExtent(ev, half) {
-  let cursor = ev.at + 21;
-  let end = cursor;
-  const seq = [];
-  if (ev.clog) seq.push([0, ev.clog]);
-  if (ev.hauler) seq.push([2, ev.hauler]);
-  if (ev.suds) seq.push([1, ev.suds]);
-  if (ev.hair) seq.push([3, ev.hair]);
-  if (ev.spit) seq.push([4, ev.spit]);
-  if (ev.leafN) seq.push([5, ev.leafN]);
-  else if (ev.leaf) {
-    for (let s = 0; s < ev.leaf; s++) seq.push([5, 8]);
-  }
-  if (ev.duck) seq.push([6, ev.duck]);
-  for (let i = 0; i < seq.length; i++) {
-    if (i) cursor += 0.8;
-    const type = seq[i][0];
-    const n = seq[i][1];
-    const step = enemyGap(type) * 0.86;
-    const rows = Math.ceil(n / laneCols(type, n, half));
-    end = cursor + Math.max(0, rows - 1) * step;
-    cursor += rows * step;
-  }
-  return { front: ev.at + 21, end };
+export function waveBodies(ev) {
+  let n = (ev.clog || 0) + (ev.suds || 0) + (ev.hauler || 0) + (ev.hair || 0) + (ev.spit || 0) + (ev.duck || 0);
+  if (ev.leafN) n += ev.leafN;
+  else if (ev.leaf) n += ev.leaf * 8;
+  return n;
+}
+
+// Road the charging pack occupies. Rhythm uses this span. Scaling does not.
+export function waveExtent(ev) {
+  const n = Math.max(1, waveBodies(ev));
+  const depth = Math.min(16, 3 + Math.sqrt(n) * 1.1);
+  return { front: ev.at, end: ev.at + CHARGE_LEAD + depth };
 }
 
 export function layoutIssues() {
@@ -801,7 +711,7 @@ export function layoutIssues() {
         if (o.at > ev.at && o.at < nextAt) nextAt = o.at;
         if (o.at > ev.at - 6 && o.at < ev.at) fails.push(id + " strip " + ev.at);
       }
-      if (prevEnd > -1e8 && ev.at < prevEnd + 12) fails.push(id + " gate " + ev.at + " after " + prevEnd.toFixed(1));
+      if (prevEnd > -1e8 && ev.at < prevEnd + 20) fails.push(id + " gate " + ev.at + " after " + prevEnd.toFixed(1));
       if (nextAt < 1e8 && nextAt < ev.at + 12) fails.push(id + " gate " + ev.at + " before " + nextAt);
     }
     const anchors = [];
@@ -815,7 +725,7 @@ export function layoutIssues() {
       for (let w = 0; w < waves.length; w++) {
         if (waves[w].front < anchors[i] && waves[w].end > prev) crossed = 1;
       }
-      const limit = crossed ? 100 : 64;
+      const limit = crossed ? 160 : 48.05;
       if (anchors[i] - prev > limit) fails.push(id + " gap " + prev + ".." + anchors[i]);
       prev = anchors[i];
     }
@@ -830,7 +740,7 @@ export function layoutIssues() {
     const items = evs[i].items || [];
     for (let k = 0; k < items.length; k++) if (items[k].type === "weapon") first.push(items[k].gun);
   }
-  if (first.join(",") !== "smg,shot,beam") fails.push("1-1 guns " + first.join(","));
+  if (first.join(",") !== "dambust,mini,beam") fails.push("1-1 guns " + first.join(","));
   return fails;
 }
 
@@ -873,6 +783,14 @@ export function bossClogMul(expect) {
   return Math.min(1100, Math.max(8, e * 3.55));
 }
 
+function gateSpecial(ev) {
+  const pair = ev.pair || [];
+  for (let s = 0; s < pair.length; s++) {
+    if (pair[s].op === "mul" || pair[s].op === "div") return 1;
+  }
+  return 0;
+}
+
 export function rhythmIssues() {
   const fails = [];
   for (let li = 0; li < LEVEL_IDS.length; li++) {
@@ -881,14 +799,16 @@ export function rhythmIssues() {
     const evs = level.events;
     const items = [{ at: 0, end: 0, kind: "start" }];
     const waves = [];
+    const gates = [];
     for (let i = 0; i < evs.length; i++) {
       const ev = evs[i];
       if (ev.kind === "wave") {
-        const ext = waveExtent(ev, DECK_HALF);
+        const ext = waveExtent(ev);
         items.push({ at: ev.at, end: ext.end, kind: "wave" });
-        waves.push(ev.at);
+        waves.push(ext);
       } else if (ev.kind === "gate" || ev.kind === "crate") {
         items.push({ at: ev.at, end: ev.at, kind: ev.kind });
+        if (ev.kind === "gate") gates.push(ev);
       }
     }
     items.push({ at: level.len, end: level.len, kind: "boss" });
@@ -899,10 +819,35 @@ export function rhythmIssues() {
       if (gap > 48.05) fails.push(id + " empty " + cursor.toFixed(1) + ".." + items[i].at + " " + gap.toFixed(1) + "m");
       if (items[i].end > cursor) cursor = items[i].end;
     }
-    for (let i = 0; i < evs.length; i++) {
-      if (evs[i].kind !== "gate") continue;
+    for (let i = 0; i < gates.length; i++) {
+      const g = gates[i];
       for (let w = 0; w < waves.length; w++) {
-        if (Math.abs(evs[i].at - waves[w]) < 20) fails.push(id + " gate " + evs[i].at + " near wave " + waves[w]);
+        const road = waves[w];
+        if (g.at > road.front - 20 && g.at < road.end + 20) {
+          fails.push(id + " gate " + g.at + " on road " + road.front + ".." + road.end.toFixed(1));
+        }
+      }
+      if (i === 0) continue;
+      const prev = gates[i - 1];
+      const gap = g.at - prev.at;
+      let waveBetween = 0;
+      for (let w = 0; w < waves.length; w++) {
+        if (waves[w].front > prev.at && waves[w].front < g.at) waveBetween = 1;
+      }
+      if (!waveBetween && (gap < 29.9 || gap > 48.05)) {
+        fails.push(id + " gate gap " + prev.at + ".." + g.at);
+      }
+      if (gateSpecial(prev) && !waveBetween && (gap < 39.9 || gap > 48.05)) {
+        fails.push(id + " after special " + prev.at + ".." + g.at);
+      }
+    }
+    for (let i = 0; i < evs.length; i++) {
+      if (evs[i].kind !== "crate") continue;
+      for (let g = 0; g < gates.length; g++) {
+        const at = gates[g].at;
+        if (evs[i].at > at - 10 && evs[i].at < at + 4) {
+          fails.push(id + " crate " + evs[i].at + " near gate " + at);
+        }
       }
     }
   }
@@ -949,7 +894,7 @@ export function rhythmText() {
   const fails = rhythmIssues();
   lines.push(fails.length ? "RHYTHM FAIL" : "RHYTHM PASS");
   lines.push("empty stretch: no more than 48 m of road outside a wave body without a gate or crate");
-  lines.push("wave clearance: no gate within 20 m of a wave start");
+  lines.push("road clearance: no gate within 20 m of Clogs still on the road");
   for (let i = 0; i < fails.length; i++) lines.push(fails[i]);
   return lines.join("\n");
 }
@@ -1011,43 +956,50 @@ export function selfTestRules() {
   shootGate(div, 6 * 40);
   eq(div.k, 15, "div cap");
 
-  eq(weaponMods("bow", 1).dmg, 14, "t1 dmg");
-  eq(Math.round(weaponMods("bow", 2).rate * 100), 394, "t2 rate");
-  eq(weaponMods("bow", 2).dmg, 17, "t2 dmg");
-  eq(weaponMods("shot", 1).pellets, 6, "t1 pellets");
-  eq(weaponMods("shot", 3).pellets, 7, "t3 pellets");
-  eq(weaponMods("shot", 4).pellets, 8, "t4 pellets");
-  eq(weaponMods("long", 1).pierce, 3, "pierce");
-  eq(weaponMods("long", 3).pierce, 4, "t3 pierce");
-  eq(weaponMods("long", 4).pierce, 5, "t4 pierce");
-  eq(Math.round(weaponMods("log", 4).splash * 10), 20, "t4 splash");
-  eq(Math.round(weaponMods("party", 1).crit * 100), 8, "crit");
-  eq(weaponMods("party", 1).family, "ROCKETS", "party family");
-  eq(weaponMods("party", 3).pellets, 6, "party t3");
-  eq(weaponMods("sap", 1).name, "Sap Burner", "sap name");
-  eq(weaponMods("sap", 1).pattern, "glob", "sap glob");
-  eq(weaponMods("sap", 1).slow, 0, "no slow");
-  eq(weaponMods("frost", 1).slow, 2, "frost slow");
+  eq(weaponMods("burst", 1).dmg, 8.7, "t1 dmg");
+  eq(Math.round(weaponMods("burst", 1).rate * 100), 160, "t1 rate");
+  eq(weaponMods("burst", 3).pellets, 4, "t3 burst");
+  eq(weaponMods("burst", 4).pierce, 1, "t4 pierce");
+  eq(weaponMods("dambust", 1).pellets, 9, "t1 pellets");
+  eq(weaponMods("dambust", 4).pellets, 12, "t4 pellets");
+  eq(weaponMods("mini", 1).pattern, "spin", "mini spin");
+  eq(Math.round(weaponMods("mini", 1).rateMax * 10), 63, "mini max");
+  eq(Math.round(weaponMods("beam", 1).dmg * 10), 48, "beam dmg");
+  eq(weaponMods("beam", 1).pattern, "bolt", "beam bolts");
+  eq(Math.round(weaponMods("flame", 1).dmg * 10), 13, "flame dmg");
+  eq(weaponMods("flame", 1).pattern, "stream", "flame stream");
+  eq(Math.round(weaponMods("glacier", 1).slow * 10), 24, "glacier slow");
   eq(weaponMods("storm", 1).chain, 3, "storm chain");
+  eq(weaponMods("storm", 4).chain, 5, "storm t4");
   eq(weaponMods("rail", 1).pierce, 40, "rail pierce");
-  eq(weaponMods("beam", 1).pattern, "beam", "beam pattern");
-  eq(GUN_ORDER.length, 14, "14 guns");
+  eq(Math.round(weaponMods("rail", 1).charge * 100), 45, "rail charge");
+  eq(weaponMods("saw", 1).bounces, 3, "saw bounce");
+  eq(weaponMods("aurora", 1).pattern, "orb", "aurora orb");
+  eq(GUN_ORDER.length, 12, "12 guns");
   eq(DECK_HALF, 3, "deck half");
   eq(BOSS_HALF, 3.6, "boss half");
+  eq(GATE_X, 1.75, "gate x");
+  eq(PANEL_W, 2, "panel");
   eq(BOSS_TALL.grunk, 6, "grunk tall");
   eq(ENEMY[0].tall, 1.6, "clog tall");
   eq(ENEMY[1].tall, 2.0, "suds tall");
   eq(ENEMY[2].tall, 2.6, "hauler tall");
   eq(ENEMY[4].tall, 1.8, "spit tall");
   eq(weaponMods("flame", 4).gold, 1, "gold");
-  eq(weaponMods("flame", 4).coneHits, 5, "flame t4 hits");
-  eq(Math.round(weaponMods("smg", 4).rate * 100), 582, "smg t4 rate");
-  eq(tierAfterPickup("bow", 1, "smg", 0), 1, "swap family");
-  eq(tierAfterPickup("smg", 2, "smg", 0), 3, "same tier");
-  eq(tierAfterPickup("smg", 3, "shot", 0), 3, "same family");
-  eq(tierAfterPickup("smg", 3, "log", 0), 3, "other family");
-  eq(tierAfterPickup("smg", 1, "bow", 1), 2, "rack bow");
-  eq(tierAfterPickup("smg", 4, "smg", 0), 4, "cap t4");
+  eq(Math.round(weaponMods("burst", 4).rate * 100), 210, "burst t4 rate");
+  eq(migrateGun("bow"), "rail", "migrate bow");
+  eq(migrateGun("smg"), "burst", "migrate smg");
+  eq(migrateGun("gerald"), "mini", "migrate gerald");
+  eq(migrateGun("frost"), "glacier", "migrate frost");
+  eq(migrateGun("log"), "cone", "migrate log");
+  eq(migrateGun("nope"), "", "migrate drop");
+  eq(migrateGun("beam"), "beam", "migrate keep");
+  eq(tierAfterPickup("burst", 1, "mini", 0), 1, "swap family");
+  eq(tierAfterPickup("burst", 2, "burst", 0), 3, "same tier");
+  eq(tierAfterPickup("burst", 3, "dambust", 0), 3, "same family");
+  eq(tierAfterPickup("burst", 3, "cone", 0), 3, "other family");
+  eq(tierAfterPickup("burst", 1, "mini", 1), 2, "rack bonus");
+  eq(tierAfterPickup("burst", 4, "burst", 0), 4, "cap t4");
   eq(starsFor(true, 30, 0, 10), 3, "star3");
   eq(starsFor(true, 30, 1, 10), 2, "star2");
   eq(starsFor(true, 10, 1, 5), 1, "star1");
@@ -1078,8 +1030,11 @@ export function selfTestRules() {
   eq(grown.bite, 7, "hair bite");
   eq(grown.hpScale, 3, "hair cap");
 
-  const pick = mysteryPick(["bow", "smg", "shot", "log"], () => 0.01);
-  if (STARTERS.indexOf(pick) < 0) fails.push("mystery locked " + pick);
+  const pick = mysteryPick(GUN_ORDER, () => 0.01);
+  if (GUN_ORDER.indexOf(pick) < 0) fails.push("mystery locked " + pick);
+  const plan = volleyPlan(300);
+  eq(plan.m, 5, "volley m");
+  eq(plan.vis, 12, "volley vis");
   eq(highestPlayable({}), "1-1", "highest fresh");
   eq(highestPlayable({ "1-1": true }), "1-2", "highest 2");
   eq(nextLevel("1-3"), "", "no chapter 2");

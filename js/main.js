@@ -1,11 +1,11 @@
 import * as THREE from "three";
-import { BUILD, GUN_COST, GUN_ORDER, WEAPONS, highestPlayable, isUnlockedLevel, rhythmText } from "./rules.js?v=br5";
-import { createWorld } from "./world.js?v=br5";
-import { createPlay } from "./play.js?v=br5";
-import { createAudio } from "./audio.js?v=br5";
-import { loadSave, rememberWin, rememberGun, writeSave, buyGun } from "./save.js?v=br5";
-import { drawWeaponIcon, setTime } from "./mats.js?v=br5";
-import { loadGame, CREDIT_LINES } from "./assets.js?v=br5";
+import { BUILD, GUN_COST, GUN_ORDER, WEAPONS, highestPlayable, isUnlockedLevel, rhythmText } from "./rules.js?v=br6";
+import { createWorld } from "./world.js?v=br6";
+import { createPlay } from "./play.js?v=br6";
+import { createAudio } from "./audio.js?v=br6";
+import { loadSave, rememberWin, rememberGun, writeSave, buyGun } from "./save.js?v=br6";
+import { drawWeaponIcon, setTime } from "./mats.js?v=br6";
+import { loadGame, CREDIT_LINES } from "./assets.js?v=br6";
 
 const save = loadSave();
 const canvas = document.getElementById("c");
@@ -26,6 +26,16 @@ renderer.shadowMap.type = THREE.PCFSoftShadowMap;
 const scene = new THREE.Scene();
 const camera = new THREE.PerspectiveCamera(30, 1, 0.2, 360);
 const world = createWorld(scene);
+const rimLight = new THREE.DirectionalLight(0xffb060, 0);
+rimLight.position.set(5.5, 4.8, 8);
+rimLight.target.position.set(0, 1.4, -16);
+scene.add(rimLight, rimLight.target);
+const runFog = scene.fog;
+let titleFog = null;
+let composer = null;
+let bloomFailed = false;
+let artReady = false;
+let heroArmed = true;
 const audio = createAudio();
 const play = createPlay(scene, camera, audio);
 
@@ -39,6 +49,13 @@ const chip = document.getElementById("chip");
 const banner = document.getElementById("squad-banner");
 const flash = document.getElementById("flash");
 const dbg = document.getElementById("dbg");
+const crossEl = new URLSearchParams(location.search).get("gates") === "1" ? document.createElement("div") : null;
+if (crossEl) {
+  crossEl.id = "cross-hits";
+  crossEl.textContent = "crossHits 0";
+  crossEl.style.cssText = "position:fixed;left:8px;top:8px;z-index:50;color:#fff;font:700 18px sans-serif;text-shadow:0 1px 2px #000";
+  document.body.appendChild(crossEl);
+}
 const barFill = document.getElementById("bar-fill");
 const barLabel = document.getElementById("bar-label");
 const boberRun = document.getElementById("bober-run");
@@ -59,6 +76,8 @@ const barkEl = document.getElementById("bark");
 const levelName = document.getElementById("level-name");
 const chipFamily = document.getElementById("chip-family");
 const wordEls = document.querySelectorAll("#words .word");
+const notesEl = document.getElementById("notes");
+const notesBtn = document.getElementById("btn-notes");
 const LEVEL_TILES = ["1-1", "1-2", "1-3"];
 
 let mode = "title";
@@ -217,6 +236,8 @@ function startRun(id) {
   toastEl.classList.add("hidden");
   barkEl.classList.add("hidden");
   title.classList.add("hidden");
+  if (notesEl) notesEl.classList.add("hidden");
+  if (notesBtn) notesBtn.setAttribute("aria-expanded", "false");
   result.classList.add("hidden");
   pauseCard.classList.add("hidden");
   boot.classList.add("hidden");
@@ -248,6 +269,10 @@ function resize() {
   camera.fov = 30;
   camera.updateProjectionMatrix();
   world.setShadow(w);
+  if (composer) {
+    composer.setPixelRatio(renderer.getPixelRatio());
+    composer.setSize(w, h);
+  }
 }
 
 function paintChip() {
@@ -402,6 +427,14 @@ function frame(now) {
       play.tickTitle(real);
     }
   }
+  if (mode === "title") {
+    if (heroArmed && artReady) {
+      heroArmed = false;
+      if (play.heroSetup) play.heroSetup();
+    }
+  } else {
+    heroArmed = true;
+  }
   const v = play.view;
   const camX = v.squadX * 0.25;
   const wave = Math.max(0, Math.min(1, v.wave || 0));
@@ -419,13 +452,49 @@ function frame(now) {
     jx = Math.sin(play.time * 74) * mag;
     jy = Math.cos(play.time * 57) * mag * 0.65;
   }
-  camera.position.set(camX + jx, lift + jy, v.squadZ + back);
-  camera.lookAt(camX, lookY, v.squadZ - ahead);
+  if (mode === "title") {
+    const t = play.time;
+    const sz = v.squadZ;
+    if (camera.fov !== 34) {
+      camera.fov = 34;
+      camera.updateProjectionMatrix();
+    }
+    camera.position.set(2.15 + Math.sin(t * 0.15) * 0.4, 2.7, sz + 6.4);
+    camera.lookAt(0.1, 0.82, sz - 0.2);
+    rimLight.position.set(5.2, 4.2, sz + 1.4);
+    rimLight.target.position.set(0, 1.3, sz - 12);
+    rimLight.intensity = 2.3;
+    if (bloomFailed) {
+      if (!titleFog) titleFog = new THREE.Fog(0xf0b56a, 22, 84);
+      scene.fog = titleFog;
+    }
+  } else {
+    rimLight.intensity = 0;
+    if (titleFog && scene.fog === titleFog) scene.fog = runFog;
+    if (camera.fov !== 30) {
+      camera.fov = 30;
+      camera.updateProjectionMatrix();
+    }
+    camera.position.set(camX + jx, lift + jy, v.squadZ + back);
+    camera.lookAt(camX, lookY, v.squadZ - ahead);
+  }
   camera.updateMatrixWorld();
   world.follow(v.squadX, v.squadZ, v.half, play.time, v.river, v.dam, v.theme);
   setTime(play.time);
   play.sync(camera);
-  renderer.render(scene, camera);
+  if (mode === "title" && composer) {
+    try {
+      composer.render(real);
+    } catch (err) {
+      console.warn("bloom skipped", err);
+      bloomFailed = true;
+      try { composer.dispose(); } catch (ignore) { /* ignore */ }
+      composer = null;
+      renderer.render(scene, camera);
+    }
+  } else {
+    renderer.render(scene, camera);
+  }
   v.calls = renderer.info.render.calls;
   fpsAcc += real;
   fpsN++;
@@ -441,6 +510,7 @@ function frame(now) {
   } else if (mode === "lose") {
     placeBanner();
   }
+  if (crossEl) crossEl.textContent = "crossHits " + (v.crossHits || 0);
   if (showDbg) {
     const c = v.counts || [0, 0, 0, 0, 0, 0, 0];
     dbg.textContent =
@@ -658,6 +728,21 @@ if (creditBtn && creditPanel) {
     creditPanel.classList.toggle("hidden");
   });
 }
+const notesClose = document.getElementById("notes-close");
+if (notesBtn && notesEl) {
+  notesBtn.addEventListener("click", () => {
+    const open = notesEl.classList.contains("hidden");
+    notesEl.classList.toggle("hidden", !open);
+    notesBtn.setAttribute("aria-expanded", open ? "true" : "false");
+    if (open) notesEl.scrollTop = 0;
+  });
+}
+if (notesClose && notesEl) {
+  notesClose.addEventListener("click", () => {
+    notesEl.classList.add("hidden");
+    if (notesBtn) notesBtn.setAttribute("aria-expanded", "false");
+  });
+}
 const labBtn = document.getElementById("btn-lab");
 if (labBtn) {
   labBtn.addEventListener("click", () => {
@@ -689,6 +774,8 @@ window.__bridge = {
   step(dt) { play.step(dt); },
   rush(sec) { play.step(sec); },
   selfTest() { return play.selfTest(); },
+  poseGunshot(id, tier) { return play.poseGunshot(id, tier); },
+  poseLineup(boss) { return play.poseLineup(boss); },
   snapshot() { return play.snapshot(); },
   spawnPack: play.spawnPack,
   killAll: play.killAll,
@@ -743,6 +830,7 @@ assets.done.then((pack) => {
   } catch (err) {
     console.warn("asset adopt failed", err);
   }
+  artReady = true;
   if (loadWrap) loadWrap.classList.add("hidden");
   window.__bridge.ready = true;
   const params = new URLSearchParams(location.search);
@@ -751,16 +839,52 @@ assets.done.then((pack) => {
     showLab(out);
     console.log(out.csv);
   } else if (params.get("lab") === "run") {
-    play.equipGun(params.get("gun") || "bow", Number(params.get("tier") || 2));
+    play.equipGun(params.get("gun") || "burst", Number(params.get("tier") || 2));
+    play.setLock(true);
+    startRun(params.get("level") || "1-1");
+    // reset() rebuilds crates and clears the steer bot, so lock-soften and
+    // autopilot have to be applied to the run that just started.
     play.setLock(true);
     if (params.get("auto") === "1") play.setAuto(true);
-    startRun(params.get("level") || "1-1");
+  } else if (params.get("lab") === "gunshots" && play.poseGunshot) {
+    /* the screenshot driver will call poseGunshot */
   }
 }).catch((err) => {
   console.warn("asset load failed", err);
   document.getElementById("btn-start").disabled = false;
   if (loadWrap) loadWrap.classList.add("hidden");
+  artReady = true;
   window.__bridge.ready = true;
 });
 
+function mountBloom() {
+  Promise.all([
+    import("three/addons/postprocessing/EffectComposer.js"),
+    import("three/addons/postprocessing/RenderPass.js"),
+    import("three/addons/postprocessing/UnrealBloomPass.js"),
+    import("three/addons/postprocessing/OutputPass.js"),
+  ]).then(([ec, rp, ub, op]) => {
+    try {
+      const next = new ec.EffectComposer(renderer);
+      next.addPass(new rp.RenderPass(scene, camera));
+      next.addPass(new ub.UnrealBloomPass(new THREE.Vector2(256, 256), 0.38, 0.42, 0.84));
+      next.addPass(new op.OutputPass());
+      composer = next;
+      const w = canvas.clientWidth || window.innerWidth;
+      const h = canvas.clientHeight || window.innerHeight;
+      composer.setPixelRatio(renderer.getPixelRatio());
+      composer.setSize(w, h);
+    } catch (err) {
+      composer = null;
+      bloomFailed = true;
+      console.warn("bloom skipped", err);
+    }
+  }).catch((err) => {
+    composer = null;
+    bloomFailed = true;
+    console.warn("bloom skipped", err);
+  });
+}
+
+mountBloom();
 requestAnimationFrame(frame);
