@@ -1,0 +1,25 @@
+Bober Bridge Rush br9 balance runs
+Lane assist only eases a centred squad, or a squad that would take a gate that wipes it, onto the nearest side that still leaves beavers. It does not pick the better gate. After the gate it lets go, and a squad that was not dragging returns to the centre.
+Sensible bot is setBot only, after start. It is not locked and not autoPick.
+Standing still is neither bot nor drag. It still shoots.
+selfTest fails: none. Soldier 320, Bober 332, boss 5875.
+
+Damage, HP, and bite were not retuned. Checkpoint squads, guns, tiers, and rams match br8. Standing still loses. Every sensible bot wins.
+
+Lane assist, no input, 10/10 seeds. None finished on x=-1.75.
+  1-1: at 32 m, n 3, x 1.2, then back to x 0. Lost on the crate at 51.1 m, n 0, burst T1, ram 1.
+  1-3: at 32 m, n 5, x 1.2, then back to x 0. Lost on the crate pair at 43.1 m, n 0, burst T1, ram 1.
+
+Standing still, 1-1 seed 7:
+  lose  n 0  dist 51.1  burst T1  ram 1  x 0
+  The first gate was survived on the right (x 1.2), then the squad returned to the centre.
+
+Sensible 1-1 (same marks as br8: 112:25 dambust T1, 248:59 mini T1, 428:95 mini T2, 690:204 mini T2):
+  seed 11  win  n 145  mini T2  ram 1  boss 9.7s  dist 700  x 2.3  lost 103
+  seed 22  win  n 140  mini T2  ram 1  boss 8.7s  dist 700  x 2.3  lost 108
+  seed 33  win  n 174  mini T2  ram 1  boss 6.4s  dist 700  x 2.3  lost 74
+
+Sensible 1-3 (same marks as br8 through 492, and 850 is 251/254/254):
+  seed 11  win  n 205  burst T3  ram 1  boss 6.1s  dist 860  x 2.3  lost 100  marks 118:13 burst T1  278:44 burst T2  492:93 burst T3  850:251 burst T3
+  seed 22  win  n 209  burst T3  ram 1  boss 6.1s  dist 860  x 2.3  lost 96  marks 118:13 burst T1  278:44 burst T2  492:93 burst T3  850:254 burst T3
+  seed 33  win  n 215  burst T3  ram 1  boss 6.1s  dist 860  x 0  lost 90  marks 118:13 burst T1  278:44 burst T2  492:93 burst T3  850:254 burst T3

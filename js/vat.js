@@ -411,6 +411,15 @@ export function bakeCrowd(gltf, opt) {
   const { inner, meshes } = mounted;
   const scale = (opt.height || 1) / mounted.height;
   inner.scale.multiplyScalar(scale);
+  if (opt.squash) {
+    inner.scale.x *= opt.squash[0];
+    inner.scale.y *= opt.squash[1];
+    inner.scale.z *= opt.squash[2];
+    inner.updateMatrixWorld(true);
+    posedBox(meshes, mounted.box);
+    const squashed = Math.max(0.05, mounted.box.max.y - mounted.box.min.y);
+    inner.scale.multiplyScalar((opt.height || 1) / squashed);
+  }
   inner.updateMatrixWorld(true);
   const clips = [];
   const wanted = opt.clips || [];
@@ -575,8 +584,17 @@ export function bakeCrowd(gltf, opt) {
     frameBase += spec.frames;
   }
   mixer.stopAllAction();
-  const yMin = mounted.box.min.y * scale;
-  const yMax = mounted.box.max.y * scale;
+  let yMin = mounted.box.min.y * scale;
+  let yMax = mounted.box.max.y * scale;
+  if (opt.squash) {
+    yMin = Infinity;
+    yMax = -Infinity;
+    for (let i = 0; i < vertCount; i++) {
+      const y = positions[i * 3 + 1];
+      if (y < yMin) yMin = y;
+      if (y > yMax) yMax = y;
+    }
+  }
   const spanY = Math.max(0.001, yMax - yMin);
   const col = new THREE.Color();
   for (let s = 0; s < spans.length; s++) {

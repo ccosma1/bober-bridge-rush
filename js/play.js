@@ -51,7 +51,7 @@ import {
   CHARGE_LEAD,
   PINCH_BLOB,
   volleyPlan,
-} from "./rules.js?v=br8";
+} from "./rules.js?v=br9";
 import {
   animToon,
   attachOutline,
@@ -71,7 +71,7 @@ import {
   writeLog,
   writeQuat,
   writeTRS,
-} from "./mats.js?v=br8";
+} from "./mats.js?v=br9";
 import {
   arrowGeo,
   buildBaron,
@@ -100,7 +100,7 @@ import {
   sawDiscGeo,
   streakGeo,
   streamGeo,
-} from "./build.js?v=br8";
+} from "./build.js?v=br9";
 
 const STRIDE = 320;
 const CAPS = [320, 320, 320, 120, 120, 120, 120];
@@ -406,18 +406,18 @@ export function createPlay(scene, camera, audio) {
   scene.add(nadeMesh);
   scene.add(nadeLamp);
   const sawGeo = sawDiscGeo();
-  const sawMesh = new THREE.InstancedMesh(sawGeo, new THREE.MeshBasicMaterial({
+  const sawMesh = new THREE.InstancedMesh(sawGeo, new THREE.MeshStandardMaterial({
     color: 0xffffff,
     vertexColors: true,
-    toneMapped: false,
+    metalness: 0.78,
+    roughness: 0.34,
   }), 60);
   const sawBlur = new THREE.InstancedMesh(sawGeo, new THREE.MeshBasicMaterial({
     color: 0xffffff,
     vertexColors: true,
     transparent: true,
-    opacity: 0.35,
+    opacity: 0.08,
     depthWrite: false,
-    toneMapped: false,
   }), 60);
   sawMesh.frustumCulled = false;
   sawBlur.frustumCulled = false;
@@ -428,12 +428,18 @@ export function createPlay(scene, camera, audio) {
   scene.add(sawBlur);
   scene.add(sawMesh);
   const orbMesh = new THREE.InstancedMesh(
-    new THREE.SphereGeometry(0.28, 12, 10),
-    new THREE.MeshBasicMaterial({ color: 0x3ddc6a, toneMapped: false }),
+    new THREE.SphereGeometry(0.35, 24, 18),
+    new THREE.MeshStandardMaterial({
+      color: 0x9dffb4,
+      emissive: 0x146b32,
+      emissiveIntensity: 0.32,
+      roughness: 0.42,
+      metalness: 0.02,
+    }),
     80
   );
-  const swirlGeo = new THREE.TorusGeometry(0.4, 0.04, 6, 18);
-  swirlGeo.rotateX(1.05);
+  const swirlGeo = new THREE.TorusGeometry(0.36, 0.012, 8, 28);
+  swirlGeo.rotateX(1.15);
   const swirlMesh = new THREE.InstancedMesh(swirlGeo, new THREE.MeshBasicMaterial({
     color: 0xb45cff,
     toneMapped: false,
@@ -1138,6 +1144,7 @@ export function createPlay(scene, camera, audio) {
   let boberLive = null;
   let boberMixer = null;
   let bossLive = null;
+  let bossNose5 = 1.55;
   let baronDress = null;
   let tubDress = null;
   let grunkDress = null;
@@ -3344,7 +3351,7 @@ export function createPlay(scene, camera, audio) {
       send(0);
       for (let r = 1; r < rounds; r++) pending.push({ t: clock + r * 0.06, fn: () => send(r) });
     } else if (pat === "disc") {
-      const id = fly(logs, sx, 0.9, sz - 0.2, base, 0, 18, dmg, life28(18), tier >= 3 ? 5 : 1, PAT_DISC, mods.bounces || 3, 0);
+      const id = fly(logs, sx, 0.9, sz - 1.35, base, 0, 18, dmg, life28(18), tier >= 3 ? 5 : 1, PAT_DISC, mods.bounces || 3, 0);
       if (id >= 0 && tier >= 3) logs.col[id] = 5;
     } else if (pat === "rail") {
       railCount++;
@@ -3909,7 +3916,7 @@ export function createPlay(scene, camera, audio) {
     }
     const bossTall = BOSS_TALL[bossKind] || 5;
     boss.scale.setScalar(bossTall / geoH(boss.geometry));
-    boss.position.set(bossState.x, y, bossState.z);
+    boss.position.set(bossState.x, y, bossDrawZ());
     boss.rotation.y = yaw;
     boss.visible = !!(bossState.shown && (bossState.alive || (ended === "win" && slowLeft > 0)));
     boss.updateMatrixWorld();
@@ -3918,7 +3925,7 @@ export function createPlay(scene, camera, audio) {
     crownY = crownV.y;
     crownZ = crownV.z;
     if (bossLive) {
-      bossLive.position.set(bossState.x, y, bossState.z);
+      bossLive.position.set(bossState.x, y, bossDrawZ());
       bossLive.rotation.y = yaw;
       bossLive.scale.setScalar(bossTall / 5);
       bossLive.visible = boss.visible;
@@ -4041,6 +4048,26 @@ export function createPlay(scene, camera, audio) {
 
   function contactZ() {
     return -dist - Math.max(0.4, radius) - 1.15 - 0.75;
+  }
+
+  function bossDrawZ() {
+    const tall = BOSS_TALL[bossKind] || 5;
+    const nose = (bossNose5 || 1.55) * (tall / 5);
+    const limit = contactZ();
+    if (bossState.z + nose > limit) return limit - nose;
+    return bossState.z;
+  }
+
+  function aheadZ(z) {
+    const limit = -dist - 0.9;
+    return z > limit ? limit : z;
+  }
+
+  function inLens(x, y, z, cam) {
+    const dx = x - cam.position.x;
+    const dy = y - cam.position.y;
+    const dz = z - cam.position.z;
+    return dx * dx + dy * dy + dz * dz < 0.2;
   }
 
   function linePressure() {
@@ -4975,7 +5002,7 @@ export function createPlay(scene, camera, audio) {
     if (bossLive && bossState.shown) {
       const tall = BOSS_TALL[bossKind] || 5;
       bossLive.visible = !!bossState.alive || ended === "win";
-      bossLive.position.set(bossState.x, DECK, bossState.z);
+      bossLive.position.set(bossState.x, DECK, bossDrawZ());
       bossLive.rotation.y = Math.PI;
       bossLive.scale.setScalar(tall / 5);
       const fur = bossKind === "grunk" ? 0x7a8086 : bossKind === "tub" ? 0x5a4030 : 0x6a4630;
@@ -5002,12 +5029,7 @@ export function createPlay(scene, camera, audio) {
     pillar.scale.set(pr, 1, pr);
     pillarMat.uniforms.uTime.value = clock;
     pillar.visible = false;
-    glow.visible = spin > 0.2;
-    if (glow.visible) {
-      glow.position.set(squadX + wob, 1.15, -dist + 0.2);
-      const gs = 0.6 + spin * 1.1;
-      glow.scale.set(gs, gs, 1);
-    }
+    glow.visible = false;
     for (let t = 0; t < TYPES; t++) {
       const p = pools[t];
       const m = p.mesh.instanceMatrix.array;
@@ -5025,7 +5047,7 @@ export function createPlay(scene, camera, audio) {
         yaw += p.spinA[i] || 0;
         const roll = t === 3 ? clock * 6 + (p.spinA[i] || 0) : 0;
         let ez = p.z[i];
-        if (!labMode && t <= 2 && ez > contactZ()) ez = contactZ();
+        if (!labMode && ez > contactZ()) ez = contactZ();
         writeTRS(m, w, p.x[i], y, ez, yaw, sc * bulk, sc * squash, sc * bulk);
         ph[w] = p.phase[i] + (t === 5 ? clock : 0);
         ht[w] = p.hit[i];
@@ -5063,7 +5085,7 @@ export function createPlay(scene, camera, audio) {
         if (p.vat.foam) p.vat.foam.needsUpdate = true;
         if (p.vat.time) p.vat.time.value = clock;
       }
-      if (p.vat) {
+      if (p.vat || p.noShell) {
         p.shell.count = 0;
         p.shell.visible = false;
       } else {
@@ -5672,12 +5694,16 @@ export function createPlay(scene, camera, audio) {
     const blurM = sawBlur.instanceMatrix.array;
     for (let i = 0; i < logs.n && sawW < 60; i++) {
       if (!logs.alive[i] || logs.pat[i] !== PAT_DISC) continue;
-      const sc = 1.15 * tierVis;
+      const sx = logs.x[i];
+      const sy = logs.y[i] + 0.05;
+      const sz = aheadZ(logs.z[i]);
+      if (inLens(sx, sy, sz, cam)) continue;
+      const sc = 0.6 * tierVis;
       const yaw = logs.roll[i];
-      writeTRS(sawM, sawW, logs.x[i], logs.y[i] + 0.05, logs.z[i], yaw, sc, sc, sc);
-      writeTRS(blurM, sawW, logs.x[i], logs.y[i] + 0.05, logs.z[i], yaw + 0.55, sc * 1.12, sc * 0.55, sc * 1.12);
+      writeTRS(sawM, sawW, sx, sy, sz, yaw, sc, sc, sc);
+      writeTRS(blurM, sawW, sx, sy, sz, yaw + 0.4, sc * 1.04, sc * 0.22, sc * 1.04);
       const sp = Math.hypot(logs.vx[i], logs.vz[i]) || 1;
-      pushHalo(logs.x[i] - logs.vx[i] / sp * 0.35, logs.y[i], logs.z[i] - logs.vz[i] / sp * 0.35, 0.12 * tierVis, COLS[10]);
+      pushHalo(sx - logs.vx[i] / sp * 0.22, sy, sz - logs.vz[i] / sp * 0.22, 0.08 * tierVis, COLS[10]);
       sawW++;
     }
     paintMesh(sawMesh, sawW);
@@ -5691,12 +5717,16 @@ export function createPlay(scene, camera, audio) {
     }
     for (let i = 0; i < logs.n && nw < 60; i++) {
       if (!logs.alive[i] || logs.pat[i] !== PAT_NADE) continue;
-      const sc = 1.35 * tierVis;
+      const sc = 1.05 * tierVis;
       const spin = clock * 5 + i;
-      writeTRS(nM, nw, logs.x[i], logs.y[i], logs.z[i], spin, sc, sc, sc);
+      const nx = logs.x[i];
+      const ny = logs.y[i];
+      const nz = aheadZ(logs.z[i]);
+      if (inLens(nx, ny, nz, cam)) continue;
+      writeTRS(nM, nw, nx, ny, nz, spin, sc * 0.92, sc * 0.92, sc * 0.92);
       putTint(nadeMesh, nw, whiteC);
-      const blink = Math.sin(clock * 16 + i * 1.7) > 0 ? 1.35 : 0.28;
-      writeTRS(lM, nw, logs.x[i], logs.y[i] + 0.22 * sc, logs.z[i], spin, blink * tierVis, blink * tierVis, blink * tierVis);
+      const blink = Math.sin(clock * 16 + i * 1.7) > 0 ? 0.85 : 0.22;
+      writeTRS(lM, nw, nx, ny + 0.16 * sc, nz, spin, blink, blink, blink);
       nw++;
     }
     let orbW = 0;
@@ -5707,16 +5737,20 @@ export function createPlay(scene, camera, audio) {
       if (party.pat[i] === PAT_ORB) {
         const x = party.x[i];
         const y = party.y[i];
-        const z = party.z[i];
+        const z = aheadZ(party.z[i]);
+        if (inLens(x, y, z, cam)) continue;
         if (orbW < 80) {
           const sc = tierVis;
-          writeTRS(orbM, orbW, x, y, z, 0, sc, sc, sc);
-          writeTRS(swirlM, orbW, x, y, z, clock * 3.2 + i, sc, sc, sc);
+          writeTRS(orbM, orbW, x, y, z, clock * 0.6, sc, sc, sc);
+          writeTRS(swirlM, orbW, x, y, z, clock * 2.4 + i, sc, sc, sc);
           orbW++;
         }
-        for (let k = 0; k < 2; k++) {
-          const ang = clock * 3.4 + k * 3.14 + i;
-          pushHalo(x + Math.cos(ang) * 0.46 * tierVis, y, z + Math.sin(ang) * 0.46 * tierVis, 0.06 * tierVis, PURPLE);
+        pushHalo(x, y, z, 0.28 * tierVis, COLS[6]);
+        for (let k = 0; k < 5; k++) {
+          const ang = clock * 6.5 + k * 1.25 + i;
+          const rad = (0.28 + (k % 3) * 0.06) * tierVis;
+          const lift = Math.sin(clock * 9 + k * 2.2) * 0.12 * tierVis;
+          pushHalo(x + Math.cos(ang) * rad, y + lift, z + Math.sin(ang) * rad, 0.05 * tierVis, k % 2 ? PURPLE : COLS[8]);
         }
       } else if (party.pat[i] === PAT_SPARK) {
         const x = party.x[i];
@@ -6037,7 +6071,7 @@ export function createPlay(scene, camera, audio) {
     const fails = selfTestRules();
     const capS = realCrowd ? 2500 : 600;
     const capB = realCrowd ? 2500 : 800;
-    const capE = realCrowd ? 2500 : 500;
+    const capE = realCrowd ? 8000 : 6000;
     if (tris.soldier > capS) fails.push("soldier tris " + tris.soldier);
     if (tris.bober > capB) fails.push("bober tris " + tris.bober);
     for (let t = 0; t < TYPES; t++) {
@@ -6475,6 +6509,10 @@ export function createPlay(scene, camera, audio) {
       }
       if (pack.bossRig) {
         const rig = pack.bossRig;
+        if (rig.box) {
+          const front = Math.max(0, -rig.box.min.z);
+          bossNose5 = front * (5 / Math.max(0.05, rig.height)) + 0.35;
+        }
         rig.inner.scale.multiplyScalar(5 / Math.max(0.05, rig.height));
         bossLive = rig.outer;
         bossLive.visible = false;
@@ -6546,6 +6584,36 @@ export function createPlay(scene, camera, audio) {
         wrenchM.scale.setScalar(0.72);
         grunkDress.add(wrenchM);
         tris.boss = 5875;
+      }
+      if (pack.mutantDuck && pack.mutantDuck.geo) {
+        const g = pack.mutantDuck.geo;
+        const src = pools[6].mesh.geometry;
+        for (let n = 0; n < 3; n++) {
+          const name = ["aPhase", "aHit", "aChill"][n];
+          const a = src.getAttribute(name);
+          if (!a) continue;
+          g.setAttribute(name, new THREE.InstancedBufferAttribute(new Float32Array(a.array), a.itemSize));
+        }
+        pools[6].mesh.geometry = g;
+        pools[6].noShell = 1;
+        enemyScale[6] = ENEMY[6].tall / geoH(g);
+        const gloss = new THREE.MeshStandardMaterial({
+          color: 0xffffff,
+          vertexColors: true,
+          roughness: 0.32,
+          metalness: 0.08,
+        });
+        gloss.onBeforeCompile = (shader) => {
+          shader.vertexShader = shader.vertexShader
+            .replace("#include <common>", "attribute float aChill;\nattribute float aHit;\nvarying float vFlash;\nvarying float vChill;\n#include <common>")
+            .replace("#include <begin_vertex>", "vChill = aChill;\nvFlash = clamp(aHit, 0.0, 1.0);\n#include <begin_vertex>");
+          shader.fragmentShader = shader.fragmentShader
+            .replace("#include <common>", "varying float vFlash;\nvarying float vChill;\n#include <common>")
+            .replace("#include <color_fragment>", "#include <color_fragment>\nif (vChill > 0.5) diffuseColor.rgb = mix(diffuseColor.rgb, vec3(0.55, 0.84, 1.0), 0.94);\n")
+            .replace("#include <opaque_fragment>", "outgoingLight = mix(outgoingLight, vec3(1.0), vFlash);\n#include <opaque_fragment>");
+        };
+        gloss.customProgramCacheKey = () => "bbr-duck-gloss";
+        pools[6].mesh.material = gloss;
       }
       return { ok: true, realCrowd };
     } catch (err) {

@@ -1,11 +1,11 @@
 import * as THREE from "three";
-import { BUILD, GUN_COST, GUN_ORDER, WEAPONS, highestPlayable, isUnlockedLevel, rhythmText } from "./rules.js?v=br8";
-import { createWorld } from "./world.js?v=br8";
-import { createPlay } from "./play.js?v=br8";
-import { createAudio } from "./audio.js?v=br8";
-import { loadSave, rememberWin, rememberGun, writeSave, buyGun } from "./save.js?v=br8";
-import { drawWeaponIcon, setTime } from "./mats.js?v=br8";
-import { loadGame, CREDIT_LINES } from "./assets.js?v=br8";
+import { BUILD, GUN_COST, GUN_ORDER, WEAPONS, highestPlayable, isUnlockedLevel, rhythmText } from "./rules.js?v=br9";
+import { createWorld } from "./world.js?v=br9";
+import { createPlay } from "./play.js?v=br9";
+import { createAudio } from "./audio.js?v=br9";
+import { loadSave, rememberWin, rememberGun, writeSave, buyGun } from "./save.js?v=br9";
+import { drawWeaponIcon, setTime } from "./mats.js?v=br9";
+import { loadGame, CREDIT_LINES } from "./assets.js?v=br9";
 
 const save = loadSave();
 const canvas = document.getElementById("c");
@@ -462,11 +462,11 @@ function frame(now) {
       camera.updateProjectionMatrix();
     }
     if (wide) {
-      camera.position.set(2.7 + Math.sin(t * 0.12) * 0.08, 1.62, sz - 3.4);
-      camera.lookAt(-0.1, 0.78, sz + 0.2);
+      camera.position.set(2.6 + Math.sin(t * 0.12) * 0.08, 3.05, sz + 6.2);
+      camera.lookAt(0.1, 0.62, sz - 3.4);
     } else {
-      camera.position.set(0.42 + Math.sin(t * 0.12) * 0.04, 0.78, sz - 4.5);
-      camera.lookAt(0.02, 1.18, sz - 0.15);
+      camera.position.set(0.42 + Math.sin(t * 0.12) * 0.04, 2.85, sz + 5.2);
+      camera.lookAt(0.02, 0.5, sz - 2.6);
     }
     world.setTitleMood(true);
     renderer.toneMappingExposure = 0.94;
@@ -801,8 +801,10 @@ window.__bridge = {
       camera.lookAt(cam.lx, cam.ly, cam.lz);
       camera.updateMatrixWorld();
       const v = play.view;
-      world.follow(v.squadX, v.squadZ, v.half, play.time, v.river, v.dam, v.theme);
       world.setTitleMood(false);
+      world.follow(v.squadX, v.squadZ, v.half, play.time, v.river, v.dam, v.theme);
+      renderer.toneMappingExposure = 1.05;
+      rimLight.intensity = 0;
       play.sync(camera);
       renderer.render(scene, camera);
     }

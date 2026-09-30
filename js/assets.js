@@ -2,9 +2,9 @@ import * as THREE from "three";
 import { GLTFLoader } from "three/addons/loaders/GLTFLoader.js";
 import { MeshoptDecoder } from "three/addons/libs/meshopt_decoder.module.js";
 import { RGBELoader } from "three/addons/loaders/RGBELoader.js";
-import { bakeCrowd, staticMerge, mountRig, boxGeo } from "./vat.js?v=br8";
+import { bakeCrowd, staticMerge, mountRig, boxGeo } from "./vat.js?v=br9";
 
-const V = "br8";
+const V = "br9";
 const warned = {};
 
 function url(path) {
@@ -106,10 +106,8 @@ function clogBits(api, kind) {
   // Mounted crowd faces -Z; eyes, mane root, and the spout use that side.
   const ey = p.y + 0.22;
   const ez = p.z - 0.55;
-  api.add("Head", sphereGeo(0.09, p.x - 0.14, ey, ez), 0, EYE, 1);
-  api.add("Head", sphereGeo(0.09, p.x + 0.14, ey, ez), 0, EYE, 1);
-  api.add("Head", sphereGeo(0.14, p.x - 0.14, ey, ez + 0.06, 6, 5), 5, EYE, 2.5);
-  api.add("Head", sphereGeo(0.14, p.x + 0.14, ey, ez + 0.06, 6, 5), 5, EYE, 2.5);
+  api.add("Head", sphereGeo(0.05, p.x - 0.09, ey, ez, 8, 6), 5, EYE, 1.6);
+  api.add("Head", sphereGeo(0.05, p.x + 0.09, ey, ez, 8, 6), 5, EYE, 1.6);
   if (kind === "clog") {
     const mane = 16;
     for (let i = 0; i < mane; i++) {
@@ -184,9 +182,10 @@ function clogBits(api, kind) {
     const bone = torso || head;
     const q = new THREE.Vector3();
     bone.getWorldPosition(q);
-    api.add(bone.name, sphereGeo(0.34, q.x + 0.02, q.y + 0.12, q.z + 0.28, 8, 6), 7, SAC, 0);
-    api.add(bone.name, sphereGeo(0.16, q.x - 0.12, q.y + 0.22, q.z + 0.22, 6, 5), 7, new THREE.Color("#c6d48a"), 0);
-    api.add(bone.name, sphereGeo(0.08, q.x + 0.16, q.y + 0.02, q.z + 0.36, 5, 4), 7, SAC, 0);
+    // Local -X is the flank the bridge camera sees after the enemy yaw.
+    api.add(bone.name, sphereGeo(0.32, q.x - 0.34, q.y + 0.02, q.z + 0.02, 12, 10), 7, SAC, 0);
+    api.add(bone.name, sphereGeo(0.16, q.x - 0.5, q.y + 0.16, q.z - 0.04, 10, 8), 7, new THREE.Color("#c6d48a"), 0);
+    api.add(bone.name, sphereGeo(0.09, q.x - 0.22, q.y - 0.16, q.z + 0.04, 8, 6), 7, SAC, 0);
     const spout = new THREE.CylinderGeometry(0.07, 0.09, 0.46, 6);
     spout.rotateX(Math.PI / 2);
     spout.translate(q.x, q.y + 0.06, q.z - 0.62);
@@ -571,6 +570,96 @@ function safeBake(gltf, opt, slot) {
   }
 }
 
+function paintSolid(geo, hex) {
+  const pos = geo.attributes.position;
+  const col = new Float32Array(pos.count * 3);
+  const c = new THREE.Color(hex);
+  for (let i = 0; i < pos.count; i++) {
+    col[i * 3] = c.r;
+    col[i * 3 + 1] = c.g;
+    col[i * 3 + 2] = c.b;
+  }
+  geo.setAttribute("color", new THREE.BufferAttribute(col, 3));
+  return geo;
+}
+
+function mergeColored(geos) {
+  const positions = [];
+  const colors = [];
+  const indices = [];
+  let off = 0;
+  for (let g = 0; g < geos.length; g++) {
+    const pos = geos[g].attributes.position;
+    const col = geos[g].attributes.color;
+    const idx = geos[g].index;
+    for (let i = 0; i < pos.count; i++) {
+      positions.push(pos.getX(i), pos.getY(i), pos.getZ(i));
+      if (col) colors.push(col.getX(i), col.getY(i), col.getZ(i));
+      else colors.push(1, 1, 1);
+    }
+    if (idx) for (let i = 0; i < idx.count; i++) indices.push(idx.getX(i) + off);
+    else for (let i = 0; i < pos.count; i++) indices.push(off + i);
+    off += pos.count;
+  }
+  const merged = new THREE.BufferGeometry();
+  merged.setAttribute("position", new THREE.Float32BufferAttribute(positions, 3));
+  merged.setAttribute("color", new THREE.Float32BufferAttribute(colors, 3));
+  merged.setIndex(indices);
+  merged.computeVertexNormals();
+  return merged;
+}
+
+function mutantDuck(gltf) {
+  if (!gltf) return null;
+  try {
+    const geo = staticMerge(gltf.scene, 0.85);
+    if (!geo || !geo.attributes.position) return null;
+    geo.rotateY(Math.PI);
+    geo.computeBoundingBox();
+    const seat = geo.boundingBox;
+    geo.translate(-(seat.min.x + seat.max.x) * 0.5, -seat.min.y, -(seat.min.z + seat.max.z) * 0.5);
+    geo.computeBoundingBox();
+    const box = geo.boundingBox;
+    const pos = geo.attributes.position;
+    const col = new Float32Array(pos.count * 3);
+    const yolk = new THREE.Color("#FFE14A");
+    const belly = new THREE.Color("#FFF3C4");
+    const shade = new THREE.Color("#E09818");
+    const spanY = Math.max(0.001, box.max.y - box.min.y);
+    for (let i = 0; i < pos.count; i++) {
+      const y = (pos.getY(i) - box.min.y) / spanY;
+      const n = Math.sin(pos.getX(i) * 37 + pos.getZ(i) * 19) * 0.04;
+      const c = y < 0.42 ? belly : y > 0.78 ? shade : yolk;
+      col[i * 3] = Math.min(1, c.r + n);
+      col[i * 3 + 1] = Math.min(1, c.g + n * 0.4);
+      col[i * 3 + 2] = c.b;
+    }
+    geo.setAttribute("color", new THREE.BufferAttribute(col, 3));
+    const w = box.max.x - box.min.x;
+    const h = box.max.y - box.min.y;
+    const faceZ = box.min.z + (box.max.z - box.min.z) * 0.16;
+    const eyeY = box.min.y + h * 0.64;
+    const eyeX = w * 0.18;
+    const bits = [geo];
+    const add = (g, hex) => bits.push(paintSolid(g, hex));
+    add(new THREE.SphereGeometry(h * 0.075, 10, 8).translate(-eyeX, eyeY, faceZ), "#B98CFF");
+    add(new THREE.SphereGeometry(h * 0.075, 10, 8).translate(eyeX, eyeY, faceZ), "#B98CFF");
+    add(new THREE.SphereGeometry(h * 0.03, 8, 6).translate(-eyeX * 0.82, eyeY + h * 0.02, faceZ - h * 0.03), "#F4E6FF");
+    add(new THREE.SphereGeometry(h * 0.03, 8, 6).translate(eyeX * 0.82, eyeY + h * 0.02, faceZ - h * 0.03), "#F4E6FF");
+    for (let i = -1; i <= 1; i++) {
+      const tooth = new THREE.ConeGeometry(h * 0.018, h * 0.11, 6);
+      tooth.translate(i * eyeX * 0.42, eyeY - h * 0.2, faceZ - h * 0.02);
+      add(tooth, "#FFF6E4");
+    }
+    const merged = mergeColored(bits);
+    const tris = merged.index ? merged.index.count / 3 : 0;
+    return { geo: merged, tris: tris };
+  } catch (err) {
+    warnOnce("mutant-duck", err && err.message);
+    return null;
+  }
+}
+
 function bakeAll(got) {
   const pack = { env: {}, guns: {}, city: [], warnings: [] };
   const tex = (t, rep) => {
@@ -591,9 +680,26 @@ function bakeAll(got) {
   }
   pack.soldier = null;
   pack.bober = null;
-  pack.clog = null;
-  pack.suds = null;
-  pack.spit = null;
+  const clogOpt = (kind, height, squash) => ({
+    height: height,
+    fps: 8,
+    squash: squash,
+    clips: [
+      { name: "Walk", frames: 16 },
+      { name: "Punch", frames: 8 },
+    ],
+    recolor: paintClog,
+    decorate: (api) => clogBits(api, kind),
+  });
+  pack.clog = safeBake(got.zombie, clogOpt("clog", 1.6, [0.82, 1.08, 0.76]), "clog");
+  pack.suds = safeBake(got.zombie, clogOpt("suds", 2.0, [1.24, 0.88, 1.16]), "suds");
+  if (pack.suds && pack.suds.mat) {
+    pack.suds.mat.transparent = true;
+    pack.suds.mat.depthWrite = true;
+    pack.suds.mat.opacity = 1;
+  }
+  pack.spit = safeBake(got.zombie, clogOpt("spit", 1.8, [0.66, 1.2, 0.64]), "spit");
+  pack.mutantDuck = mutantDuck(got.duck);
   pack.hauler = safeBake(got.yetiCrowd || got.yeti, {
     height: 2.6,
     fps: 8,
