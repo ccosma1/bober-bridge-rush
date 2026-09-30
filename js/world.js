@@ -1,6 +1,6 @@
 import * as THREE from "three";
-import { toon, pineTexture, skyTexture, goldenSkyTexture, writeTRS } from "./mats.js?v=br7";
-import { buildTile } from "./build.js?v=br7";
+import { toon, pineTexture, skyTexture, goldenSkyTexture, writeTRS } from "./mats.js?v=br8";
+import { buildTile } from "./build.js?v=br8";
 
 const TILE = 20;
 const TILES = 10;
@@ -210,12 +210,12 @@ export function createWorld(scene) {
     sky.position.set(x, 8, z);
     if (titleMood) {
       key.color.setHex(0xff7a32);
-      key.intensity = 3.15;
-      key.position.set(x + 16, 4.6, z + 14);
-      key.target.position.set(x - 1.2, 0.7, z - 10);
+      key.intensity = 1.55;
+      key.position.set(x + 2.8, 4.4, z - 6);
+      key.target.position.set(x, 0.8, z);
       hemi.color.setHex(0xffb090);
       hemi.groundColor.setHex(0x5a3020);
-      hemi.intensity = 0.5;
+      hemi.intensity = 0.62;
       scene.background.setHex(0xf29a78);
       if (scene.fog) {
         scene.fog.color.setHex(0xf0b48a);

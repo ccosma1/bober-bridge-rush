@@ -2,9 +2,9 @@ import * as THREE from "three";
 import { GLTFLoader } from "three/addons/loaders/GLTFLoader.js";
 import { MeshoptDecoder } from "three/addons/libs/meshopt_decoder.module.js";
 import { RGBELoader } from "three/addons/loaders/RGBELoader.js";
-import { bakeCrowd, staticMerge, mountRig, boxGeo } from "./vat.js?v=br7";
+import { bakeCrowd, staticMerge, mountRig, boxGeo } from "./vat.js?v=br8";
 
-const V = "br7";
+const V = "br8";
 const warned = {};
 
 function url(path) {
@@ -591,25 +591,9 @@ function bakeAll(got) {
   }
   pack.soldier = null;
   pack.bober = null;
-  const clogOpt = (kind, height) => ({
-    height,
-    fps: 10,
-    clips: [
-      { name: "Run_Arms", frames: 16 },
-      { name: "Walk", frames: 16 },
-      { name: "Punch", frames: 8 },
-    ],
-    recolor: paintClog,
-    decorate: (api) => clogBits(api, kind),
-  });
-  pack.clog = safeBake(got.zombie, clogOpt("clog", 1.6), "clog");
-  pack.suds = safeBake(got.zombie, clogOpt("suds", 2.0), "suds");
-  if (pack.suds && pack.suds.mat) {
-    pack.suds.mat.transparent = true;
-    pack.suds.mat.depthWrite = true;
-    pack.suds.mat.opacity = 1;
-  }
-  pack.spit = safeBake(got.zombie, clogOpt("spit", 1.8), "spit");
+  pack.clog = null;
+  pack.suds = null;
+  pack.spit = null;
   pack.hauler = safeBake(got.yetiCrowd || got.yeti, {
     height: 2.6,
     fps: 8,

@@ -238,37 +238,70 @@ function done(parts, crown) {
 }
 
 export function buildClogling() {
-  const lump = sph(0.16, 5, 4);
-  const eye = sph(0.045, 4, 3);
-  const leaf = cone(0.06, 0.14, 4);
-  const arm = box(0.08, 0.08, 0.22);
-  return done([
-    place(lump, CLOG, 0, null, 0, 0.32, 0, 1.35, 1.05, 1.2),
-    place(lump, CLOG_D, 0, null, 0.12, 0.4, 0.08, 0.8, 0.7, 0.85),
-    place(lump, CLOG, 0, null, -0.1, 0.28, -0.06, 0.7, 0.65, 0.7),
-    place(lump, CLOG, 0, null, 0, 0.52, -0.12, 0.85, 0.75, 0.8),
-    place(leaf, LEAF, 0, null, -0.08, 0.66, -0.04),
-    place(leaf, LEAF, 0, null, 0.1, 0.7, 0.02, 0.8, 1.1, 0.8),
-    place(leaf, "#6E9440", 0, null, 0.02, 0.62, 0.1, 0.7, 0.8, 0.7),
-    place(eye, EYE, 0, null, -0.07, 0.52, -0.26),
-    place(eye, EYE, 0, null, 0.07, 0.52, -0.26),
-    place(arm, CLOG_D, 0, null, -0.18, 0.36, -0.22),
-    place(arm, CLOG_D, 0, null, 0.18, 0.34, -0.24),
-  ]);
+  const torso = cyl(0.1, 0.12, 0.46, 6);
+  const head = sph(0.11, 6, 5);
+  const eye = sph(0.03, 4, 3);
+  const arm = cyl(0.034, 0.04, 0.58, 5);
+  const hand = sph(0.04, 4, 3);
+  const leg = cyl(0.045, 0.05, 0.32, 5);
+  const moss = cone(0.04, 0.18, 4);
+  const parts = [
+    place(leg, CLOG_D, 0, null, -0.07, 0.16, 0.02),
+    place(leg, CLOG_D, 0, null, 0.07, 0.16, 0.02),
+    place(torso, CLOG, 0, null, 0, 0.5, 0, 0.85, 1, 0.72),
+    place(head, CLOG, 0, null, 0, 0.88, -0.04, 0.82, 0.9, 0.78),
+    place(sph(0.05, 4, 3), CLOG_D, 0, null, 0, 0.8, -0.14, 0.75, 0.55, 0.85),
+    place(eye, EYE, 0, null, -0.045, 0.92, -0.12),
+    place(eye, EYE, 0, null, 0.045, 0.92, -0.12),
+    place(sph(0.012, 3, 2), "#F4E6FF", 0, null, -0.038, 0.94, -0.145),
+    place(sph(0.012, 3, 2), "#F4E6FF", 0, null, 0.052, 0.94, -0.145),
+    place(arm, CLOG_D, 0, null, -0.16, 0.62, -0.28, 1, 1, 1, 0.35, -1.15),
+    place(arm, CLOG_D, 0, null, 0.16, 0.6, -0.3, 1, 1, 1, -0.28, -1.2),
+    place(hand, CLOG, 0, null, -0.22, 0.48, -0.62),
+    place(hand, CLOG, 0, null, 0.2, 0.46, -0.64),
+  ];
+  for (let i = 0; i < 8; i++) {
+    const ang = -1.1 + (i / 7) * 2.2;
+    parts.push(place(
+      moss,
+      i % 2 ? LEAF : "#6E9440",
+      0, null,
+      Math.sin(ang) * 0.1,
+      1.05,
+      -0.02 + (i % 3) * 0.03,
+      0.8,
+      0.9 + (i % 3) * 0.25,
+      0.8,
+      ang * 0.4,
+      0.35
+    ));
+  }
+  return done(parts);
 }
 
 export function buildSuds() {
-  const bubble = sph(0.16, 5, 4);
-  const eye = sph(0.04, 4, 3);
+  const plate = cyl(0.2, 0.2, 0.055, 7);
+  const eye = sph(0.026, 4, 3);
+  const helm = sph(0.15, 6, 5);
+  const shield = cyl(0.2, 0.2, 0.04, 8);
   return done([
-    place(bubble, CLOG, 0, null, 0, 0.36, 0.05, 0.9, 0.8, 0.85),
-    place(bubble, FOAM, 0, null, 0, 0.48, 0, 1.45, 1.2, 1.35),
-    place(bubble, FOAM, 0, null, -0.22, 0.62, -0.08, 0.75, 0.75, 0.75),
-    place(bubble, FOAM, 0, null, 0.24, 0.4, 0.1, 0.6, 0.6, 0.6),
-    place(bubble, FOAM, 0, null, 0.05, 0.72, 0.12, 0.5, 0.5, 0.5),
-    place(bubble, FOAM, 0, null, -0.08, 0.3, -0.16, 0.55, 0.55, 0.55),
-    place(eye, EYE, 0, null, -0.07, 0.5, -0.28),
-    place(eye, EYE, 0, null, 0.07, 0.5, -0.28),
+    place(cyl(0.08, 0.09, 0.3, 5), CLOG_D, 0, null, -0.13, 0.16, 0.04),
+    place(cyl(0.08, 0.09, 0.3, 5), CLOG_D, 0, null, 0.13, 0.16, 0.04),
+    place(cyl(0.14, 0.16, 0.46, 6), CLOG, 0, null, 0, 0.52, 0.02, 1.25, 1, 1.05),
+    place(plate, FOAM, 0, null, 0, 0.58, -0.02, 1.15, 1, 0.85),
+    place(plate, "#E7F3F6", 0, null, 0, 0.72, 0.02, 1.28, 1, 0.95),
+    place(plate, FOAM, 0, null, 0, 0.86, 0, 1.05, 1, 0.78),
+    place(cyl(0.16, 0.16, 0.045, 7), "#F4FBFD", 0, null, -0.22, 0.7, -0.02, 0.7, 1, 0.55, 0.4),
+    place(cyl(0.15, 0.15, 0.045, 7), "#F4FBFD", 0, null, 0.22, 0.66, 0.02, 0.65, 1, 0.5, -0.35),
+    place(helm, FOAM, 0, null, 0, 1.16, -0.02, 1.05, 0.85, 1.05),
+    place(cyl(0.2, 0.2, 0.035, 8), "#D5E4EA", 0, null, 0, 1.02, -0.02, 1.15, 1, 1.05),
+    place(eye, "#1A2430", 0, null, -0.055, 1.16, -0.15),
+    place(eye, "#1A2430", 0, null, 0.055, 1.16, -0.15),
+    place(sph(0.01, 3, 2), "#FFFFFF", 0, null, -0.048, 1.175, -0.17),
+    place(sph(0.01, 3, 2), "#FFFFFF", 0, null, 0.062, 1.175, -0.17),
+    place(shield, FOAM, 0, null, -0.42, 0.7, -0.22, 1.15, 1, 1, 0.2, Math.PI / 2),
+    place(cyl(0.05, 0.05, 0.03, 6), "#C5D5DC", 0, null, -0.42, 0.7, -0.28, 1, 1, 1, 0, Math.PI / 2),
+    place(cyl(0.045, 0.05, 0.22, 5), CLOG_D, 0, null, -0.28, 0.62, -0.12, 1, 1, 1, 0.5, -0.9),
   ]);
 }
 
@@ -294,78 +327,96 @@ export function buildHauler() {
 }
 
 export function buildHairball() {
-  const core = sph(0.22, 6, 5);
-  const tuft = cone(0.045, 0.22, 4);
-  const eye = sph(0.055, 5, 4);
-  const tooth = box(0.035, 0.07, 0.03);
+  const core = sph(0.2, 6, 4);
+  const tuft = cone(0.032, 0.2, 3);
+  const fang = cone(0.022, 0.08, 3);
+  const eye = sph(0.042, 4, 3);
   const parts = [
-    place(core, "#4A3828", 0, null, 0, 0.4, 0, 1.15, 1.05, 1.2),
-    place(sph(0.1, 5, 4), "#3A2A22", 0, null, 0, 0.34, -0.16, 1.1, 0.7, 0.8),
+    place(core, "#4A3828", 0, null, 0, 0.42, 0, 1.2, 1.05, 1.15),
+    place(sph(0.09, 5, 4), "#2A1814", 0, null, 0, 0.34, -0.16, 1.05, 0.72, 0.85),
   ];
-  for (let i = 0; i < 22; i++) {
-    const ang = (i / 22) * Math.PI * 2;
-    const lift = 0.22 + (i % 5) * 0.08;
-    const rad = 0.16 + (i % 3) * 0.05;
-    const len = 0.7 + (i % 4) * 0.22;
+  for (let i = 0; i < 36; i++) {
+    const ang = (i / 36) * Math.PI * 2;
+    const lift = 0.2 + (i % 6) * 0.07;
+    const rad = 0.14 + (i % 4) * 0.04;
+    const len = 0.75 + (i % 5) * 0.18;
     parts.push(place(
       tuft,
       i % 3 === 0 ? "#6B5340" : i % 3 === 1 ? "#8A6A48" : "#3E2E24",
       0, null,
       Math.cos(ang) * rad,
       lift,
-      Math.sin(ang) * rad * 0.75,
-      0.7 + (i % 3) * 0.25,
+      Math.sin(ang) * rad * 0.72,
+      0.65 + (i % 3) * 0.2,
       len,
-      0.7,
+      0.65,
       ang,
-      0.9 + (i % 4) * 0.35
+      0.85 + (i % 4) * 0.3
     ));
   }
-  parts.push(place(eye, "#E6B0FF", 0, null, -0.08, 0.42, -0.2));
-  parts.push(place(eye, "#E6B0FF", 0, null, 0.09, 0.41, -0.2));
-  parts.push(place(sph(0.025, 4, 3), "#FFFFFF", 0, null, -0.06, 0.45, -0.24));
-  parts.push(place(sph(0.025, 4, 3), "#FFFFFF", 0, null, 0.11, 0.44, -0.24));
-  parts.push(place(tooth, "#FFF6E4", 0, null, -0.05, 0.28, -0.24));
-  parts.push(place(tooth, "#FFF6E4", 0, null, 0.02, 0.27, -0.25));
-  parts.push(place(tooth, "#FFF6E4", 0, null, 0.08, 0.28, -0.23));
+  parts.push(place(eye, "#E6B0FF", 0, null, -0.07, 0.44, -0.2));
+  parts.push(place(eye, "#E6B0FF", 0, null, 0.08, 0.43, -0.2));
+  parts.push(place(sph(0.016, 3, 2), "#FFFFFF", 0, null, -0.055, 0.46, -0.23));
+  parts.push(place(sph(0.016, 3, 2), "#FFFFFF", 0, null, 0.095, 0.45, -0.23));
+  for (let i = 0; i < 7; i++) {
+    const u = i / 6 - 0.5;
+    const ang = u * 1.15;
+    parts.push(place(
+      fang,
+      "#FFF6E4",
+      0, null,
+      Math.sin(ang) * 0.09,
+      0.3 - Math.abs(u) * 0.03,
+      -0.26,
+      1,
+      1.05 + (i % 2) * 0.25,
+      1,
+      ang,
+      -1.25 + u * 0.45
+    ));
+  }
   return done(parts);
 }
 
 export function buildSpitter() {
-  const body = box(0.36, 0.42, 0.3);
-  const head = box(0.26, 0.22, 0.24);
-  const eye = box(0.06, 0.05, 0.03);
-  const pipe = cyl(0.07, 0.09, 0.62, 5);
+  const body = cyl(0.055, 0.07, 0.78, 6);
+  const eye = sph(0.024, 4, 3);
+  const sac = sph(0.16, 6, 5);
+  const spout = cyl(0.028, 0.04, 0.42, 6);
   return done([
-    place(body, CLOG, 0, null, 0, 0.46, 0.04),
-    place(head, CLOG, 0, null, 0, 0.78, -0.06),
-    place(eye, EYE, 0, null, -0.07, 0.82, -0.18),
-    place(eye, EYE, 0, null, 0.07, 0.82, -0.18),
-    place(pipe, "#8A5A3A", 0, null, 0.22, 0.7, -0.32, 1, 1, 1, 0.4, Math.PI / 2.4),
-    place(box(0.1, 0.16, 0.1), CLOG_D, 0, null, -0.1, 0.12, 0.04),
-    place(box(0.1, 0.16, 0.1), CLOG_D, 0, null, 0.1, 0.12, 0.04),
+    place(cyl(0.028, 0.032, 0.4, 5), CLOG_D, 0, null, -0.04, 0.2, 0.02),
+    place(cyl(0.028, 0.032, 0.4, 5), CLOG_D, 0, null, 0.04, 0.2, 0.02),
+    place(body, CLOG, 0, null, 0, 0.72, 0, 0.72, 1, 0.58),
+    place(sph(0.08, 6, 5), CLOG, 0, null, 0, 1.2, -0.02, 0.58, 0.95, 0.55),
+    place(eye, EYE, 0, null, -0.03, 1.24, -0.07),
+    place(eye, EYE, 0, null, 0.03, 1.24, -0.07),
+    place(sac, "#C6A04A", 0, null, -0.16, 0.7, 0.08, 1.15, 1.45, 1.2),
+    place(sph(0.07, 5, 4), "#E0A030", 0, null, -0.22, 0.98, 0.1),
+    place(sph(0.05, 4, 3), "#A87828", 0, null, -0.08, 0.48, 0.12),
+    place(spout, "#8A5A3A", 0, null, 0.02, 1.02, -0.28, 1, 1, 1, 0.15, -1.35),
+    place(cyl(0.045, 0.032, 0.05, 6), "#6E442C", 0, null, 0.04, 0.96, -0.5, 1, 1, 1, 0.15, -1.35),
   ]);
 }
 
 export function buildLeaf() {
-  const body = sph(0.16, 5, 4);
-  const wing = cone(0.12, 0.3, 4);
-  const eye = sph(0.028, 3, 2);
+  const body = cone(0.07, 0.16, 4);
+  const wing = cone(0.045, 0.16, 3);
+  const eye = sph(0.028, 4, 3);
   const parts = [];
-  const greens = ["#8FBF4A", "#6E9440", "#C6DE62", "#4E7A32", "#A8D15A"];
-  for (let i = 0; i < 5; i++) {
-    const ang = (i / 5) * Math.PI * 2 + 0.4;
-    const rad = 0.34 + (i % 2) * 0.12;
+  const greens = ["#B6E25A", "#7CB342", "#E4F58A", "#5C9A38", "#C6EE6A", "#9AD44A", "#6AAA40", "#F2FF9A", "#4E8A30"];
+  for (let i = 0; i < 9; i++) {
+    const ang = (i / 9) * Math.PI * 2 + 0.4;
+    const rad = 0.16 + (i % 4) * 0.08;
     const cx = Math.cos(ang) * rad;
-    const cy = (i - 2) * 0.16;
-    const cz = Math.sin(ang) * rad * 0.45;
-    const pivot = { x: cx, y: cy, z: cz };
+    const cy = ((i % 5) - 2) * 0.1;
+    const cz = Math.sin(ang) * rad * 0.7;
+    const pivot = { x: cx, y: cy + 0.02, z: cz };
     const col = greens[i];
-    parts.push(place(body, col, 0, pivot, cx, cy, cz, 1.05, 0.72, 1.25));
-    parts.push(place(wing, "#2F5A22", 6, pivot, cx - 0.2, cy + 0.02, cz, 1.2, 0.42, 0.9, 0.7, 0.2));
-    parts.push(place(wing, col, 6, pivot, cx + 0.2, cy + 0.02, cz, 1.2, 0.42, 0.9, -0.7, -0.15));
-    parts.push(place(eye, "#E6B0FF", 0, pivot, cx - 0.04, cy + 0.04, cz - 0.12));
-    parts.push(place(eye, "#E6B0FF", 0, pivot, cx + 0.05, cy + 0.03, cz - 0.12));
+    parts.push(place(body, col, 0, pivot, cx, cy, cz, 0.85, 0.55, 1.15, ang * 0.25, 0.7));
+    parts.push(place(wing, "#E8F6A0", 6, pivot, cx - 0.1, cy + 0.03, cz, 0.55, 1.35, 0.4, 1.15, 0.2));
+    parts.push(place(wing, col, 6, pivot, cx + 0.1, cy + 0.03, cz, 0.55, 1.35, 0.4, -1.15, -0.15));
+    parts.push(place(eye, "#FFF6C2", 0, pivot, cx - 0.025, cy + 0.045, cz - 0.06));
+    parts.push(place(eye, "#FFF6C2", 0, pivot, cx + 0.028, cy + 0.045, cz - 0.06));
   }
   return done(parts);
 }
@@ -377,7 +428,7 @@ export function buildDuck() {
   const wing = cone(0.045, 0.18, 4);
   const foot = box(0.1, 0.028, 0.14);
   const eye = sph(0.032, 4, 3);
-  const tooth = box(0.022, 0.055, 0.02);
+  const tooth = cone(0.016, 0.07, 4);
   const wart = sph(0.03, 3, 2);
   const pivot = { x: 0, y: 0.4, z: 0.02 };
   return done([
@@ -389,9 +440,9 @@ export function buildDuck() {
     place(cone(0.045, 0.14, 3), "#C4232A", 0, null, 0.09, 0.94, -0.06, 1, 1.25, 1, -0.45),
     place(beak, "#F07A18", 0, null, 0, 0.76, -0.4, 1.45, 0.42, 1.25, 0, Math.PI / 2),
     place(beak, "#C45A10", 0, null, 0, 0.5, -0.38, 1.25, 0.34, 1.15, 0, Math.PI / 2),
-    place(tooth, "#FFF6E4", 0, null, -0.07, 0.62, -0.62, 1.8, 2.4, 1.4),
-    place(tooth, "#FFF6E4", 0, null, 0, 0.58, -0.7, 1.7, 2.8, 1.5),
-    place(tooth, "#FFF6E4", 0, null, 0.07, 0.62, -0.62, 1.8, 2.4, 1.4),
+    place(tooth, "#FFF6E4", 0, null, -0.05, 0.58, -0.5, 1, 1.15, 1, 0.4, -1.2),
+    place(tooth, "#FFF6E4", 0, null, 0, 0.54, -0.56, 1, 1.35, 1, 0, -1.4),
+    place(tooth, "#FFF6E4", 0, null, 0.05, 0.58, -0.5, 1, 1.15, 1, -0.4, -1.2),
     place(eye, "#1E1410", 0, null, -0.08, 0.78, -0.26),
     place(eye, "#1E1410", 0, null, 0.085, 0.78, -0.26),
     place(sph(0.014, 3, 2), "#FFFFFF", 0, null, -0.065, 0.8, -0.28),
@@ -667,6 +718,31 @@ export function buildPedestal() {
 
 export function bulletGeo() {
   return new THREE.BoxGeometry(0.12, 0.12, 1.5);
+}
+
+export function sawDiscGeo() {
+  const disc = new THREE.CylinderGeometry(0.3, 0.3, 0.045, 14);
+  const hub = new THREE.CylinderGeometry(0.07, 0.07, 0.07, 8);
+  const tooth = new THREE.ConeGeometry(0.045, 0.16, 4);
+  const parts = [
+    place(disc, "#E6EDF4", 0, null, 0, 0, 0),
+    place(hub, "#F7FBFF", 0, null, 0, 0.01, 0),
+  ];
+  for (let i = 0; i < 12; i++) {
+    const ang = (i / 12) * Math.PI * 2;
+    parts.push(place(
+      tooth,
+      "#5E6772",
+      0, null,
+      Math.sin(ang) * 0.34,
+      0.03,
+      Math.cos(ang) * 0.34,
+      1, 1, 1,
+      ang,
+      Math.PI / 2 - 0.55
+    ));
+  }
+  return mergeParts(parts);
 }
 
 export function logGeo() {

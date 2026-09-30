@@ -1,11 +1,11 @@
 import * as THREE from "three";
-import { BUILD, GUN_COST, GUN_ORDER, WEAPONS, highestPlayable, isUnlockedLevel, rhythmText } from "./rules.js?v=br7";
-import { createWorld } from "./world.js?v=br7";
-import { createPlay } from "./play.js?v=br7";
-import { createAudio } from "./audio.js?v=br7";
-import { loadSave, rememberWin, rememberGun, writeSave, buyGun } from "./save.js?v=br7";
-import { drawWeaponIcon, setTime } from "./mats.js?v=br7";
-import { loadGame, CREDIT_LINES } from "./assets.js?v=br7";
+import { BUILD, GUN_COST, GUN_ORDER, WEAPONS, highestPlayable, isUnlockedLevel, rhythmText } from "./rules.js?v=br8";
+import { createWorld } from "./world.js?v=br8";
+import { createPlay } from "./play.js?v=br8";
+import { createAudio } from "./audio.js?v=br8";
+import { loadSave, rememberWin, rememberGun, writeSave, buyGun } from "./save.js?v=br8";
+import { drawWeaponIcon, setTime } from "./mats.js?v=br8";
+import { loadGame, CREDIT_LINES } from "./assets.js?v=br8";
 
 const save = loadSave();
 const canvas = document.getElementById("c");
@@ -455,18 +455,25 @@ function frame(now) {
   if (mode === "title") {
     const t = play.time;
     const sz = v.squadZ;
-    if (camera.fov !== 34) {
-      camera.fov = 34;
+    const wide = window.innerWidth > 700;
+    const fov = wide ? 32 : 48;
+    if (camera.fov !== fov) {
+      camera.fov = fov;
       camera.updateProjectionMatrix();
     }
-    camera.position.set(2.15 + Math.sin(t * 0.15) * 0.4, 2.7, sz + 6.4);
-    camera.lookAt(0.1, 0.82, sz - 0.2);
+    if (wide) {
+      camera.position.set(2.7 + Math.sin(t * 0.12) * 0.08, 1.62, sz - 3.4);
+      camera.lookAt(-0.1, 0.78, sz + 0.2);
+    } else {
+      camera.position.set(0.42 + Math.sin(t * 0.12) * 0.04, 0.78, sz - 4.5);
+      camera.lookAt(0.02, 1.18, sz - 0.15);
+    }
     world.setTitleMood(true);
-    renderer.toneMappingExposure = 1.12;
+    renderer.toneMappingExposure = 0.94;
     rimLight.color.setHex(0xffc07a);
-    rimLight.position.set(-7.2, 2.35, sz + 2.4);
-    rimLight.target.position.set(0.2, 1.1, sz - 8);
-    rimLight.intensity = 3.5;
+    rimLight.position.set(-2.4, 2.6, sz - 6.5);
+    rimLight.target.position.set(0, 0.8, sz - 1);
+    rimLight.intensity = 0.32;
     if (bloomFailed) {
       if (!titleFog) titleFog = new THREE.Fog(0xf0b56a, 22, 84);
       scene.fog = titleFog;
@@ -779,8 +786,9 @@ window.__bridge = {
   step(dt) { play.step(dt); },
   rush(sec) { play.step(sec); },
   selfTest() { return play.selfTest(); },
-  poseGunshot(id, tier, frames) { return play.poseGunshot(id, tier, frames); },
-  spawnAt(kind, x, z) { return play.spawnAt(kind, x, z); },
+  poseGunshot(id, tier, frames, squad) { return play.poseGunshot(id, tier, frames, squad); },
+  slabQuads() { return play.slabQuads ? play.slabQuads() : 0; },
+  spawnAt(kind, x, z, side) { return play.spawnAt(kind, x, z, side); },
   fxMarks() { return play.fxMarks(); },
   grab(cam) {
     if (cam) {
@@ -893,7 +901,7 @@ function mountBloom() {
     try {
       const next = new ec.EffectComposer(renderer);
       next.addPass(new rp.RenderPass(scene, camera));
-      next.addPass(new ub.UnrealBloomPass(new THREE.Vector2(256, 256), 0.5, 0.48, 0.72));
+      next.addPass(new ub.UnrealBloomPass(new THREE.Vector2(256, 256), 0.28, 0.4, 0.88));
       next.addPass(new op.OutputPass());
       composer = next;
       const w = canvas.clientWidth || window.innerWidth;

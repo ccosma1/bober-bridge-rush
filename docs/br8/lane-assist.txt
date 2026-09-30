@@ -1,0 +1,13 @@
+No-input squad of 3. Lane assist eases a centred squad onto the nearest side that survives, then releases. It does not chase the better gate. The first gate must be survived. Runs must not all sit on x=-1.75.
+
+1-1, gate at 36 m. Seeds 1-10 were identical.
+  At 36 m, on the gate: n 3, x 1.2 (right side, not the +5).
+  At 42 m, after the gate: n 4, x 0, still alive.
+  Died later at the crate, dist 51.1, n 0, ram 1. That is not the gate.
+10 of 10 survived the first gate. None were on x=-1.75.
+
+1-3, gate at 30 m. Seeds 1-10 were identical.
+  At 30 m, on the gate: n 3, x 1.2.
+  At 36 m, after the gate: n 5, x 0, still alive.
+  Died later at the crate pair, dist 43.1, n 0, ram 1.
+10 of 10 survived the first gate. None were on x=-1.75.
