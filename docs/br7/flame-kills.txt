@@ -1,0 +1,11 @@
+Maple Flamer, N=20, frozen Clog, closest about 10 m. Must die within 3 s.
+
+T1 deadAt 0.7 s
+  t=0 n=1 kills=0 closest=10
+  t=0.5 n=1 kills=0 closest=10
+  t=0.7 n=0 kills=1 closest=-1
+
+T4 deadAt 0.7 s
+  t=0 n=1 kills=0 closest=10
+  t=0.5 n=1 kills=0 closest=10
+  t=0.7 n=0 kills=1 closest=-1

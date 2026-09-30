@@ -2,9 +2,9 @@ import * as THREE from "three";
 import { GLTFLoader } from "three/addons/loaders/GLTFLoader.js";
 import { MeshoptDecoder } from "three/addons/libs/meshopt_decoder.module.js";
 import { RGBELoader } from "three/addons/loaders/RGBELoader.js";
-import { bakeCrowd, staticMerge, mountRig, boxGeo } from "./vat.js?v=br6";
+import { bakeCrowd, staticMerge, mountRig, boxGeo } from "./vat.js?v=br7";
 
-const V = "br6";
+const V = "br7";
 const warned = {};
 
 function url(path) {
@@ -110,50 +110,92 @@ function clogBits(api, kind) {
   api.add("Head", sphereGeo(0.09, p.x + 0.14, ey, ez), 0, EYE, 1);
   api.add("Head", sphereGeo(0.14, p.x - 0.14, ey, ez + 0.06, 6, 5), 5, EYE, 2.5);
   api.add("Head", sphereGeo(0.14, p.x + 0.14, ey, ez + 0.06, 6, 5), 5, EYE, 2.5);
-  for (let i = 0; i < 8; i++) {
-    const len = 0.16 + (i % 5) * 0.055;
-    const ang = (i / 8) * Math.PI * 2;
-    const lean = (i % 2 ? 0.42 : -0.36) * (0.65 + (i % 3) * 0.2);
-    api.add("Head", strandGeo(
-      0.016 + (i % 3) * 0.006,
-      len,
-      p.x + Math.cos(ang) * 0.11,
-      p.y + 0.36,
-      p.z + Math.sin(ang) * 0.07,
-      lean,
-      i % 2 === 0
-    ), 6, REEDS[i % 4], 0);
+  if (kind === "clog") {
+    const mane = 16;
+    for (let i = 0; i < mane; i++) {
+      const len = 0.28 + (i % 5) * 0.07;
+      const ang = (i / mane) * Math.PI * 2;
+      const lean = (i % 2 ? 0.55 : -0.48) * (0.7 + (i % 3) * 0.18);
+      api.add("Head", strandGeo(
+        0.02 + (i % 3) * 0.008,
+        len,
+        p.x + Math.cos(ang) * 0.16,
+        p.y + 0.42,
+        p.z + Math.sin(ang) * 0.1,
+        lean,
+        i % 2 === 0
+      ), 6, REEDS[i % 4], 0);
+    }
+    const body = torso || head;
+    const q = new THREE.Vector3();
+    body.getWorldPosition(q);
+    api.add(body.name, shellGeo(0.22, 0.1, 0.16, q.x - 0.2, q.y + 0.16, q.z + 0.02), 0, BARK, 0);
+    api.add(body.name, shellGeo(0.18, 0.08, 0.14, q.x + 0.18, q.y + 0.1, q.z - 0.02), 0, BARK2, 0);
+    api.add(body.name, shellGeo(0.16, 0.12, 0.12, q.x, q.y + 0.22, q.z + 0.12), 0, MUD, 0);
+    for (let i = 0; i < 6; i++) {
+      const len = 0.42 + (i % 3) * 0.08;
+      api.add("Head", strandGeo(
+        0.016,
+        len,
+        p.x + (i - 2.5) * 0.045,
+        p.y + 0.3,
+        p.z + 0.16,
+        1.05,
+        i % 2 === 0
+      ), 6, REEDS[i % 4], 0);
+    }
   }
   if (kind === "suds") {
     const s = torso || head;
     const q = new THREE.Vector3();
     s.getWorldPosition(q);
     const bubbles = [
-      [0.2, 0.16, 0.02, 0.13],
-      [-0.18, 0.14, -0.02, 0.11],
-      [0.04, 0.28, -0.1, 0.1],
-      [-0.08, 0.22, 0.12, 0.12],
-      [0.14, 0.08, -0.14, 0.08],
-      [0, 0.12, 0.1, 0.14],
-      [0.22, 0.24, 0.06, 0.07],
+      [0.22, 0.2, 0.02, 0.16],
+      [-0.2, 0.16, -0.04, 0.14],
+      [0.04, 0.32, -0.08, 0.12],
+      [-0.1, 0.26, 0.14, 0.13],
+      [0.16, 0.08, -0.16, 0.1],
+      [0, 0.14, 0.12, 0.15],
+      [0.24, 0.28, 0.08, 0.09],
+      [-0.26, 0.02, 0.06, 0.11],
+      [0.08, -0.02, -0.12, 0.1],
+      [-0.06, 0.36, 0.02, 0.08],
+      [0.18, 0.18, 0.16, 0.09],
+      [-0.14, 0.08, -0.16, 0.12],
     ];
     for (let i = 0; i < bubbles.length; i++) {
       const b = bubbles[i];
       api.add(s.name, sphereGeo(b[3], q.x + b[0], q.y + b[1], q.z + b[2], 7, 5), 2, i % 2 ? FOAM : FOAM2, 0);
     }
-    api.add("Head", sphereGeo(0.15, p.x, p.y + 0.16, p.z + 0.02, 7, 5), 2, FOAM, 0);
-    api.add("Head", sphereGeo(0.1, p.x + 0.12, p.y + 0.06, p.z - 0.08, 6, 5), 2, FOAM2, 0);
-    api.add("Head", sphereGeo(0.09, p.x - 0.1, p.y + 0.1, p.z + 0.06, 6, 5), 2, FOAM, 0);
+    api.add("Head", sphereGeo(0.28, p.x, p.y + 0.28, p.z, 8, 6), 2, FOAM, 0);
+    api.add("Head", sphereGeo(0.12, p.x + 0.16, p.y + 0.36, p.z - 0.06, 6, 5), 2, FOAM2, 0);
+    api.add("Head", sphereGeo(0.1, p.x - 0.14, p.y + 0.34, p.z + 0.04, 6, 5), 2, FOAM, 0);
+    api.add(s.name, shellGeo(0.16, 0.48, 0.42, q.x - 0.42, q.y + 0.08, q.z - 0.28), 2, FOAM, 0);
+    api.add(s.name, shellGeo(0.1, 0.36, 0.3, q.x - 0.5, q.y + 0.08, q.z - 0.22), 2, FOAM2, 0);
+    api.add("Head", sphereGeo(0.11, p.x - 0.1, ey - 0.04, ez - 0.1, 6, 4), 2, FOAM, 0);
+    api.add("Head", sphereGeo(0.11, p.x + 0.1, ey - 0.04, ez - 0.1, 6, 4), 2, FOAM2, 0);
+    api.add("Head", sphereGeo(0.08, p.x, ey + 0.1, ez - 0.12, 5, 4), 2, FOAM, 0);
+    const visor = new THREE.TorusGeometry(0.18, 0.04, 4, 8);
+    visor.rotateX(1.15);
+    visor.translate(p.x, ey + 0.02, ez - 0.04);
+    api.add("Head", visor, 2, FOAM2, 0);
   }
   if (kind === "spit") {
     const bone = torso || head;
     const q = new THREE.Vector3();
     bone.getWorldPosition(q);
-    api.add(bone.name, sphereGeo(0.2, q.x, q.y + 0.06, q.z - 0.26, 8, 6), 7, SAC, 0);
-    const spout = new THREE.ConeGeometry(0.07, 0.3, 6, 1, false);
-    spout.rotateX(-Math.PI / 2);
-    spout.translate(q.x, q.y + 0.08, q.z - 0.5);
+    api.add(bone.name, sphereGeo(0.34, q.x + 0.02, q.y + 0.12, q.z + 0.28, 8, 6), 7, SAC, 0);
+    api.add(bone.name, sphereGeo(0.16, q.x - 0.12, q.y + 0.22, q.z + 0.22, 6, 5), 7, new THREE.Color("#c6d48a"), 0);
+    api.add(bone.name, sphereGeo(0.08, q.x + 0.16, q.y + 0.02, q.z + 0.36, 5, 4), 7, SAC, 0);
+    const spout = new THREE.CylinderGeometry(0.07, 0.09, 0.46, 6);
+    spout.rotateX(Math.PI / 2);
+    spout.translate(q.x, q.y + 0.06, q.z - 0.62);
     api.add(bone.name, spout, 7, RUST, 0);
+    const lip = new THREE.TorusGeometry(0.09, 0.025, 5, 8);
+    lip.rotateX(Math.PI / 2);
+    lip.translate(q.x, q.y + 0.06, q.z - 0.84);
+    api.add(bone.name, lip, 7, new THREE.Color("#6e3a28"), 0);
+    api.add(bone.name, sphereGeo(0.06, q.x, q.y + 0.02, q.z - 0.92, 5, 4), 7, SAC, 0);
   }
 }
 

@@ -2,7 +2,7 @@
 // br3 gun table. Lab may multiply a tier's DMG; the comment block at the
 // bottom of weaponMods records the numbers that passed the gun lab.
 
-export const BUILD = "br6";
+export const BUILD = "br7";
 export const SIM_CAP = 300;
 export const RENDER_CAP = 60;
 export const LIVE_CAP = 320;
@@ -231,7 +231,7 @@ export const LEVELS = {
     bossName: "BARON CLOG",
     win: "BRIDGE HELD!",
     events: [
-      { at: 36, kind: "gate", pair: [{ op: "add", k: 5 }, { op: "sub", k: 3 }] },
+      { at: 36, kind: "gate", pair: [{ op: "add", k: 5 }, { op: "sub", k: 2 }] },
       { at: 52, kind: "crate", layout: "single", items: [{ type: "weapon", gun: "dambust", hp: 360, x: -1.5 }] },
       { at: 76, kind: "gate", pair: [{ op: "mul", k: 2 }, { op: "add", k: 4 }] },
       { at: 112, kind: "wave", clog: 40 },
@@ -272,7 +272,7 @@ export const LEVELS = {
     bossName: "BIG TUB",
     win: "BRIDGE HELD!",
     events: [
-      { at: 30, kind: "gate", pair: [{ op: "add", k: 6 }, { op: "sub", k: 4 }] },
+      { at: 30, kind: "gate", pair: [{ op: "add", k: 6 }, { op: "sub", k: 2 }] },
       { at: 48, kind: "crate", layout: "pair", items: [
         { type: "weapon", gun: "rail", hp: 640, x: -1.5 },
         { type: "weapon", gun: "flame", hp: 640, x: 1.5 },
@@ -320,7 +320,7 @@ export const LEVELS = {
     bossName: "GRUNK THE PLUMBER",
     win: "DAM HELD!",
     events: [
-      { at: 30, kind: "gate", pair: [{ op: "add", k: 6 }, { op: "sub", k: 4 }] },
+      { at: 30, kind: "gate", pair: [{ op: "add", k: 6 }, { op: "sub", k: 2 }] },
       { at: 44, kind: "crate", layout: "pair", items: [
         { type: "weapon", gun: "storm", hp: 900, x: -1.5 },
         { type: "weapon", gun: "cone", hp: 900, x: 1.5 },
@@ -914,6 +914,8 @@ export function selfTestRules() {
   eq(applyGate(200, "mul", 2, 20), 300, "cap");
 
   const plus = freshGate("add", 5);
+  eq(gateLabel(plus), "+5", "+ fresh");
+  eq(applyGate(3, "sub", 2, 20), 1, "first half lives");
   shootGate(plus, 6);
   eq(plus.k, 6, "+ shoot");
   eq(gateLabel(plus), "+6", "+ label");

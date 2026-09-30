@@ -75,6 +75,15 @@ if (pid > 4.5 && pid < 5.5) {
   p.x = x;
   p.z = z;
 }
+if (pid > 5.5 && pid < 6.5) {
+  float flap = sin(tt * 1.7) * 0.7;
+  float cs2 = cos(flap);
+  float sn2 = sin(flap);
+  float y2 = p.y * cs2 - p.z * sn2;
+  float z2 = p.y * sn2 + p.z * cs2;
+  p.y = y2;
+  p.z = z2;
+}
 transformed = p + aPivot;
 transformed.y += abs(sw) * ${bob};
 transformed.x += sw * ${sway};
@@ -644,7 +653,7 @@ export function paintGateSign(ctx, canvas, text, blue) {
     size -= 10;
     ctx.font = "900 " + size + "px Arial Black, Arial, sans-serif";
   }
-  ctx.lineWidth = Math.max(14, size * 0.1);
+  ctx.lineWidth = Math.max(8, size * 0.045);
   ctx.strokeStyle = "#1E1410";
   ctx.strokeText(text, w / 2, h * 0.52);
   ctx.fillStyle = "#FFFFFF";
@@ -768,6 +777,76 @@ export function paintCrateHp(ctx, canvas, hp) {
   ctx.strokeText(text, w / 2, h * 0.52);
   ctx.fillStyle = "#FFFFFF";
   ctx.fillText(text, w / 2, h * 0.52);
+}
+
+export function glowTexture() {
+  const c = document.createElement("canvas");
+  c.width = 64;
+  c.height = 64;
+  const g = c.getContext("2d");
+  const grd = g.createRadialGradient(32, 32, 0, 32, 32, 32);
+  grd.addColorStop(0, "rgba(255,255,255,1)");
+  grd.addColorStop(0.18, "rgba(255,255,255,0.75)");
+  grd.addColorStop(0.42, "rgba(255,255,255,0.16)");
+  grd.addColorStop(0.68, "rgba(255,255,255,0)");
+  grd.addColorStop(1, "rgba(255,255,255,0)");
+  g.fillStyle = grd;
+  g.fillRect(0, 0, 64, 64);
+  const tex = new THREE.CanvasTexture(c);
+  tex.colorSpace = THREE.SRGBColorSpace;
+  tex.magFilter = THREE.LinearFilter;
+  tex.minFilter = THREE.LinearFilter;
+  return tex;
+}
+
+export function streakTexture() {
+  const c = document.createElement("canvas");
+  c.width = 64;
+  c.height = 128;
+  const g = c.getContext("2d");
+  g.clearRect(0, 0, 64, 128);
+  const along = g.createLinearGradient(0, 0, 0, 128);
+  along.addColorStop(0, "rgba(255,255,255,0)");
+  along.addColorStop(0.18, "rgba(255,255,255,0.2)");
+  along.addColorStop(0.5, "rgba(255,255,255,1)");
+  along.addColorStop(0.82, "rgba(255,255,255,0.2)");
+  along.addColorStop(1, "rgba(255,255,255,0)");
+  g.fillStyle = along;
+  g.fillRect(0, 0, 64, 128);
+  g.globalCompositeOperation = "destination-in";
+  const side = g.createLinearGradient(0, 0, 64, 0);
+  side.addColorStop(0, "rgba(255,255,255,0)");
+  side.addColorStop(0.18, "rgba(255,255,255,0.25)");
+  side.addColorStop(0.5, "rgba(255,255,255,1)");
+  side.addColorStop(0.82, "rgba(255,255,255,0.25)");
+  side.addColorStop(1, "rgba(255,255,255,0)");
+  g.fillStyle = side;
+  g.fillRect(0, 0, 64, 128);
+  const tex = new THREE.CanvasTexture(c);
+  tex.colorSpace = THREE.SRGBColorSpace;
+  tex.magFilter = THREE.LinearFilter;
+  tex.minFilter = THREE.LinearFilter;
+  return tex;
+}
+
+export function goldenSkyTexture() {
+  const c = document.createElement("canvas");
+  c.width = 4;
+  c.height = 256;
+  const g = c.getContext("2d");
+  const grd = g.createLinearGradient(0, 0, 0, 256);
+  grd.addColorStop(0, "#5C3A86");
+  grd.addColorStop(0.22, "#C45A78");
+  grd.addColorStop(0.48, "#F08A62");
+  grd.addColorStop(0.7, "#F6B56A");
+  grd.addColorStop(1, "#F3C99A");
+  g.fillStyle = grd;
+  g.fillRect(0, 0, 4, 256);
+  const tex = new THREE.CanvasTexture(c);
+  tex.colorSpace = THREE.SRGBColorSpace;
+  tex.magFilter = THREE.LinearFilter;
+  tex.minFilter = THREE.LinearFilter;
+  return tex;
 }
 
 export function skyTexture() {

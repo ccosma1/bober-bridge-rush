@@ -1,6 +1,6 @@
 import * as THREE from "three";
-import { toon, pineTexture, skyTexture, writeTRS } from "./mats.js?v=br6";
-import { buildTile } from "./build.js?v=br6";
+import { toon, pineTexture, skyTexture, goldenSkyTexture, writeTRS } from "./mats.js?v=br7";
+import { buildTile } from "./build.js?v=br7";
 
 const TILE = 20;
 const TILES = 10;
@@ -12,9 +12,11 @@ export function createWorld(scene) {
   scene.background = new THREE.Color(0xc5d4df);
   scene.fog = new THREE.Fog(0xc5d5e0, 60, 260);
 
+  const runSky = skyTexture();
+  const warmSky = goldenSkyTexture();
   const sky = new THREE.Mesh(
     new THREE.SphereGeometry(220, 18, 12),
-    new THREE.MeshBasicMaterial({ map: skyTexture(), side: THREE.BackSide, depthWrite: false, fog: false })
+    new THREE.MeshBasicMaterial({ map: runSky, side: THREE.BackSide, depthWrite: false, fog: false })
   );
   sky.frustumCulled = false;
   sky.renderOrder = -2;
@@ -193,6 +195,11 @@ export function createWorld(scene) {
   const pyM = pylons.instanceMatrix.array;
   const foM = foam.instanceMatrix.array;
 
+  let titleMood = 0;
+  function setTitleMood(on) {
+    titleMood = on ? 1 : 0;
+  }
+
   function follow(x, z, half, time, river, damScale, theme) {
     waterUniforms.uTime.value = time;
     const drop = river || 0;
@@ -201,8 +208,49 @@ export function createWorld(scene) {
     dam.position.set(0, drop, z - 96);
     dam.scale.set(scale, scale, scale);
     sky.position.set(x, 8, z);
-    key.position.set(x - 12, 22, z - 18);
-    key.target.position.set(x, 1.2, z - 18);
+    if (titleMood) {
+      key.color.setHex(0xff7a32);
+      key.intensity = 3.15;
+      key.position.set(x + 16, 4.6, z + 14);
+      key.target.position.set(x - 1.2, 0.7, z - 10);
+      hemi.color.setHex(0xffb090);
+      hemi.groundColor.setHex(0x5a3020);
+      hemi.intensity = 0.5;
+      scene.background.setHex(0xf29a78);
+      if (scene.fog) {
+        scene.fog.color.setHex(0xf0b48a);
+        scene.fog.near = 26;
+        scene.fog.far = 96;
+      }
+      if (sky.material.map !== warmSky) sky.material.map = warmSky;
+      key.shadow.camera.left = -18;
+      key.shadow.camera.right = 18;
+      key.shadow.camera.top = 24;
+      key.shadow.camera.bottom = -16;
+      key.shadow.camera.far = 72;
+      key.shadow.camera.updateProjectionMatrix();
+    } else {
+      key.color.setHex(0xffe6c4);
+      key.intensity = 2.2;
+      key.position.set(x - 12, 22, z - 18);
+      key.target.position.set(x, 1.2, z - 18);
+      hemi.color.setHex(0xcfe3ff);
+      hemi.groundColor.setHex(0x6b5e4a);
+      hemi.intensity = 0.6;
+      scene.background.setHex(0xc5d4df);
+      if (scene.fog && scene.fog.far < 200) {
+        scene.fog.color.setHex(0xc5d5e0);
+        scene.fog.near = 60;
+        scene.fog.far = 260;
+      }
+      if (sky.material.map !== runSky) sky.material.map = runSky;
+      key.shadow.camera.left = -12;
+      key.shadow.camera.right = 12;
+      key.shadow.camera.top = 20;
+      key.shadow.camera.bottom = -10;
+      key.shadow.camera.far = 52;
+      key.shadow.camera.updateProjectionMatrix();
+    }
     const dist = -z;
     const base = Math.floor(dist / TILE);
     const sx = half / 5;
@@ -375,5 +423,5 @@ export function createWorld(scene) {
   }
 
   follow(0, 0, 3, 0);
-  return { follow, applyArt, setShadow };
+  return { follow, applyArt, setShadow, setTitleMood };
 }

@@ -294,18 +294,41 @@ export function buildHauler() {
 }
 
 export function buildHairball() {
-  const ball = sph(0.4, 7, 5);
-  const tuft = cone(0.08, 0.18, 4);
-  const eye = sph(0.05, 4, 3);
-  return done([
-    place(ball, CLOG, 0, null, 0, 0.4, 0),
-    place(tuft, LEAF, 0, null, 0.16, 0.62, 0.08),
-    place(tuft, LEAF, 0, null, -0.18, 0.48, -0.1, 0.8, 0.9, 0.8),
-    place(tuft, "#6E9440", 0, null, 0.05, 0.22, 0.28, 0.7, 0.7, 0.7),
-    place(tuft, CLOG_D, 0, null, -0.05, 0.7, 0.02, 0.6, 0.8, 0.6),
-    place(eye, EYE, 0, null, -0.12, 0.46, -0.32),
-    place(eye, EYE, 0, null, 0.12, 0.46, -0.32),
-  ]);
+  const core = sph(0.22, 6, 5);
+  const tuft = cone(0.045, 0.22, 4);
+  const eye = sph(0.055, 5, 4);
+  const tooth = box(0.035, 0.07, 0.03);
+  const parts = [
+    place(core, "#4A3828", 0, null, 0, 0.4, 0, 1.15, 1.05, 1.2),
+    place(sph(0.1, 5, 4), "#3A2A22", 0, null, 0, 0.34, -0.16, 1.1, 0.7, 0.8),
+  ];
+  for (let i = 0; i < 22; i++) {
+    const ang = (i / 22) * Math.PI * 2;
+    const lift = 0.22 + (i % 5) * 0.08;
+    const rad = 0.16 + (i % 3) * 0.05;
+    const len = 0.7 + (i % 4) * 0.22;
+    parts.push(place(
+      tuft,
+      i % 3 === 0 ? "#6B5340" : i % 3 === 1 ? "#8A6A48" : "#3E2E24",
+      0, null,
+      Math.cos(ang) * rad,
+      lift,
+      Math.sin(ang) * rad * 0.75,
+      0.7 + (i % 3) * 0.25,
+      len,
+      0.7,
+      ang,
+      0.9 + (i % 4) * 0.35
+    ));
+  }
+  parts.push(place(eye, "#E6B0FF", 0, null, -0.08, 0.42, -0.2));
+  parts.push(place(eye, "#E6B0FF", 0, null, 0.09, 0.41, -0.2));
+  parts.push(place(sph(0.025, 4, 3), "#FFFFFF", 0, null, -0.06, 0.45, -0.24));
+  parts.push(place(sph(0.025, 4, 3), "#FFFFFF", 0, null, 0.11, 0.44, -0.24));
+  parts.push(place(tooth, "#FFF6E4", 0, null, -0.05, 0.28, -0.24));
+  parts.push(place(tooth, "#FFF6E4", 0, null, 0.02, 0.27, -0.25));
+  parts.push(place(tooth, "#FFF6E4", 0, null, 0.08, 0.28, -0.23));
+  return done(parts);
 }
 
 export function buildSpitter() {
@@ -325,24 +348,72 @@ export function buildSpitter() {
 }
 
 export function buildLeaf() {
-  const blade = box(0.34, 0.03, 0.16);
-  return done([
-    place(blade, LEAF, 0, null, 0, 0, 0, 1, 1, 1, 0.4),
-    place(blade, "#6E9440", 0, null, 0, 0, 0, 0.8, 1, 0.9, -0.6),
-  ]);
+  const body = sph(0.16, 5, 4);
+  const wing = cone(0.12, 0.3, 4);
+  const eye = sph(0.028, 3, 2);
+  const parts = [];
+  const greens = ["#8FBF4A", "#6E9440", "#C6DE62", "#4E7A32", "#A8D15A"];
+  for (let i = 0; i < 5; i++) {
+    const ang = (i / 5) * Math.PI * 2 + 0.4;
+    const rad = 0.34 + (i % 2) * 0.12;
+    const cx = Math.cos(ang) * rad;
+    const cy = (i - 2) * 0.16;
+    const cz = Math.sin(ang) * rad * 0.45;
+    const pivot = { x: cx, y: cy, z: cz };
+    const col = greens[i];
+    parts.push(place(body, col, 0, pivot, cx, cy, cz, 1.05, 0.72, 1.25));
+    parts.push(place(wing, "#2F5A22", 6, pivot, cx - 0.2, cy + 0.02, cz, 1.2, 0.42, 0.9, 0.7, 0.2));
+    parts.push(place(wing, col, 6, pivot, cx + 0.2, cy + 0.02, cz, 1.2, 0.42, 0.9, -0.7, -0.15));
+    parts.push(place(eye, "#E6B0FF", 0, pivot, cx - 0.04, cy + 0.04, cz - 0.12));
+    parts.push(place(eye, "#E6B0FF", 0, pivot, cx + 0.05, cy + 0.03, cz - 0.12));
+  }
+  return done(parts);
 }
 
 export function buildDuck() {
-  const body = sph(0.2, 6, 4);
-  const head = sph(0.11, 5, 4);
-  const beak = cone(0.045, 0.14, 4);
-  const eye = box(0.03, 0.03, 0.02);
+  const body = sph(0.26, 6, 5);
+  const head = sph(0.15, 5, 4);
+  const beak = cone(0.05, 0.2, 5);
+  const wing = cone(0.045, 0.18, 4);
+  const foot = box(0.1, 0.028, 0.14);
+  const eye = sph(0.032, 4, 3);
+  const tooth = box(0.022, 0.055, 0.02);
+  const wart = sph(0.03, 3, 2);
+  const pivot = { x: 0, y: 0.4, z: 0.02 };
   return done([
-    place(body, GOLD, 0, null, 0, 0.24, 0, 1.2, 0.85, 1.25),
-    place(head, GOLD, 0, null, 0, 0.44, -0.1),
-    place(beak, "#E86A1A", 0, null, 0, 0.42, -0.22, 1, 0.7, 1, 0, Math.PI / 2),
-    place(eye, INK, 0, null, -0.05, 0.48, -0.18),
-    place(eye, INK, 0, null, 0.05, 0.48, -0.18),
+    place(body, "#FFE14A", 0, null, 0, 0.36, 0, 1.35, 0.95, 1.2),
+    place(sph(0.1, 4, 3), "#FFF6C2", 0, null, 0, 0.42, -0.12, 0.85, 0.5, 0.55),
+    place(head, "#FFD23A", 0, null, 0, 0.7, -0.14, 1.05, 0.92, 1.08),
+    place(cone(0.07, 0.2, 4), "#E23B3B", 0, null, 0, 1.02, -0.1, 1.15, 1.45, 1, 0, 0.15),
+    place(cone(0.045, 0.14, 3), "#C4232A", 0, null, -0.09, 0.94, -0.06, 1, 1.25, 1, 0.45),
+    place(cone(0.045, 0.14, 3), "#C4232A", 0, null, 0.09, 0.94, -0.06, 1, 1.25, 1, -0.45),
+    place(beak, "#F07A18", 0, null, 0, 0.76, -0.4, 1.45, 0.42, 1.25, 0, Math.PI / 2),
+    place(beak, "#C45A10", 0, null, 0, 0.5, -0.38, 1.25, 0.34, 1.15, 0, Math.PI / 2),
+    place(tooth, "#FFF6E4", 0, null, -0.07, 0.62, -0.62, 1.8, 2.4, 1.4),
+    place(tooth, "#FFF6E4", 0, null, 0, 0.58, -0.7, 1.7, 2.8, 1.5),
+    place(tooth, "#FFF6E4", 0, null, 0.07, 0.62, -0.62, 1.8, 2.4, 1.4),
+    place(eye, "#1E1410", 0, null, -0.08, 0.78, -0.26),
+    place(eye, "#1E1410", 0, null, 0.085, 0.78, -0.26),
+    place(sph(0.014, 3, 2), "#FFFFFF", 0, null, -0.065, 0.8, -0.28),
+    place(sph(0.014, 3, 2), "#FFFFFF", 0, null, 0.1, 0.8, -0.28),
+    place(cyl(0.022, 0.03, 0.12, 5), "#E6B0FF", 0, null, 0.02, 1.02, -0.1),
+    place(sph(0.07, 5, 4), "#D070FF", 0, null, 0.03, 1.14, -0.16),
+    place(sph(0.026, 4, 3), "#140818", 0, null, 0.03, 1.15, -0.21),
+    place(box(0.07, 0.018, 0.02), "#C45A10", 0, null, -0.07, 0.82, -0.26, 1, 1, 1, 0.35),
+    place(box(0.07, 0.018, 0.02), "#C45A10", 0, null, 0.075, 0.82, -0.26, 1, 1, 1, -0.35),
+    place(wing, "#F0C030", 6, pivot, -0.38, 0.42, -0.02, 0.7, 1.7, 1.15, 0.85),
+    place(wing, "#E8A020", 6, pivot, -0.46, 0.38, 0.02, 0.5, 1.3, 0.95, 1.15),
+    place(wing, "#F0C030", 6, pivot, 0.38, 0.42, -0.02, 0.7, 1.7, 1.15, -0.85),
+    place(wing, "#E8A020", 6, pivot, 0.46, 0.38, 0.02, 0.5, 1.3, 0.95, -1.15),
+    place(cone(0.06, 0.16, 4), "#E8A020", 5, pivot, 0, 0.38, 0.26, 1, 0.55, 1, 0, -0.85),
+    place(cone(0.035, 0.11, 3), "#FFD23A", 5, pivot, 0.05, 0.42, 0.24, 1, 0.45, 1, 0.25, -0.6),
+    place(cone(0.035, 0.11, 3), "#FFD23A", 5, pivot, -0.05, 0.42, 0.24, 1, 0.45, 1, -0.25, -0.6),
+    place(wart, "#F6C21A", 0, null, 0.18, 0.46, 0.06, 0.9, 0.6, 0.7),
+    place(wart, "#E0A010", 0, null, -0.16, 0.32, 0.08, 0.75, 0.5, 0.65),
+    place(foot, "#E86A1A", 0, null, -0.1, 0.04, 0),
+    place(foot, "#E86A1A", 0, null, 0.1, 0.04, 0),
+    place(box(0.018, 0.016, 0.05), "#C45A10", 0, null, -0.14, 0.045, -0.07),
+    place(box(0.018, 0.016, 0.05), "#C45A10", 0, null, 0.14, 0.045, -0.07),
   ]);
 }
 
@@ -468,10 +539,53 @@ export function arrowGeo() {
   return new THREE.BoxGeometry(0.12, 0.12, 1.7);
 }
 
+function mergeBare(geos) {
+  let vCount = 0;
+  let iCount = 0;
+  for (let p = 0; p < geos.length; p++) {
+    vCount += geos[p].getAttribute("position").count;
+    iCount += geos[p].index.count;
+  }
+  const pos = new Float32Array(vCount * 3);
+  const nrm = new Float32Array(vCount * 3);
+  const idx = new Uint32Array(iCount);
+  let v = 0;
+  let k = 0;
+  for (let p = 0; p < geos.length; p++) {
+    const g = geos[p];
+    const gp = g.getAttribute("position");
+    const gn = g.getAttribute("normal");
+    const gi = g.index;
+    const base = v;
+    for (let i = 0; i < gp.count; i++) {
+      pos[(v + i) * 3] = gp.getX(i);
+      pos[(v + i) * 3 + 1] = gp.getY(i);
+      pos[(v + i) * 3 + 2] = gp.getZ(i);
+      nrm[(v + i) * 3] = gn.getX(i);
+      nrm[(v + i) * 3 + 1] = gn.getY(i);
+      nrm[(v + i) * 3 + 2] = gn.getZ(i);
+    }
+    for (let i = 0; i < gi.count; i++) idx[k++] = gi.getX(i) + base;
+    v += gp.count;
+  }
+  const geo = new THREE.BufferGeometry();
+  geo.setAttribute("position", new THREE.BufferAttribute(pos, 3));
+  geo.setAttribute("normal", new THREE.BufferAttribute(nrm, 3));
+  geo.setIndex(new THREE.BufferAttribute(idx, 1));
+  return geo;
+}
+
 export function rocketGeo() {
-  const g = new THREE.ConeGeometry(0.12, 0.56, 6);
-  g.rotateX(Math.PI / 2);
-  return g;
+  const nose = new THREE.ConeGeometry(0.08, 0.36, 6);
+  nose.rotateX(Math.PI / 2);
+  nose.translate(0, 0, 0.24);
+  const body = new THREE.CylinderGeometry(0.055, 0.078, 0.34, 6);
+  body.rotateX(Math.PI / 2);
+  const finA = new THREE.BoxGeometry(0.2, 0.016, 0.14);
+  finA.translate(0, 0, -0.16);
+  const finB = new THREE.BoxGeometry(0.016, 0.2, 0.14);
+  finB.translate(0, 0, -0.16);
+  return mergeBare([nose, body, finA, finB]);
 }
 
 export function flameGeo() {
@@ -563,4 +677,90 @@ export function logGeo() {
 
 export function quadGeo() {
   return new THREE.PlaneGeometry(1, 1);
+}
+
+export function streakGeo() {
+  const flat = new THREE.PlaneGeometry(1, 1);
+  flat.rotateX(-Math.PI / 2);
+  const side = new THREE.PlaneGeometry(1, 1);
+  side.rotateY(Math.PI / 2);
+  const geos = [flat, side];
+  let vCount = 0;
+  let iCount = 0;
+  for (let p = 0; p < geos.length; p++) {
+    vCount += geos[p].getAttribute("position").count;
+    iCount += geos[p].index.count;
+  }
+  const pos = new Float32Array(vCount * 3);
+  const nrm = new Float32Array(vCount * 3);
+  const uv = new Float32Array(vCount * 2);
+  const idx = new Uint32Array(iCount);
+  let v = 0;
+  let k = 0;
+  for (let p = 0; p < geos.length; p++) {
+    const g = geos[p];
+    const gp = g.getAttribute("position");
+    const gn = g.getAttribute("normal");
+    const gu = g.getAttribute("uv");
+    const gi = g.index;
+    const base = v;
+    for (let i = 0; i < gp.count; i++) {
+      pos[(v + i) * 3] = gp.getX(i);
+      pos[(v + i) * 3 + 1] = gp.getY(i);
+      pos[(v + i) * 3 + 2] = gp.getZ(i);
+      nrm[(v + i) * 3] = gn.getX(i);
+      nrm[(v + i) * 3 + 1] = gn.getY(i);
+      nrm[(v + i) * 3 + 2] = gn.getZ(i);
+      uv[(v + i) * 2] = gu.getX(i);
+      uv[(v + i) * 2 + 1] = gu.getY(i);
+    }
+    for (let i = 0; i < gi.count; i++) idx[k++] = gi.getX(i) + base;
+    v += gp.count;
+  }
+  const geo = new THREE.BufferGeometry();
+  geo.setAttribute("position", new THREE.BufferAttribute(pos, 3));
+  geo.setAttribute("normal", new THREE.BufferAttribute(nrm, 3));
+  geo.setAttribute("uv", new THREE.BufferAttribute(uv, 2));
+  geo.setIndex(new THREE.BufferAttribute(idx, 1));
+  return geo;
+}
+
+export function iceSpikeGeo() {
+  const g = new THREE.ConeGeometry(0.2, 1.2, 7, 1);
+  g.rotateX(Math.PI / 2);
+  const pos = g.attributes.position;
+  const col = new Float32Array(pos.count * 3);
+  for (let i = 0; i < pos.count; i++) {
+    const x = pos.getX(i);
+    const y = pos.getY(i);
+    const z = pos.getZ(i);
+    const rad = Math.hypot(x, y);
+    const jag = rad > 0.02 ? (i % 3 === 0 ? 1.85 : 0.5 + 0.35 * Math.abs(Math.cos(i * 1.7))) : 1;
+    if (rad > 0.02) {
+      pos.setX(i, (x / rad) * rad * jag);
+      pos.setY(i, (y / rad) * rad * jag);
+    }
+    const ang = Math.atan2(y, x);
+    const shade = 0.45 + 0.55 * Math.abs(Math.sin(ang * 3 + i));
+    const u = Math.max(0, Math.min(1, (z + 0.6) / 1.2));
+    col[i * 3] = 0.35 + shade * 0.35 + u * 0.25;
+    col[i * 3 + 1] = 0.72 + shade * 0.18 + u * 0.08;
+    col[i * 3 + 2] = 0.85 + shade * 0.15;
+  }
+  g.setAttribute("color", new THREE.BufferAttribute(col, 3));
+  g.computeVertexNormals();
+  return g;
+}
+
+export function buildGrenade() {
+  const body = sph(0.16, 8, 6);
+  const ridge = new THREE.TorusGeometry(0.15, 0.028, 4, 10);
+  return done([
+    place(body, "#3FA34A", 0, null, 0, 0, 0, 1, 1.05, 1),
+    place(ridge, "#246B32", 0, null, 0, 0, 0, 1, 1, 1, 0, Math.PI / 2),
+    place(ridge, "#2E7A38", 0, null, 0, 0.07, 0, 0.86, 0.86, 0.86, 0, Math.PI / 2),
+    place(ridge, "#2E7A38", 0, null, 0, -0.07, 0, 0.86, 0.86, 0.86, 0, Math.PI / 2),
+    place(cyl(0.04, 0.05, 0.08, 6), "#245C30", 0, null, 0, 0.18, 0),
+    place(sph(0.04, 5, 4), "#FF2430", 0, null, 0, 0.22, 0),
+  ]);
 }

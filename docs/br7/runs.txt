@@ -1,0 +1,21 @@
+Bober Bridge Rush br7 balance runs
+Same B1 targets as br6. Lane assist is on, so a squad that does not drag is eased toward the better gate.
+Sensible bot is setBot only, after start. It is not locked and not autoPick.
+Standing still is neither bot nor drag. It still shoots. Lane assist eases it at the gates.
+selfTest fails: none. Soldier 320, Bober 332, boss 5875.
+Phone readability, Chrome 390x844, 4x CPU throttle, N=300 soldiers and about 200 Clogs: 64 fps, 47 draws, scale 1.
+
+Damage, HP, and bite were not retuned. Squad counts sit a little above the br6 band. Guns, tiers, rams, and wins are the same path.
+
+Sensible 1-1 (br6 target: win, n 144-151, mini T2, ram 1, boss about 6-9s, marks 20/54/90/197):
+  seed 11  win  n 145  mini T2  ram 1  boss 10s  dist 700  x 2.3  lost 103  marks 112:25 dambust T1 248:59 mini T1 428:95 mini T2 690:204 mini T2
+  seed 22  win  n 156  mini T2  ram 1  boss 6s  dist 700  x 2.3  lost 92  marks 112:25 dambust T1 248:59 mini T1 428:95 mini T2 690:204 mini T2
+  seed 33  win  n 165  mini T2  ram 1  boss 6s  dist 700  x 2.3  lost 83  marks 112:25 dambust T1 248:59 mini T1 428:95 mini T2 690:204 mini T2
+
+Standing still, 1-1 seed 7 (br6 died at 38 m on the first gate, squad 0, Incisor T1):
+  win  n 145  dist 700  beam T2  ram 0  boss 6s  x -1.75  lost 101  marks 40:11 burst T1 x=-1.75 80:30 dambust T1 x=-1.75 112:23 dambust T1 x=-1.75 248:57 mini T1 x=-1.75
+
+Sensible 1-3 (br6 target: win, n 184-198, burst T3, ram 1, boss 6s, marks 6/24/72/230):
+  seed 11  win  n 212  burst T3  ram 1  boss 6s  dist 860  x 0  lost 93  marks 118:13 burst T1 278:44 burst T2 492:93 burst T3 850:251 burst T3
+  seed 22  win  n 207  burst T3  ram 1  boss 6s  dist 860  x 2.3  lost 98  marks 118:13 burst T1 278:44 burst T2 492:93 burst T3 850:254 burst T3
+  seed 33  win  n 209  burst T3  ram 1  boss 6s  dist 860  x 0  lost 96  marks 118:13 burst T1 278:44 burst T2 492:93 burst T3 850:254 burst T3
