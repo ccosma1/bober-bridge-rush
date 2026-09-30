@@ -230,17 +230,6 @@ vObjN = objectNormal;
 `;
 
 const COLOR_FRAG = `#include <color_fragment>
-if (vGlow < 0.5 && vPart < 0.5) {
-  float nlen = dot(vObjN, vObjN);
-  vec3 on = nlen > 0.0001 ? normalize(vObjN) : vec3(0.0, 1.0, 0.0);
-  vec3 bn = abs(on);
-  float bs = bn.x + bn.y + bn.z;
-  bn = bs > 0.001 ? bn / bs : vec3(0.0, 1.0, 0.0);
-  vec3 mud = texture2D(tMud, vLocal.yz * 1.45).rgb * bn.x
-    + texture2D(tMud, vLocal.xz * 1.45).rgb * bn.y
-    + texture2D(tMud, vLocal.xy * 1.45).rgb * bn.z;
-  diffuseColor.rgb *= mud;
-}
 if (vPart > 1.5 && vPart < 2.5) diffuseColor.rgb *= mix(0.42, 1.0, smoothstep(0.0, 0.55, vFoam));
 if (vChill > 0.5) diffuseColor.rgb = mix(diffuseColor.rgb, vec3(0.55, 0.84, 1.0), 0.94);
 if (vChill > 0.5) {
@@ -249,7 +238,7 @@ if (vChill > 0.5) {
   if (fh > 0.94) diffuseColor.rgb = mix(diffuseColor.rgb, vec3(0.94, 0.98, 1.0), 0.92);
 }
 if (vPart > 1.5 && vPart < 2.5) diffuseColor.a *= mix(0.2, 0.62, smoothstep(0.0, 0.55, vFoam));
-if (vPart > 4.5 && vPart < 5.5) { diffuseColor.rgb *= 0.07; diffuseColor.a *= 0.45; }
+if (vPart > 4.5 && vPart < 5.5) { diffuseColor.rgb = vec3(0.96, 0.94, 1.0); diffuseColor.a = 1.0; }
 if (vPart > 6.5 && vPart < 7.5) diffuseColor.rgb *= vec3(1.05, 1.08, 0.92);
 `;
 

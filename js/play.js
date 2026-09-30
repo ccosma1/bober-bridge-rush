@@ -47,11 +47,13 @@ import {
   laneCols,
   WAVE_ADVANCE,
   GATE_X,
+  PANEL_W,
+  AIM_CONE,
   DIVIDER_W,
   CHARGE_LEAD,
   PINCH_BLOB,
   volleyPlan,
-} from "./rules.js?v=br9";
+} from "./rules.js?v=br10";
 import {
   animToon,
   attachOutline,
@@ -71,7 +73,7 @@ import {
   writeLog,
   writeQuat,
   writeTRS,
-} from "./mats.js?v=br9";
+} from "./mats.js?v=br10";
 import {
   arrowGeo,
   buildBaron,
@@ -100,7 +102,7 @@ import {
   sawDiscGeo,
   streakGeo,
   streamGeo,
-} from "./build.js?v=br9";
+} from "./build.js?v=br10";
 
 const STRIDE = 320;
 const CAPS = [320, 320, 320, 120, 120, 120, 120];
@@ -121,7 +123,7 @@ const FLOATS = 40;
 const GLYPHS = FLOATS * 4;
 const CORE = 0.75;
 const GATE_N = 48;
-const CRATE_N = 12;
+const CRATE_N = 24;
 const QX = -0.70710678118;
 const QW = 0.70710678118;
 
@@ -192,6 +194,14 @@ export function createPlay(scene, camera, audio) {
   attachOutline(bober, 0.04);
   bober.children[0].material = beaverShell;
   scene.add(bober);
+  const leaderRing = new THREE.Mesh(
+    new THREE.TorusGeometry(0.46, 0.045, 8, 22),
+    new THREE.MeshBasicMaterial({ color: 0xffd24a, transparent: true, opacity: 0.9, depthWrite: false, toneMapped: false })
+  );
+  leaderRing.rotation.x = -Math.PI / 2;
+  leaderRing.frustumCulled = false;
+  leaderRing.renderOrder = 2;
+  scene.add(leaderRing);
 
   const pillarMat = new THREE.ShaderMaterial({
     transparent: true,
@@ -795,7 +805,8 @@ export function createPlay(scene, camera, audio) {
       new THREE.PlaneGeometry(1.7, 0.72),
       new THREE.MeshBasicMaterial({ map: tex, transparent: true, alphaTest: 0.1, toneMapped: false })
     );
-    face.position.set(0, 1.42, 0.6);
+    face.position.set(0, 0.72, 0.52);
+    face.scale.set(0.7, 0.7, 0.7);
     mesh.add(face);
     const hpCanvas = document.createElement("canvas");
     hpCanvas.width = 512;
@@ -807,8 +818,16 @@ export function createPlay(scene, camera, audio) {
       new THREE.PlaneGeometry(1.85, 0.95),
       new THREE.MeshBasicMaterial({ map: hpTex, transparent: true, depthWrite: false, toneMapped: false })
     );
-    hpFace.position.set(0, 0.78, 0.62);
+    hpFace.position.set(0, 0.62, 0.5);
     mesh.add(hpFace);
+    const pickupRing = new THREE.Mesh(
+      new THREE.TorusGeometry(0.62, 0.045, 6, 18),
+      new THREE.MeshBasicMaterial({ color: 0xffd24a, transparent: true, opacity: 0.92, depthWrite: false, toneMapped: false })
+    );
+    pickupRing.rotation.x = -Math.PI / 2;
+    pickupRing.position.set(0, 0.02, 0);
+    pickupRing.visible = false;
+    mesh.add(pickupRing);
     const tierCanvas = document.createElement("canvas");
     tierCanvas.width = 512;
     tierCanvas.height = 256;
@@ -831,7 +850,7 @@ export function createPlay(scene, camera, audio) {
     mesh.visible = false;
     scene.add(mesh);
     crates.push({
-      mesh, canvas, ctx, tex, top, face, hpCanvas, hpCtx, hpTex, hpFace, tierCanvas, tierCtx, tierTex, tierFace,
+      mesh, canvas, ctx, tex, top, face, hpCanvas, hpCtx, hpTex, hpFace, tierCanvas, tierCtx, tierTex, tierFace, pickupRing,
       kind: "weapon", gun: "burst", hp: 1, max: 1, x: 0, z: -40,
       state: "dead", shake: 0, reel: 0, dirty: 0, extra: "", jab: 0,
     });
@@ -1072,6 +1091,7 @@ export function createPlay(scene, camera, audio) {
   let shotMul = 1;
   let shotThick = 1;
   let crossHits = 0;
+  let wrongGateHits = 0;
   let gateWait = -1;
   let gateWaitI = -1;
   let gateSide = 1;
@@ -1574,29 +1594,79 @@ export function createPlay(scene, camera, audio) {
     if (!count || count <= 0) return z;
     const p = pools[type];
     const room = Math.min(count, p.freeN, 320 - liveN);
-    const gap = type === 5 ? 0.72 : Math.max(0.9, (ENEMY[type].rad || 0.5) * 1.75);
-    const cols = laneCols(type, room, half);
-    const edge = Math.max(0.6, half - 0.42);
-    const bias = waveBias(z);
-    for (let i = 0; i < room; i++) {
-      const row = (i / cols) | 0;
-      const col = i % cols;
-      const nCols = Math.min(cols, room - row * cols);
-      const stagger = row % 2 ? gap * 0.5 : 0;
-      let x0 = nCols <= 1 ? 0 : -((nCols - 1) * gap) * 0.5 + col * gap + stagger;
-      x0 += bias;
-      if (x0 > edge) x0 = edge;
-      if (x0 < -edge) x0 = -edge;
-      if (type <= 2 && !labMode && !arenaStarted) {
-        x0 = (rnd() * 2 - 1) * edge * (i < 8 ? 0.55 : 1);
-        const frontN = Math.max(3, Math.min(squadN > 90 ? 28 : 10, Math.round(squadN * (squadN > 90 ? 0.4 : 0.22))));
-        const front = type === 0 && i < frontN;
-        if (front) x0 = squadX + (rnd() * 2 - 1) * 0.45;
-        const ahead = front ? Math.max(0.4, radius) + 1.82 : 26 + rnd() * 12;
-        spawnEnemy(type, x0, -dist - ahead);
-      } else spawnEnemy(type, x0, z - row * gap * 0.86);
+    const edge = Math.max(0.6, half - 0.6);
+    if (type === 5) {
+      const span = edge * 2;
+      const cols = Math.max(1, Math.min(room, Math.max(3, Math.floor(span / 0.72))));
+      const rowPitch = 0.7;
+      for (let i = 0; i < room; i++) {
+        const row = (i / cols) | 0;
+        const col = i % cols;
+        const nCols = Math.min(cols, room - row * cols);
+        const gap = nCols <= 1 ? 0 : Math.min(2.05, Math.max(0.72, span / Math.max(1, nCols - 1)));
+        let x0 = nCols <= 1 ? (rnd() * 2 - 1) * edge * 0.35 : -((nCols - 1) * gap) * 0.5 + col * gap;
+        x0 += (rnd() * 2 - 1) * 0.2;
+        if (x0 > edge) x0 = edge;
+        if (x0 < -edge) x0 = -edge;
+        spawnEnemy(type, x0, z - row * rowPitch + (rnd() * 2 - 1) * 0.28);
+      }
+      per;
+      return z - Math.ceil(room / cols) * rowPitch;
     }
-    return z - Math.ceil(room / cols) * gap * 0.86;
+    if (type === 0 && room >= 12 && room <= 44) {
+      const spots = [[-0.62, -0.35], [0.62, 0.28], [0.05, 1.05], [-0.55, 1.25]];
+      const front = [[-2.15, 6.3], [-1.72, 6.55], [-2.4, 6.9], [2.1, 6.2], [1.7, 6.6], [2.35, 6.95]];
+      const knot = [[-0.32, 2.15], [0.26, 2.35], [0.02, 2.6], [-0.46, 2.85], [0.38, 3.05], [-0.08, 3.3], [0.2, 1.95], [-0.16, 3.55], [0.44, 3.75], [-0.4, 4.0], [0.1, 4.15], [-0.04, 2.75], [0.34, 3.4], [-0.22, 2.5]];
+      let left = room;
+      let cursor = z;
+      let cluster = 0;
+      const leadZ = cursor + 12;
+      const placed = Math.min(left, front.length + knot.length);
+      for (let k = 0; k < placed; k++) {
+        const spot = k < front.length ? front[k] : knot[k - front.length];
+        let x0 = spot[0];
+        if (x0 > edge) x0 = edge;
+        if (x0 < -edge) x0 = -edge;
+        const i = spawnEnemy(type, x0, leadZ + spot[1]);
+        if (i >= 0) pools[type].phase[i] = 0.5;
+      }
+      left -= placed;
+      cursor -= 3.2;
+      while (left > 0) {
+        const size = Math.min(left, 2 + ((rnd() * 3) | 0));
+        const cx = (rnd() * 2 - 1) * (edge * 0.55);
+        for (let k = 0; k < size; k++) {
+          let x0 = cx + spots[k][0];
+          if (x0 > edge) x0 = edge;
+          if (x0 < -edge) x0 = -edge;
+          spawnEnemy(type, x0, cursor + spots[k][1]);
+        }
+        left -= size;
+        cursor -= cluster < 3 ? 1.6 + rnd() * 0.5 : 2.4 + rnd() * 1.2;
+        cluster++;
+      }
+      per;
+      return cursor;
+    }
+    const spots = [[-0.42, 0], [0.4, 0.2], [0.02, 0.46], [-0.26, 0.66]];
+    let left = room;
+    let cursor = z;
+    let cluster = 0;
+    while (left > 0) {
+      const size = Math.min(left, 4);
+      const cx = ((cluster % 3) - 1) * 1.15;
+      for (let k = 0; k < size; k++) {
+        let x0 = cx + spots[k][0];
+        if (x0 > edge) x0 = edge;
+        if (x0 < -edge) x0 = -edge;
+        spawnEnemy(type, x0, cursor + spots[k][1]);
+      }
+      left -= size;
+      cursor -= 2.8;
+      cluster++;
+    }
+    per;
+    return cursor;
   }
 
   function spawnWave(ev) {
@@ -1636,27 +1706,26 @@ export function createPlay(scene, camera, audio) {
     const evs = level.events;
     for (let s = 0; s < evs.length; s++) {
       const ev = evs[s];
-      if (ev.kind !== "gate") continue;
-      for (let side = 0; side < 2; side++) {
-        const g = freshGate(ev.pair[side].op, ev.pair[side].k);
-        g.x = side === 0 ? -GATE_X : GATE_X;
-        g.z = -ev.at;
-        g.side = side;
-        g.passed = 0;
-        g.bump = 0;
-        g.flip = 0;
-        g.stamp = 0;
-        g.label = gateLabel(g);
-        g.index = n;
-        gates.push(g);
-        paintGateSign(signs[n].ctx, signs[n].canvas, g.label, gateBlue(g.op));
-        signs[n].tex.needsUpdate = true;
-        const tint = gateBlue(g.op) ? blueC : redC;
-        gatePanel.setColorAt(n, tint);
-        gateRim.setColorAt(n, tint);
-        gateStrip.setColorAt(n, tint);
-        n++;
-      }
+      if (ev.kind !== "gate" || !ev.op) continue;
+      const side = ev.side === 0 ? 0 : 1;
+      const g = freshGate(ev.op, ev.k);
+      g.x = side === 0 ? -GATE_X : GATE_X;
+      g.z = -ev.at;
+      g.side = side;
+      g.passed = 0;
+      g.bump = 0;
+      g.flip = 0;
+      g.stamp = 0;
+      g.label = gateLabel(g);
+      g.index = n;
+      gates.push(g);
+      paintGateSign(signs[n].ctx, signs[n].canvas, g.label, gateBlue(g.op));
+      signs[n].tex.needsUpdate = true;
+      const tint = gateBlue(g.op) ? blueC : redC;
+      gatePanel.setColorAt(n, tint);
+      gateRim.setColorAt(n, tint);
+      gateStrip.setColorAt(n, tint);
+      n++;
     }
     if (gatePanel.instanceColor) gatePanel.instanceColor.needsUpdate = true;
     if (gateRim.instanceColor) gateRim.instanceColor.needsUpdate = true;
@@ -1772,7 +1841,8 @@ export function createPlay(scene, camera, audio) {
           c.reel = 0;
           c.dirty = 1;
           c.eased = 0;
-          c.extra = kind === "volunteer" ? "+" + level.vol : "";
+          c.reward = kind === "volunteer" ? (item.hp || level.vol) : 0;
+          c.extra = kind === "volunteer" ? "+" + c.reward : "";
           c.stamp = 0;
           c.top.visible = kind === "duck";
           if (c.mesh.material) {
@@ -1878,6 +1948,7 @@ export function createPlay(scene, camera, audio) {
 
   function grantGun(id) {
     const next = id || "burst";
+    if (bot && weaponId && gunScore(next, 1) < gunScore(weaponId, tier) * 0.9) return;
     tier = tierAfterPickup(weaponId, tier, next, 0);
     weaponId = next;
     spin = 0;
@@ -1927,8 +1998,10 @@ export function createPlay(scene, camera, audio) {
       } else grantGun(c.gun || "burst");
     } else if (c.kind === "volunteer") {
       cratesOpened++;
-      squadN = Math.min(SIM_CAP, squadN + level.vol);
-      floater(9200, c.x, 2.2, c.z, level.vol);
+      const add = c.reward || c.max || level.vol;
+      squadN = Math.min(SIM_CAP, squadN + add);
+      floater(9200, c.x, 2.2, c.z, add);
+      word("+" + add, c.x, 2.4, c.z, 0, 1);
     } else if (c.kind === "tier") {
       cratesOpened++;
       if (!lockGun) {
@@ -1953,14 +2026,23 @@ export function createPlay(scene, camera, audio) {
   }
 
   function ramCrate(c) {
+    const cost = Math.max(1, Math.ceil((c.hp || 1) / 10));
+    if (squadN <= 4 && cost >= squadN) {
+      const lose = Math.max(0, squadN - 1);
+      if (lose > 0) hurtSquad(lose, 1);
+      word("BONK", squadX, 2.2, -dist, 1, 1);
+      dist = Math.max(0, dist - 0.85);
+      publish();
+      return;
+    }
     c.state = "dead";
     c.mesh.visible = false;
     c.top.visible = false;
     crateRammed = 1;
     audio.crack();
-    puff(c.x, 1.4, c.z, 3, 8, 2.4, 0.35, 0.45);
-    word("-5", squadX, 2.45, -dist, 1, 1);
-    hurtSquad(5, 1);
+    puff(c.x, 1.1, c.z, 3, 8, 2.4, 0.35, 0.45);
+    word("-" + cost, squadX, 2.45, -dist, 1, 1);
+    hurtSquad(cost, 1);
     publish();
   }
 
@@ -2315,7 +2397,7 @@ export function createPlay(scene, camera, audio) {
       const dx = c.x - x0;
       const dz = c.z - z0;
       if (dx * dx + dz * dz > r2) continue;
-      hitCrate(c.x, 1.2, c.z, dmg);
+      hitCrate(c.x, 1.2, c.z, dmg, 0, x0);
     }
     if (bossState.alive) {
       const dx = bossState.x - x0;
@@ -2327,26 +2409,26 @@ export function createPlay(scene, camera, audio) {
     }
   }
 
-  function hitGate(x0, z0, z1, tag, lane) {
-    if (lane == null || lane < 0) return 0;
-    const side = lane | 0;
+  function inAimCone(ox, oz, gx, gz) {
+    const fwd = oz - gz;
+    if (fwd <= 0.05) return 0;
+    return Math.abs(Math.atan2(gx - ox, fwd)) <= AIM_CONE ? 1 : 0;
+  }
+
+  function hitGate(x0, z0, z1, tag, lane, ox, oz) {
+    if (bot || autoPick) return 0;
+    const originX = ox == null ? x0 : ox;
+    const originZ = oz == null ? z0 : oz;
     const lo = z0 < z1 ? z0 : z1;
     const hi = z0 < z1 ? z1 : z0;
+    lane;
     for (let i = 0; i < gates.length; i++) {
       const g = gates[i];
       if (g.passed) continue;
       if (tag && g.stamp === tag) continue;
-      if (g.z < lo - 0.4 || g.z > hi + 0.4) continue;
-      // crossHits counts damage that landed on the other lane's panel.
-      // The divider eats a shot that has left its own lane, so a fan can
-      // cross the gap without scoring either sign.
-      if (g.side !== side) {
-        if (Math.abs(x0 - g.x) <= 1.05) return 2;
-        continue;
-      }
-      const crossed = (side === 0 && x0 > -DIVIDER_W * 0.5) || (side === 1 && x0 < DIVIDER_W * 0.5);
-      if (crossed) return 2;
-      if (Math.abs(x0 - g.x) > 1.05) continue;
+      if (g.z < lo - 0.6 || g.z > hi + 0.6) continue;
+      if (Math.abs(x0 - g.x) > PANEL_W * 0.5 + 0.2) continue;
+      if (!inAimCone(originX, originZ, g.x, g.z)) continue;
       if (tag) g.stamp = tag;
       const wasBlue = gateBlue(g.op);
       if (shootGate(g, 1)) {
@@ -2361,13 +2443,14 @@ export function createPlay(scene, camera, audio) {
     return 0;
   }
 
-  function hitCrate(x0, y0, z0, dmg, tag) {
+  function hitCrate(x0, y0, z0, dmg, tag, ox) {
     for (let i = 0; i < crates.length; i++) {
       const c = crates[i];
       if (c.state !== "idle") continue;
       if (tag && c.stamp === tag) continue;
       if (Math.abs(x0 - c.x) > 1.15) continue;
       if (Math.abs(z0 - c.z) > 0.85) continue;
+      if (ox != null && Math.abs(c.x - ox) > 0.95) continue;
       if (y0 < 0.15 || y0 > 3.35) continue;
       if (tag) c.stamp = tag;
       c.hp -= dmg;
@@ -2745,7 +2828,7 @@ export function createPlay(scene, camera, audio) {
       }
       const decor = kind === "mud" || (kind === "party" && !s.pat[i]) || (icy && s.pat[i] !== PAT_SPIKE);
       const flyingNade = s.pat[i] === PAT_NADE && s.y[i] > 0.55;
-      if (!decor && !flyingNade && (hitCrate(s.x[i], s.y[i], s.z[i], s.dmg[i], s.tag[i]) || hitGate(s.x[i], z0, s.z[i], s.tag[i], s.lane[i]) || (railShot && (hitCrate((x0 + s.x[i]) * 0.5, (y0 + s.y[i]) * 0.5, (z0 + s.z[i]) * 0.5, s.dmg[i], s.tag[i]) || hitGate((x0 + s.x[i]) * 0.5, z0, s.z[i], s.tag[i], s.lane[i]))))) {
+      if (!decor && !flyingNade && (hitCrate(s.x[i], s.y[i], s.z[i], s.dmg[i], s.tag[i], s.ox[i]) || hitGate(s.x[i], z0, s.z[i], s.tag[i], s.lane[i], s.ox[i], s.oz[i]) || (railShot && (hitCrate((x0 + s.x[i]) * 0.5, (y0 + s.y[i]) * 0.5, (z0 + s.z[i]) * 0.5, s.dmg[i], s.tag[i], s.ox[i]) || hitGate((x0 + s.x[i]) * 0.5, z0, s.z[i], s.tag[i], s.lane[i], s.ox[i], s.oz[i]))))) {
         if (railShot) continue;
         if (s.pat[i] === PAT_ROCKET) rocketBoom(s.x[i], s.y[i], s.z[i]);
         if (!(kind === "arrow" && s.extra[i] > 1) && s.pat[i] !== PAT_ORB) freeS(s, i);
@@ -2877,24 +2960,18 @@ export function createPlay(scene, camera, audio) {
       for (let i = 0; i < p.cap; i++) if (p.alive[i]) consider(t, i, p.x[i], p.z[i], reach);
     }
     if (!labMode && bossState.alive && bossState.shown) consider(7, 0, bossState.x, bossState.z, 28);
-    const lock = !labMode ? gateLock() : null;
-    if (lock && lock.side >= 0 && lock.gate) {
-      cn = 0;
-      consider(9, lock.pair + lock.side, lock.gate.x, lock.gate.z, 28);
-      return;
-    }
     if (!labMode) {
       for (let i = 0; i < crates.length; i++) {
-        if (crates[i].state === "idle" && cratePay(crates[i]) > 0) consider(8, i, crates[i].x, crates[i].z, 28);
+        if (crates[i].state !== "idle" || cratePay(crates[i]) <= 0) continue;
+        const lined = Math.max(0.85, radius * 0.9);
+        if (Math.abs(crates[i].x - squadX) > lined) continue;
+        consider(8, i, crates[i].x, crates[i].z, 28);
       }
-      if (!lock) {
-        for (let i = 0; i < gates.length; i++) {
-          if (gates[i].passed) continue;
-          // The locked-gun run takes each gate at the printed value. Aiming at
-          // it from 28 m away turns fire rate into extra volunteers.
-          if (autoPick) continue;
-          consider(9, i, gates[i].x, gates[i].z, 28);
-        }
+      for (let i = 0; i < gates.length; i++) {
+        if (gates[i].passed) continue;
+        // Driving collects the printed value. Aiming from range turns fire rate into extra volunteers.
+        if (autoPick || bot) continue;
+        consider(9, i, gates[i].x, gates[i].z, 28);
       }
     }
   }
@@ -3012,27 +3089,13 @@ export function createPlay(scene, camera, audio) {
   }
 
   function gateLock() {
-    let pair = -1;
-    let relBest = 1e9;
-    for (let i = 0; i < gates.length; i += 2) {
-      const g = gates[i];
-      if (!g || g.passed) continue;
-      const rel = -g.z - dist;
-      if (rel > 28 || rel < -0.4) continue;
-      if (rel < relBest) {
-        relBest = rel;
-        pair = i;
-      }
-    }
-    if (pair < 0) return null;
-    const side = squadX < -0.3 ? 0 : squadX > 0.3 ? 1 : -1;
-    return { pair, side, gate: side < 0 ? null : gates[pair + side] };
+    return null;
   }
 
   function shotBlocked(x0, x1) {
-    if (view.hero) return 0;
-    if (!gateLock()) return 0;
-    return crossesCentre(x0, x1);
+    x0;
+    x1;
+    return 0;
   }
 
   function fly(pool, x, y, z, ang, pitch, speed, dmg, life, col, pat, extra, extra2) {
@@ -3294,7 +3357,13 @@ export function createPlay(scene, camera, audio) {
     let base = 0;
     let pitch = 0;
     let aimWalk = 0;
+    let aimed = 0;
     if (cn > 0) {
+      const inCone = (k) => {
+        if (k < 0 || k >= cn) return 0;
+        if (!aimOf(ct[k], ci[k], sx)) return 0;
+        return Math.abs(Math.atan2(aimX - sx, sz - aimZ)) <= AIM_CONE ? 1 : 0;
+      };
       let pick = labMode ? (s * 7 + (shotTag % cn)) % cn : s % cn;
       if (!labMode && arenaStarted && !(ct[0] < 7 && cd[0] < 36)) {
         for (let k = 0; k < cn; k++) if (ct[k] === 7) { pick = k; break; }
@@ -3305,29 +3374,37 @@ export function createPlay(scene, camera, audio) {
         const far = start + (s % span);
         if (ct[far] < 7) pick = far;
       }
-      if (!aimOf(ct[pick], ci[pick], sx)) return;
-      const lockNow = gateLock();
-      if (lockNow && lockNow.side < 0 && (ct[pick] === 9 || crossesCentre(sx, aimX))) {
-        aimX = sx;
-        aimY = sy;
-        aimZ = sz - 16;
+      if (!labMode && !inCone(pick)) {
+        pick = -1;
+        let best = 1e9;
+        for (let k = 0; k < cn; k++) {
+          if (cd[k] >= best) continue;
+          if (!inCone(k)) continue;
+          best = cd[k];
+          pick = k;
+        }
       }
-      const dx = aimX - sx;
-      const dy = aimY - sy;
-      const dz = aimZ - sz;
-      const len = Math.hypot(dx, dy, dz) || 1;
-      base = Math.atan2(dx, -dz);
-      pitch = Math.asin(clamp(dy / len, -0.85, 0.85));
-      if (lockNow && crossesCentre(sx, aimX)) return;
-      if (ct[pick] < 7 && ct[pick] !== 4) {
-        const gap = -aimZ - dist;
-        const stopGap = labMode ? 4 : Math.max(0.4, radius) + 1.9;
-        aimWalk = gap > stopGap + 0.45 ? ENEMY[ct[pick]].speed * (labMode ? 1 : 0.45) : 0;
+      if (pick >= 0 && aimOf(ct[pick], ci[pick], sx)) {
+        aimed = 1;
+        const dx = aimX - sx;
+        const dy = aimY - sy;
+        const dz = aimZ - sz;
+        const len = Math.hypot(dx, dy, dz) || 1;
+        base = Math.atan2(dx, -dz);
+        pitch = Math.asin(clamp(dy / len, -0.85, 0.85));
+        if (ct[pick] < 7 && ct[pick] !== 4) {
+          const gap = -aimZ - dist;
+          const stopGap = labMode ? 4 : Math.max(0.4, radius) + 1.9;
+          aimWalk = gap > stopGap + 0.45 ? ENEMY[ct[pick]].speed * (labMode ? 1 : 0.45) : 0;
+        }
       }
-    } else {
+    }
+    if (!aimed) {
       aimX = sx;
       aimY = sy;
-      aimZ = sz - 12;
+      aimZ = sz - 16;
+      base = 0;
+      pitch = 0;
     }
     const dmg = power();
     const life28 = (speed) => Math.max(0.25, 28 / speed + 0.05);
@@ -3510,7 +3587,7 @@ export function createPlay(scene, camera, audio) {
         const fwd = sz - cr.z;
         if (fwd <= 0.2 || fwd > range) continue;
         if (Math.atan2(Math.abs(dx), fwd) > halfAng) continue;
-        hitCrate(cr.x, 1.2, cr.z, dmg);
+        hitCrate(cr.x, 1.2, cr.z, dmg, 0, sx);
       }
       if (bossState.alive && bossState.shown) {
         const dx = bossState.x - sx;
@@ -3707,17 +3784,22 @@ export function createPlay(scene, camera, audio) {
     }
     for (let g = 0; g < gates.length; g++) {
       const gate = gates[g];
-      if (gate.passed) continue;
+      if (gate.passed || bot || autoPick) continue;
       const fwd = -dist - gate.z;
       if (fwd <= 0.2 || fwd > range) continue;
-      const lo = gate.side === 0 ? -half : 0;
-      const hi = gate.side === 0 ? 0 : half;
+      let ax = 0;
+      let az = 0;
       let aligned = 0;
       for (let s = 0; s < shown; s++) {
         const sx = squadX + (fx[s] || 0);
-        if (sx + halfW >= lo && sx - halfW <= hi) aligned = 1;
+        const sz = -dist + (fz[s] || 0);
+        if (Math.abs(gate.x - sx) > halfW + 0.35) continue;
+        if (!inAimCone(sx, sz, gate.x, gate.z)) continue;
+        ax = sx;
+        az = sz;
+        aligned = 1;
       }
-      if (aligned) hitGate(gate.x, gate.z - 0.2, gate.z + 0.2, pulse);
+      if (aligned) hitGate(gate.x, gate.z - 0.2, gate.z + 0.2, pulse, 0, ax, az);
     }
     if (bossState.alive && bossState.shown) {
       const fwd = -dist - bossState.z;
@@ -3765,7 +3847,7 @@ export function createPlay(scene, camera, audio) {
   }
 
   function cratePay(c) {
-    if (c.kind === "volunteer") return level.vol || 8;
+    if (c.kind === "volunteer") return c.reward || c.max || level.vol || 8;
     if (c.kind === "tier") return 12;
     if (c.kind === "weapon" || c.kind === "mystery") {
       if (!c.gun || c.gun === weaponId) return 80;
@@ -3881,6 +3963,10 @@ export function createPlay(scene, camera, audio) {
         }
         if (gain > 0) return rx;
       }
+    }
+    if (bestN >= 0 && bestN < squadN) {
+      const lim = Math.max(0.4, half - radius - 0.2);
+      return bestX > 0 ? -lim : lim;
     }
     if (arenaStarted) {
       let x = bossState.x;
@@ -4094,43 +4180,26 @@ export function createPlay(scene, camera, audio) {
   function packMarch(h) {
     if (labMode) return;
     const line = contactZ();
-    const list = [];
+    const edge = Math.max(0.55, half - 0.5);
     for (let t = 0; t <= 2; t++) {
       const p = pools[t];
+      const k = ENEMY[t];
       for (let i = 0; i < p.cap; i++) {
         if (!p.alive[i] || p.freeze[i] > 0 || p.stagT[i] > 0) continue;
-        list.push(t * 1000 + i);
+        const slow = p.slowT[i] > 0 ? 0.6 : 1;
+        const vary = 0.62 + ((p.phase[i] || 0) % 1) * 0.7;
+        const step = k.speed * vary * slow * h;
+        if (p.z[i] < line - 1.6) {
+          p.z[i] += step;
+          p.x[i] += Math.sin(clock * 1.5 + (p.phase[i] || 0)) * 0.28 * h;
+        } else if (p.z[i] < line) {
+          p.z[i] = Math.min(line, p.z[i] + step);
+        }
+        if (p.z[i] > line) p.z[i] = line;
+        if (p.x[i] > edge) p.x[i] = edge;
+        if (p.x[i] < -edge) p.x[i] = -edge;
+        if (line - p.z[i] < 1.2) p.hit[i] = Math.max(p.hit[i], 0.35);
       }
-    }
-    list.sort((a, b) => pools[(b / 1000) | 0].z[b % 1000] - pools[(a / 1000) | 0].z[a % 1000]);
-    const cols = 5;
-    const edge = Math.max(0.55, half - 0.5);
-    const rowGap = 2.2;
-    for (let n = 0; n < list.length; n++) {
-      const key = list[n];
-      const t = (key / 1000) | 0;
-      const i = key % 1000;
-      const p = pools[t];
-      const k = ENEMY[t];
-      const slow = p.slowT[i] > 0 ? 0.6 : 1;
-      const row = (n / cols) | 0;
-      let targetZ = line - Math.min(row, 4) * rowGap;
-      if (row >= 5) targetZ = line - 4 * rowGap - (row - 4) * rowGap;
-      const vary = 0.82 + ((p.phase[i] || 0) % 1) * 0.36;
-      const step = k.speed * vary * slow * h;
-      const gapZ = targetZ - p.z[i];
-      if (gapZ > 6) {
-        p.z[i] += step;
-        p.x[i] += Math.sin(clock * 1.7 + (p.phase[i] || 0)) * 0.55 * h;
-      } else if (p.z[i] < targetZ) {
-        p.z[i] = Math.min(targetZ, p.z[i] + step);
-      } else if (p.z[i] > targetZ) {
-        p.z[i] = Math.max(targetZ, p.z[i] - step);
-      }
-      if (p.z[i] > line) p.z[i] = line;
-      if (p.x[i] > edge) p.x[i] = edge;
-      if (p.x[i] < -edge) p.x[i] = -edge;
-      if (line - p.z[i] < 1.2) p.hit[i] = Math.max(p.hit[i], 0.35);
     }
   }
 
@@ -4174,77 +4243,45 @@ export function createPlay(scene, camera, audio) {
         else squadX = targetX;
       }
       squadX = clampLane(squadX, radius, half);
-      let nearGate = 0;
-      if (!arenaStarted) {
-        for (let gi = 0; gi < gates.length; gi += 2) {
-          const gg = gates[gi];
-          if (!gg || gg.passed) continue;
-          const rel = -gg.z - dist;
-          if (rel <= 12 && rel >= -2) nearGate = 1;
+      assistHold = 0;
+      pinch = 0;
+      if (!arenaStarted && !bot && !axis && !pointing) {
+        let dodge = 0;
+        let dodgeX = squadX;
+        const body = Math.max(0.7, radius * 0.45);
+        for (let i = 0; i < crates.length; i++) {
+          const c = crates[i];
+          if (c.state !== "idle" || c.kind !== "volunteer") continue;
+          const rel = -c.z - dist;
+          if (rel > 12 || rel < -0.4) continue;
+          if (Math.abs(squadX - c.x) > body + 0.55) continue;
+          const cost = Math.max(1, Math.ceil((c.hp || 1) / 10));
+          if (cost < squadN) continue;
+          const left = c.x - 1.9;
+          const right = c.x + 1.9;
+          dodgeX = Math.abs(squadX - left) <= Math.abs(squadX - right) ? left : right;
+          dodge = 1;
         }
-      }
-      if (axis || pointing) assistHold = 0;
-      if (nearGate && !pointing && !axis && !bot) {
-        let want = 0;
-        let wantRel = 1e9;
-        let found = 0;
-        for (let gi = 0; gi < gates.length; gi += 2) {
-          const a = gates[gi];
-          const b = gates[gi + 1];
-          if (!a || !b || a.passed) continue;
-          const rel = -a.z - dist;
-          if (rel > 12 || rel < -2 || rel >= wantRel) continue;
-          const na = applyGate(squadN, a.op, a.k, a.tenths);
-          const nb = applyGate(squadN, b.op, b.k, b.tenths);
-          const sideNow = squadX < 0 ? 0 : 1;
-          const nowResult = sideNow === 0 ? na : nb;
-          const inLane = Math.abs(Math.abs(squadX) - GATE_X) < 0.55;
-          const centred = Math.abs(squadX) < 0.45;
-          // Keep a rescue that already started until the squad is in that lane.
-          // Stopping at the first nudge left them in the centre gap.
-          const reaching = assistHold && !inLane;
-          wantRel = rel;
-          if (inLane && nowResult > 0) {
-            found = 0;
-            continue;
-          }
-          if (!centred && nowResult > 0 && !reaching) {
-            found = 0;
-            continue;
-          }
-          const dL = Math.abs(squadX + GATE_X);
-          const dR = Math.abs(squadX - GATE_X);
-          let side = -1;
-          if (na > 0 && nb > 0) {
-            if (dL + 0.02 < dR) side = 0;
-            else if (dR + 0.02 < dL) side = 1;
-            else side = squadX < 0 ? 0 : 1;
-          } else if (na > 0) side = 0;
-          else if (nb > 0) side = 1;
-          if (side < 0) {
-            found = 0;
-            continue;
-          }
-          want = side === 0 ? -GATE_X : GATE_X;
-          found = 1;
+        for (let i = 0; i < gates.length; i++) {
+          const g = gates[i];
+          if (!g || g.passed) continue;
+          const rel = -g.z - dist;
+          if (rel > 12 || rel < -0.4) continue;
+          if (Math.abs(squadX - g.x) > PANEL_W * 0.5 + 0.35) continue;
+          const out = applyGate(squadN, g.op, g.k, g.tenths);
+          if (out > 0) continue;
+          dodgeX = g.x < 0 ? 0.6 : -0.6;
+          dodge = 1;
         }
-        if (found) {
+        if (dodge) {
+          dodgeX = clampLane(dodgeX, radius, half);
           const maxA = 3 * h;
-          const dxA = want - squadX;
+          const dxA = dodgeX - squadX;
           squadX += dxA > maxA ? maxA : dxA < -maxA ? -maxA : dxA;
-          assistHold = 1;
           targetX = squadX;
           squadX = clampLane(squadX, radius, half);
         }
-      } else if (assistHold && !axis && !pointing && !bot) {
-        // The latch must drop after the gate. A stuck target lets a
-        // standing squad shoot every nearer sign into a bonus and reach the boss.
-        assistHold = 0;
-        targetX = 0;
       }
-      const pinchStep = h / 0.4;
-      const pinchWant = nearGate ? 1 : 0;
-      pinch += pinchWant > pinch ? Math.min(pinchStep, pinchWant - pinch) : -Math.min(pinchStep, pinch - pinchWant);
       if (pullT > 0 && bossKind === "grunk" && arenaStarted) {
         const step = 1.5 * h;
         if (squadX > step) squadX -= step;
@@ -4265,38 +4302,22 @@ export function createPlay(scene, camera, audio) {
       half = arenaStarted ? BOSS_HALF : DECK_HALF;
       const z = -dist;
       if (!arenaStarted) {
-        const passGate = (i) => {
-          const side = gateSide === 0 || gateSide === 1 ? gateSide : (squadX < 0 ? 0 : 1);
-          const pick = gates[i + side];
-          if (!pick) return;
-          squadN = applyGate(squadN, pick.op, pick.k, pick.tenths);
-          gates[i].passed = 1;
-          gates[i + 1].passed = 1;
-          audio.gate();
-          word(pick.label, squadX, 2.6, z, gateBlue(pick.op) ? 0 : 1, 1);
-          puff(pick.x, 1.6, pick.z, gateBlue(pick.op) ? 5 : 6, 10, 3.5, 0.4, 0.4);
-        };
-        if (gateWait >= 0 && pointing) gateSide = squadX < 0 ? 0 : 1;
-        if (gateWait >= 0 && clock >= gateWait) {
-          const i = gateWaitI;
-          gateWait = -1;
-          gateWaitI = -1;
-          if (i >= 0 && gates[i] && !gates[i].passed) {
-            passGate(i);
+        for (let i = 0; i < gates.length; i++) {
+          const g = gates[i];
+          if (!g || g.passed) continue;
+          if (!(prevZ > g.z && z <= g.z && prevZ - g.z < 20)) continue;
+          g.passed = 1;
+          const slop = PANEL_W * 0.5 + Math.max(0.35, radius * 0.35);
+          if (Math.abs(squadX - g.x) < slop) {
+            squadN = applyGate(squadN, g.op, g.k, g.tenths);
+            audio.gate();
+            word(g.label, squadX, 2.6, z, gateBlue(g.op) ? 0 : 1, 1);
+            puff(g.x, 1.6, g.z, gateBlue(g.op) ? 5 : 6, 10, 3.5, 0.4, 0.4);
             if (squadN <= 0) {
               prevZ = z;
               doLose();
               return;
             }
-          }
-        }
-        for (let i = 0; i < gates.length; i += 2) {
-          const g = gates[i];
-          if (!g || g.passed || gateWait >= 0) continue;
-          if (prevZ > g.z && z <= g.z && prevZ - g.z < 20) {
-            gateWait = clock + 0.2;
-            gateWaitI = i;
-            gateSide = squadX < 0 ? 0 : 1;
           }
         }
       }
@@ -4319,8 +4340,10 @@ export function createPlay(scene, camera, audio) {
           const reach = Math.max(0.85, radius * 0.85) + 1.05;
           const d = Math.abs(squadX - c.x);
           if (d >= reach) continue;
-          // A locked gun never picks up a new weapon. Overlap pays the
-          // volunteer break instead of the ram that wipes a squad of 3.
+          if (c.kind === "weapon" || c.kind === "tier" || c.kind === "mystery") {
+            grantCrate(c);
+            continue;
+          }
           if (lockGun) {
             c.hp = 0;
             breakCrate(c);
@@ -4658,6 +4681,7 @@ export function createPlay(scene, camera, audio) {
     view.half = half;
     view.squadX = squadX;
     view.crossHits = crossHits;
+    view.wrongGateHits = wrongGateHits;
     view.hero = view.hero || 0;
     view.squadZ = -dist;
     view.radius = radius;
@@ -4734,6 +4758,7 @@ export function createPlay(scene, camera, audio) {
     bitePool = 8;
     lostSquad = 0;
     crossHits = 0;
+    wrongGateHits = 0;
     pending.length = 0;
     railCount = 0;
     boltCount = 0;
@@ -4877,12 +4902,11 @@ export function createPlay(scene, camera, audio) {
     }
     for (let g = 0; g < gates.length; g++) {
       const gate = gates[g];
-      if (gate.passed) continue;
+      if (gate.passed || bot || autoPick) continue;
       const fwd = sz - gate.z;
       if (fwd <= 0.2 || fwd >= best) continue;
-      const lo = gate.side === 0 ? -half : 0;
-      const hi = gate.side === 0 ? 0 : half;
-      if (sx + 0.2 < lo || sx - 0.2 > hi) continue;
+      if (Math.abs(gate.x - sx) > halfW + 0.35) continue;
+      if (!inAimCone(sx, sz, gate.x, gate.z)) continue;
       best = fwd;
     }
     if (bossState.alive && bossState.shown) {
@@ -4983,6 +5007,8 @@ export function createPlay(scene, camera, audio) {
     bober.scale.setScalar(boberScale0);
     bober.rotation.y = yawS;
     bober.position.set(squadX + wob, DECK, -dist - radius - 1.15 + back);
+    leaderRing.position.set(squadX + wob, DECK + 0.04, -dist - radius - 1.15 + back);
+    leaderRing.visible = ended !== "lose" && !labMode;
     if (boberLive) {
       bober.visible = false;
       boberLive.visible = ended !== "lose" && !labMode;
@@ -5005,7 +5031,7 @@ export function createPlay(scene, camera, audio) {
       bossLive.position.set(bossState.x, DECK, bossDrawZ());
       bossLive.rotation.y = Math.PI;
       bossLive.scale.setScalar(tall / 5);
-      const fur = bossKind === "grunk" ? 0x7a8086 : bossKind === "tub" ? 0x5a4030 : 0x6a4630;
+      const fur = bossKind === "grunk" ? 0x7d9a55 : bossKind === "tub" ? 0xc5ddd8 : 0xe08a45;
       if (bossTint !== fur) {
         bossTint = fur;
         bossLive.traverse((o) => {
@@ -5280,74 +5306,44 @@ export function createPlay(scene, camera, audio) {
       if (digits.instanceColor) digits.instanceColor.needsUpdate = true;
     }
 
-    const fM = gateFrame.instanceMatrix.array;
-    const oM = gateOutline.instanceMatrix.array;
-    const pPM = gatePanel.instanceMatrix.array;
-    const rM = gateRim.instanceMatrix.array;
-    const stripM = gateStrip.instanceMatrix.array;
-    const postM = centrePost.instanceMatrix.array;
-    let anyGate = 0;
-    let posts = 0;
+    gateFrame.count = 0;
+    gateOutline.count = 0;
+    gatePanel.count = 0;
+    gateRim.count = 0;
+    gateStrip.count = 0;
+    centrePost.count = 0;
+    gateFrame.visible = false;
+    gateOutline.visible = false;
+    gatePanel.visible = false;
+    gateRim.visible = false;
+    gateStrip.visible = false;
+    centrePost.visible = false;
     for (let i = 0; i < gates.length; i++) {
       const g = gates[i];
       const near = Math.abs(-g.z - dist) < 80;
       const s = view.hero || g.passed || !near ? 0 : 1;
-      if (s) anyGate = 1;
       let flipY = s ? 1 : 0;
       if (s && g.flip > 0) {
         const u = 1 - g.flip / 0.3;
         flipY = Math.abs(Math.cos(u * Math.PI));
         if (flipY < 0.04) flipY = 0.04;
       }
-      const gs = s ? 1 : 0;
-      writeTRS(fM, i, g.x, 0, g.z, 0, gs, gs, gs);
-      writeTRS(oM, i, g.x, 0, g.z, 0, gs, gs, gs);
-      writeTRS(pPM, i, g.x, 0, g.z, 0, 0, 0, 0);
-      writeTRS(rM, i, g.x, 0, g.z, 0, 0, 0, 0);
-      if ((i % 2) === 0) {
-        writeTRS(stripM, i, 0, DECK + 0.05, g.z + 6, 0, gs ? 0.04 : 0, 1, gs ? 2 : 0);
-        gateStrip.setColorAt(i, lineC);
-      } else writeTRS(stripM, i, 0, 0, g.z, 0, 0, 0, 0);
-      if ((i % 2) === 0 && posts < 24) {
-        writeTRS(postM, posts, 0, 1.975, g.z, 0, gs, gs, gs);
-        posts++;
-      }
       const sign = signs[i].mesh;
       sign.visible = !!s;
       if (s) {
-        const close = Math.abs(-g.z - dist) < 12;
-        sign.position.set(g.x, close ? 3.2 : 2.2, g.z + 0.2);
-        sign.renderOrder = close ? 8 : 2;
+        sign.position.set(g.x, 1.12, g.z + 0.08);
+        sign.renderOrder = 4;
         sign.quaternion.identity();
-        const bump = 1 + g.bump * 0.28;
-        sign.scale.set(bump, bump * flipY, bump);
+        const bump = 1 + g.bump * 0.12;
+        sign.scale.set(1.106 * bump, 0.93 * bump * flipY, 1);
       }
     }
     for (let i = gates.length; i < signs.length; i++) signs[i].mesh.visible = false;
-    gateFrame.count = gates.length;
-    gateOutline.count = gates.length;
-    gatePanel.count = 0;
-    gateRim.count = 0;
-    gateStrip.count = gates.length;
-    centrePost.count = posts;
-    gateFrame.visible = !!anyGate;
-    gateOutline.visible = !!anyGate;
-    gatePanel.visible = false;
-    gateRim.visible = false;
-    gateStrip.visible = !!anyGate;
-    centrePost.visible = !!anyGate;
     let flashes = 0;
     for (let i = 0; i < muzzles.n; i++) if (muzzles.alive[i]) flashes++;
     muzzleLight.intensity = Math.min(5, flashes * 1.2);
     muzzleLight.color.copy(gunTint);
     muzzleLight.position.set(squadX, 1.15, -dist - 0.6);
-    if (anyGate) {
-      gateFrame.instanceMatrix.needsUpdate = true;
-      gateOutline.instanceMatrix.needsUpdate = true;
-      gateStrip.instanceMatrix.needsUpdate = true;
-      if (gateStrip.instanceColor) gateStrip.instanceColor.needsUpdate = true;
-      centrePost.instanceMatrix.needsUpdate = true;
-    }
     for (let i = 0; i < crates.length; i++) {
       const c = crates[i];
       if (c.state === "dead") {
@@ -5358,18 +5354,29 @@ export function createPlay(scene, camera, audio) {
       c.mesh.visible = near;
       if (!near) continue;
       const jx = (c.state === "shake" ? Math.sin(clock * 95) * 0.08 : 0) + Math.sin(clock * 70) * (c.jab || 0);
-      const wobble = c.kind === "mystery" ? Math.sin(clock * 2.2) * 0.05 : 0;
+      const pickup = c.kind === "weapon" || c.kind === "tier" || c.kind === "mystery";
+      if (c.face) c.face.visible = pickup;
+      if (c.hpFace) c.hpFace.visible = !pickup;
+      if (c.pickupRing) c.pickupRing.visible = pickup;
+      if (c.tierFace) c.tierFace.visible = false;
+      if (c.top) c.top.visible = false;
       let bob = 0;
-      if (c.kind === "tier" && c.mesh.material) {
-        bob = Math.sin(clock * 1.6 + c.x) * 0.16;
-        c.mesh.material.emissiveIntensity = 0.28 + 0.7 * (0.5 + 0.5 * Math.sin(clock * 2.5));
-        if (c.tierFace) c.tierFace.visible = true;
-        c.face.position.set(0, 1.7, 0.64);
-        c.face.scale.set(1.22, 1.9, 1);
-        c.hpFace.position.set(0, 0.52, 0.66);
+      if (pickup) {
+        bob = 0.35 + Math.sin(clock * 2.4 + c.x) * 0.12;
+        c.mesh.scale.setScalar(0.62);
+        c.mesh.rotation.y = clock * 1.6;
+        c.mesh.rotation.z = 0;
+        c.face.position.set(0, 0.95, 0.55);
+        c.face.scale.set(1.35, 1.35, 1);
+        if (c.mesh.material) c.mesh.material.emissiveIntensity = c.kind === "tier" ? 0.35 : 0.12;
+      } else {
+        c.mesh.scale.setScalar(1);
+        c.mesh.rotation.y = 0;
+        c.mesh.rotation.z = 0;
+        c.hpFace.position.set(0, 0.62, 0.52);
+        c.hpFace.scale.set(1.2, 1.25, 1);
       }
       c.mesh.position.set(c.x + jx, DECK + bob, c.z);
-      c.mesh.rotation.z = wobble;
     }
     for (let i = 0; i < 3; i++) rackBits[i].icon.rotation.y = clock * 0.55 + i * 0.4;
     if (rack.visible) {
@@ -5913,9 +5920,10 @@ export function createPlay(scene, camera, audio) {
     running = false;
     ended = "";
     const kinds = [0, 0, 1, 0, 2, 0, 4, 0, 1, 0];
+    const heroSpots = [[-1.5, 14], [1.3, 16.5], [-0.2, 20], [2.2, 23], [-2.3, 25], [0.7, 29], [-1.4, 33], [1.8, 36], [0.1, 40], [-2.0, 18]];
     for (let i = 0; i < kinds.length; i++) {
-      const row = (i / 5) | 0;
-      const id = spawnEnemy(kinds[i], -2.1 + (i % 5) * 1.05, -dist - 8 - row * 3.4);
+      const spot = heroSpots[i];
+      const id = spawnEnemy(kinds[i], spot[0], -dist - spot[1]);
       if (id >= 0) pools[kinds[i]].freeze[id] = 1;
     }
     view.hero = 1;
@@ -6001,6 +6009,7 @@ export function createPlay(scene, camera, audio) {
     snap.x = Math.round(squadX * 100) / 100;
     snap.lost = lostSquad;
     snap.crossHits = crossHits;
+    snap.wrongGateHits = wrongGateHits;
     snap.nxt = "";
     for (let gi = 0; gi < gates.length; gi++) {
       const g = gates[gi];
@@ -6170,14 +6179,15 @@ export function createPlay(scene, camera, audio) {
       const evs = level.events;
       for (let i = 0; i < evs.length; i++) {
         if (evs[i].kind !== "gate") continue;
-        if (evs[i].pair[side] && evs[i].pair[side].op === op) return evs[i].at;
+        if (evs[i].op === op && evs[i].side === side) return evs[i];
       }
-      return -1;
+      return null;
     };
     squadN = 10;
-    squadX = -0.4;
-    targetX = -0.4;
-    const atMul = gateAt("mul", 0);
+    squadX = -GATE_X;
+    targetX = -GATE_X;
+    const mulEv = gateAt("mul", 0);
+    const atMul = mulEv ? mulEv.at : -1;
     dist = atMul - 0.3;
     prevZ = -dist;
     step(0.4);
@@ -6186,14 +6196,16 @@ export function createPlay(scene, camera, audio) {
     reset();
     running = true;
     for (let i = 0; i < RENDER_CAP; i++) cds[i] = 9;
+    const subEv = gateAt("sub", 1);
     squadN = 11;
-    squadX = 0.6;
-    targetX = 0.6;
-    const atDiv = gateAt("div", 1);
-    dist = atDiv - 0.3;
+    squadX = GATE_X;
+    targetX = GATE_X;
+    const atSub = subEv ? subEv.at : -1;
+    const wantSub = subEv ? applyGate(11, "sub", subEv.k, 0) : -1;
+    dist = atSub - 0.3;
     prevZ = -dist;
     step(0.4);
-    if (atDiv < 0 || squadN !== 6) fails.push("live /2 " + squadN);
+    if (atSub < 0 || squadN !== wantSub) fails.push("live sub " + squadN);
 
     reset();
     running = true;
@@ -6549,9 +6561,17 @@ export function createPlay(scene, camera, audio) {
           bit.rotation.x = 0.28;
           baronDress.add(bit);
         }
-        const monocle = new THREE.Mesh(new THREE.TorusGeometry(0.46, 0.09, 8, 16), cloth(0x5e666c, 0.22));
-        monocle.position.set(0.42, 4.05, -1.25);
-        baronDress.add(monocle);
+        const faceBit = (x, y, z, r, hex) => {
+          const m = new THREE.Mesh(new THREE.SphereGeometry(r, 8, 6), cloth(hex, 0.35));
+          m.position.set(x, y, z);
+          return m;
+        };
+        baronDress.add(faceBit(-0.32, 4.15, -1.32, 0.22, 0xfff6ea));
+        baronDress.add(faceBit(0.34, 4.15, -1.32, 0.22, 0xfff6ea));
+        baronDress.add(faceBit(-0.32, 4.15, -1.5, 0.09, 0x1c140c));
+        baronDress.add(faceBit(0.34, 4.15, -1.5, 0.09, 0x1c140c));
+        baronDress.add(faceBit(-0.12, 3.55, -1.42, 0.08, 0xfff8ee));
+        baronDress.add(faceBit(0.12, 3.55, -1.42, 0.08, 0xfff8ee));
         const shield = new THREE.Mesh(new THREE.SphereGeometry(1, 10, 8), cloth(0xf4f7f8, 0.22));
         shield.scale.set(1.45, 1.02, 0.22);
         shield.position.set(0, 2.45, -1.25);
@@ -6568,16 +6588,24 @@ export function createPlay(scene, camera, audio) {
           duck.scale.setScalar(1.35);
           tubDress.add(duck);
         }
-        const overall = new THREE.Mesh(new THREE.SphereGeometry(1, 10, 8), cloth(0x2a4f86, 0.55));
+        const overall = new THREE.Mesh(new THREE.SphereGeometry(1, 10, 8), cloth(0x3d7dff, 0.42));
         overall.scale.set(1.05, 1.28, 0.36);
         overall.position.set(0, 2.35, -0.55);
-        const strapL = new THREE.Mesh(new THREE.CylinderGeometry(0.1, 0.1, 1.35, 6), cloth(0x1d3a66, 0.5));
+        const strapL = new THREE.Mesh(new THREE.CylinderGeometry(0.1, 0.1, 1.35, 6), cloth(0x2f62d0, 0.45));
         strapL.position.set(-0.48, 3.2, -0.72);
         strapL.rotation.z = 0.18;
         const strapR = strapL.clone();
         strapR.position.x = 0.48;
         strapR.rotation.z = -0.18;
-        grunkDress.add(overall, strapL, strapR);
+        const gEyeL = new THREE.Mesh(new THREE.SphereGeometry(0.16, 8, 6), cloth(0xfff6ea, 0.3));
+        gEyeL.position.set(-0.22, 3.55, -0.95);
+        const gEyeR = gEyeL.clone();
+        gEyeR.position.x = 0.24;
+        const gPupL = new THREE.Mesh(new THREE.SphereGeometry(0.07, 6, 5), cloth(0x1c140c, 0.4));
+        gPupL.position.set(-0.22, 3.55, -1.08);
+        const gPupR = gPupL.clone();
+        gPupR.position.x = 0.24;
+        grunkDress.add(overall, strapL, strapR, gEyeL, gEyeR, gPupL, gPupR);
         const wrenchM = new THREE.Mesh(wrenchBuilt.geo, cloth(0xc5ced6, 0.32));
         wrenchM.position.set(0.95, 2.35, -1.05);
         wrenchM.rotation.set(0.35, 0.4, 1.2);

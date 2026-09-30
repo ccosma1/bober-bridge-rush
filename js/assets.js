@@ -2,9 +2,9 @@ import * as THREE from "three";
 import { GLTFLoader } from "three/addons/loaders/GLTFLoader.js";
 import { MeshoptDecoder } from "three/addons/libs/meshopt_decoder.module.js";
 import { RGBELoader } from "three/addons/loaders/RGBELoader.js";
-import { bakeCrowd, staticMerge, mountRig, boxGeo } from "./vat.js?v=br9";
+import { bakeCrowd, staticMerge, mountRig, boxGeo } from "./vat.js?v=br10";
 
-const V = "br9";
+const V = "br10";
 const warned = {};
 
 function url(path) {
@@ -42,11 +42,11 @@ function withTimeout(run, ms) {
   });
 }
 
-const MUD = new THREE.Color("#3e2c1c");
-const MUD2 = new THREE.Color("#6d5136");
-const BARK = new THREE.Color("#4e3826");
-const BARK2 = new THREE.Color("#8a6844");
-const MOSS = new THREE.Color("#4E6B2E");
+const MUD = new THREE.Color("#E08A3C");
+const MUD2 = new THREE.Color("#F2B15A");
+const BARK = new THREE.Color("#D4722A");
+const BARK2 = new THREE.Color("#F0C07A");
+const MOSS = new THREE.Color("#7CB342");
 const LEAF = new THREE.Color("#6E9440");
 const REED_DK = new THREE.Color("#3f5a28");
 const REED_LT = new THREE.Color("#8eac58");
@@ -69,8 +69,8 @@ function paintClog(col, name, yNorm, x, y, z, nx, ny) {
   if (blot > 0.58) col.copy(BARK).lerp(BARK2, fine);
   else col.copy(MUD).lerp(MUD2, fine);
   const up = ny > 0 ? ny : 0;
-  if (up > 0.42) col.lerp(MOSS, Math.min(0.72, (up - 0.42) * 1.35) * (0.4 + fine * 0.6));
-  if (yNorm < 0.18) col.multiplyScalar(0.78 + fine * 0.12);
+  if (up > 0.55) col.lerp(MOSS, Math.min(0.28, (up - 0.55) * 0.7));
+  if (yNorm < 0.12) col.multiplyScalar(0.92);
 }
 
 function sphereGeo(r, x, y, z, w, h) {
@@ -106,8 +106,8 @@ function clogBits(api, kind) {
   // Mounted crowd faces -Z; eyes, mane root, and the spout use that side.
   const ey = p.y + 0.22;
   const ez = p.z - 0.55;
-  api.add("Head", sphereGeo(0.05, p.x - 0.09, ey, ez, 8, 6), 5, EYE, 1.6);
-  api.add("Head", sphereGeo(0.05, p.x + 0.09, ey, ez, 8, 6), 5, EYE, 1.6);
+  api.add("Head", sphereGeo(0.08, p.x - 0.1, ey, ez, 8, 6), 5, EYE, 0);
+  api.add("Head", sphereGeo(0.08, p.x + 0.1, ey, ez, 8, 6), 5, EYE, 0);
   if (kind === "clog") {
     const mane = 16;
     for (let i = 0; i < mane; i++) {

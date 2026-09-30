@@ -1,11 +1,11 @@
 import * as THREE from "three";
-import { BUILD, GUN_COST, GUN_ORDER, WEAPONS, highestPlayable, isUnlockedLevel, rhythmText } from "./rules.js?v=br9";
-import { createWorld } from "./world.js?v=br9";
-import { createPlay } from "./play.js?v=br9";
-import { createAudio } from "./audio.js?v=br9";
-import { loadSave, rememberWin, rememberGun, writeSave, buyGun } from "./save.js?v=br9";
-import { drawWeaponIcon, setTime } from "./mats.js?v=br9";
-import { loadGame, CREDIT_LINES } from "./assets.js?v=br9";
+import { BUILD, GUN_COST, GUN_ORDER, WEAPONS, highestPlayable, isUnlockedLevel, rhythmText } from "./rules.js?v=br10";
+import { createWorld } from "./world.js?v=br10";
+import { createPlay } from "./play.js?v=br10";
+import { createAudio } from "./audio.js?v=br10";
+import { loadSave, rememberWin, rememberGun, writeSave, buyGun } from "./save.js?v=br10";
+import { drawWeaponIcon, setTime } from "./mats.js?v=br10";
+import { loadGame, CREDIT_LINES } from "./assets.js?v=br10";
 
 const save = loadSave();
 const canvas = document.getElementById("c");
@@ -266,7 +266,6 @@ function resize() {
   renderer.setPixelRatio(dpr);
   renderer.setSize(w, h, false);
   camera.aspect = w / Math.max(1, h);
-  camera.fov = 30;
   camera.updateProjectionMatrix();
   world.setShadow(w);
   if (composer) {
@@ -436,14 +435,10 @@ function frame(now) {
     heroArmed = true;
   }
   const v = play.view;
-  const camX = v.squadX * 0.25;
-  const wave = Math.max(0, Math.min(1, v.wave || 0));
-  // Raised and pulled back just enough that the squad sits in the bottom quarter
-  // and about five clog rows fill the view above them. fov stays 30.
-  const lift = 13 + wave * 13;
-  const back = 16 + wave * 2;
-  const ahead = 10 - wave * 4;
-  const lookY = 0.3 + wave * 2.6;
+  const camX = v.squadX;
+  const viewW = canvas.clientWidth || window.innerWidth;
+  const viewH = canvas.clientHeight || window.innerHeight;
+  const phone = viewH > viewW * 0.85;
   let jx = 0;
   let jy = 0;
   const sh = v.shake || 0;
@@ -456,35 +451,40 @@ function frame(now) {
     const t = play.time;
     const sz = v.squadZ;
     const wide = window.innerWidth > 700;
-    const fov = wide ? 32 : 48;
+    const fov = wide ? 36 : 50;
     if (camera.fov !== fov) {
       camera.fov = fov;
       camera.updateProjectionMatrix();
     }
     if (wide) {
-      camera.position.set(2.6 + Math.sin(t * 0.12) * 0.08, 3.05, sz + 6.2);
-      camera.lookAt(0.1, 0.62, sz - 3.4);
+      camera.position.set(2.2 + Math.sin(t * 0.12) * 0.06, 4.4, sz + 5.6);
+      camera.lookAt(0.1, 0.85, sz - 4.2);
     } else {
-      camera.position.set(0.42 + Math.sin(t * 0.12) * 0.04, 2.85, sz + 5.2);
-      camera.lookAt(0.02, 0.5, sz - 2.6);
+      camera.position.set(0.28 + Math.sin(t * 0.12) * 0.03, 4.8, sz + 4.4);
+      camera.lookAt(0, 0.72, sz - 3.6);
     }
-    world.setTitleMood(true);
-    renderer.toneMappingExposure = 0.94;
-    rimLight.color.setHex(0xffc07a);
-    rimLight.position.set(-2.4, 2.6, sz - 6.5);
-    rimLight.target.position.set(0, 0.8, sz - 1);
-    rimLight.intensity = 0.32;
+    world.setTitleMood(false);
+    renderer.toneMappingExposure = 1.12;
+    rimLight.color.setHex(0xfff6e8);
+    rimLight.position.set(-4, 8, sz + 4);
+    rimLight.target.position.set(0, 0.8, sz - 2);
+    rimLight.intensity = 0.15;
     if (bloomFailed) {
-      if (!titleFog) titleFog = new THREE.Fog(0xf0b56a, 22, 84);
+      if (!titleFog) titleFog = new THREE.Fog(0xc5e4f5, 40, 180);
       scene.fog = titleFog;
     }
   } else {
     world.setTitleMood(false);
-    renderer.toneMappingExposure = 1.05;
+    renderer.toneMappingExposure = 1.08;
     rimLight.intensity = 0;
     if (titleFog && scene.fog === titleFog) scene.fog = runFog;
-    if (camera.fov !== 30) {
-      camera.fov = 30;
+    const fov = phone ? 54 : 42;
+    const back = phone ? 7.6 : 10.8;
+    const lift = phone ? 11.4 : 11.2;
+    const ahead = phone ? 6.6 : 10;
+    const lookY = 0.42;
+    if (camera.fov !== fov) {
+      camera.fov = fov;
       camera.updateProjectionMatrix();
     }
     camera.position.set(camX + jx, lift + jy, v.squadZ + back);

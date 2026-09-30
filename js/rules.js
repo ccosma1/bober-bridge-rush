@@ -2,7 +2,7 @@
 // br3 gun table. Lab may multiply a tier's DMG; the comment block at the
 // bottom of weaponMods records the numbers that passed the gun lab.
 
-export const BUILD = "br9";
+export const BUILD = "br10";
 export const SIM_CAP = 300;
 export const RENDER_CAP = 60;
 export const LIVE_CAP = 320;
@@ -10,14 +10,15 @@ export const ADVANCE = 8;
 export const WAVE_ADVANCE = 2;
 export const STEER_MAX = 14;
 export const RANGE = 28;
-export const DECK_HALF = 3;
-export const BOSS_HALF = 3.6;
-export const FORM_GAP = 0.46;
-export const LANE_BLOB = 2.15;
-export const LANE_X = 1.5;
-export const GATE_X = 1.75;
-export const PANEL_W = 2;
-export const DIVIDER_W = 0.35;
+export const DECK_HALF = 4.5;
+export const BOSS_HALF = 4.5;
+export const FORM_GAP = 0.58;
+export const LANE_BLOB = 7.2;
+export const LANE_X = 2.2;
+export const GATE_X = 3;
+export const PANEL_W = 2.6;
+export const DIVIDER_W = 0;
+export const AIM_CONE = 12 * Math.PI / 180;
 export const CHARGE_LEAD = 34;
 export const PINCH_BLOB = 1.2;
 
@@ -231,25 +232,40 @@ export const LEVELS = {
     bossName: "BARON CLOG",
     win: "BRIDGE HELD!",
     events: [
-      { at: 36, kind: "gate", pair: [{ op: "add", k: 5 }, { op: "sub", k: 2 }] },
-      { at: 52, kind: "crate", layout: "single", items: [{ type: "weapon", gun: "dambust", hp: 360, x: -1.5 }] },
-      { at: 76, kind: "gate", pair: [{ op: "mul", k: 2 }, { op: "add", k: 4 }] },
+      { at: 24, kind: "gate", side: 1, op: "add", k: 5 },
+      { at: 52, kind: "crate", layout: "row", items: [
+        { type: "volunteer", hp: 8, x: -2.6 },
+        { type: "volunteer", hp: 6, x: 2.4 },
+      ] },
+      { at: 86, kind: "gate", side: 0, op: "mul", k: 2 },
       { at: 112, kind: "wave", clog: 40 },
-      { at: 184, kind: "gate", pair: [{ op: "add", k: 8 }, { op: "sub", k: 4 }] },
-      { at: 200, kind: "crate", layout: "single", items: [{ type: "weapon", gun: "mini", hp: 620, x: 1.5 }] },
-      { at: 220, kind: "gate", pair: [{ op: "add", k: 4 }, { op: "sub", k: 3 }] },
+      { at: 128, kind: "crate", layout: "row", items: [
+        { type: "volunteer", hp: 10, x: -3.1 },
+        { type: "volunteer", hp: 12, x: 2.6 },
+      ] },
+      { at: 150, kind: "crate", layout: "single", items: [{ type: "weapon", gun: "dambust", hp: 12, x: 1.8 }] },
+      { at: 190, kind: "gate", side: 1, op: "add", k: 8 },
+      { at: 214, kind: "crate", layout: "row", items: [
+        { type: "volunteer", hp: 14, x: -2.4 },
+        { type: "volunteer", hp: 16, x: 0.2 },
+        { type: "volunteer", hp: 14, x: 2.8 },
+      ] },
+      { at: 236, kind: "crate", layout: "single", items: [{ type: "weapon", gun: "mini", hp: 16, x: -2.0 }] },
       { at: 248, kind: "wave", clog: 72, suds: 22 },
-      { at: 320, kind: "gate", pair: [{ op: "add", k: 6 }, { op: "div", k: 2 }] },
-      { at: 340, kind: "crate", layout: "single", items: [{ type: "weapon", gun: "beam", hp: 880, x: -1.5 }] },
-      { at: 364, kind: "gate", pair: [{ op: "add", k: 6 }, { op: "sub", k: 4 }] },
-      { at: 384, kind: "crate", layout: "single", items: [{ type: "tier", hp: 520, x: 1.5 }] },
-      { at: 400, kind: "gate", pair: [{ op: "add", k: 8 }, { op: "sub", k: 4 }] },
+      { at: 300, kind: "crate", layout: "row", items: [
+        { type: "volunteer", hp: 18, x: -3.0 },
+        { type: "volunteer", hp: 20, x: 1.6 },
+      ] },
+      { at: 340, kind: "gate", side: 0, op: "add", k: 6 },
+      { at: 366, kind: "crate", layout: "single", items: [{ type: "weapon", gun: "beam", hp: 18, x: 2.4 }] },
+      { at: 392, kind: "gate", side: 1, op: "sub", k: 3 },
       { at: 428, kind: "wave", clog: 80, suds: 24, hauler: 2, duck: 1 },
-      { at: 508, kind: "gate", pair: [{ op: "add", k: 10 }, { op: "sub", k: 6 }] },
-      { at: 544, kind: "gate", pair: [{ op: "add", k: 8 }, { op: "sub", k: 4 }] },
-      { at: 588, kind: "gate", pair: [{ op: "add", k: 6 }, { op: "sub", k: 3 }] },
-      { at: 632, kind: "gate", pair: [{ op: "add", k: 6 }, { op: "div", k: 2 }] },
-      { at: 676, kind: "gate", pair: [{ op: "add", k: 4 }, { op: "sub", k: 2 }] },
+      { at: 456, kind: "crate", layout: "single", items: [{ type: "tier", hp: 20, x: -1.6 }] },
+      { at: 520, kind: "gate", side: 0, op: "add", k: 10 },
+      { at: 560, kind: "gate", side: 1, op: "add", k: 8 },
+      { at: 600, kind: "gate", side: 0, op: "sub", k: 2 },
+      { at: 640, kind: "gate", side: 1, op: "add", k: 6 },
+      { at: 672, kind: "gate", side: 0, op: "add", k: 4 },
       { at: 700, kind: "boss" },
     ],
   },
@@ -272,32 +288,33 @@ export const LEVELS = {
     bossName: "BIG TUB",
     win: "BRIDGE HELD!",
     events: [
-      { at: 30, kind: "gate", pair: [{ op: "add", k: 6 }, { op: "sub", k: 2 }] },
-      { at: 48, kind: "crate", layout: "pair", items: [
-        { type: "weapon", gun: "rail", hp: 640, x: -1.5 },
-        { type: "weapon", gun: "flame", hp: 640, x: 1.5 },
+      { at: 26, kind: "gate", side: 1, op: "add", k: 6 },
+      { at: 48, kind: "crate", layout: "row", items: [
+        { type: "volunteer", hp: 8, x: -2.8 },
+        { type: "volunteer", hp: 10, x: 2.5 },
       ] },
-      { at: 76, kind: "gate", pair: [{ op: "mul", k: 2 }, { op: "add", k: 5 }] },
+      { at: 54, kind: "crate", layout: "pair", items: [
+        { type: "weapon", gun: "rail", hp: 14, x: -1.6 },
+        { type: "weapon", gun: "flame", hp: 14, x: 1.8 },
+      ] },
+      { at: 84, kind: "gate", side: 0, op: "mul", k: 2 },
       { at: 122, kind: "wave", clog: 52 },
-      { at: 196, kind: "gate", pair: [{ op: "add", k: 5 }, { op: "sub", k: 3 }] },
-      { at: 210, kind: "crate", layout: "single", items: [{ type: "weapon", gun: "glacier", hp: 860, x: -1.5 }] },
-      { at: 232, kind: "gate", pair: [{ op: "add", k: 6 }, { op: "sub", k: 3 }] },
+      { at: 200, kind: "gate", side: 1, op: "add", k: 5 },
+      { at: 224, kind: "crate", layout: "single", items: [{ type: "weapon", gun: "glacier", hp: 18, x: -2.2 }] },
       { at: 270, kind: "wave", clog: 74, suds: 16, hair: 2 },
-      { at: 348, kind: "gate", pair: [{ op: "add", k: 10 }, { op: "sub", k: 6 }] },
-      { at: 368, kind: "crate", layout: "single", items: [{ type: "tier", hp: 700, x: 0 }] },
-      { at: 392, kind: "gate", pair: [{ op: "add", k: 8 }, { op: "sub", k: 4 }] },
-      { at: 410, kind: "crate", layout: "pair", items: [
-        { type: "weapon", gun: "barrage", hp: 980, x: -1.5 },
-        { type: "weapon", gun: "aurora", hp: 980, x: 1.5 },
+      { at: 360, kind: "gate", side: 0, op: "add", k: 10 },
+      { at: 400, kind: "crate", layout: "pair", items: [
+        { type: "weapon", gun: "barrage", hp: 20, x: -2.4 },
+        { type: "weapon", gun: "aurora", hp: 20, x: 2.2 },
       ] },
-      { at: 436, kind: "gate", pair: [{ op: "add", k: 8 }, { op: "sub", k: 5 }] },
+      { at: 430, kind: "gate", side: 1, op: "sub", k: 4 },
       { at: 470, kind: "wave", clog: 70, suds: 18, hauler: 1, spit: 1, duck: 1 },
-      { at: 552, kind: "gate", pair: [{ op: "add", k: 8 }, { op: "div", k: 2 }] },
-      { at: 596, kind: "gate", pair: [{ op: "add", k: 8 }, { op: "sub", k: 4 }] },
-      { at: 636, kind: "gate", pair: [{ op: "add", k: 6 }, { op: "sub", k: 3 }] },
-      { at: 676, kind: "gate", pair: [{ op: "add", k: 8 }, { op: "sub", k: 4 }] },
-      { at: 720, kind: "gate", pair: [{ op: "add", k: 10 }, { op: "sub", k: 5 }] },
-      { at: 764, kind: "gate", pair: [{ op: "add", k: 6 }, { op: "sub", k: 4 }] },
+      { at: 560, kind: "gate", side: 0, op: "add", k: 8 },
+      { at: 588, kind: "crate", layout: "single", items: [{ type: "tier", hp: 24, x: 1.4 }] },
+      { at: 620, kind: "gate", side: 1, op: "add", k: 8 },
+      { at: 660, kind: "gate", side: 0, op: "sub", k: 3 },
+      { at: 700, kind: "gate", side: 1, op: "add", k: 6 },
+      { at: 740, kind: "gate", side: 0, op: "add", k: 10 },
       { at: 780, kind: "boss" },
     ],
   },
@@ -320,32 +337,42 @@ export const LEVELS = {
     bossName: "GRUNK THE PLUMBER",
     win: "DAM HELD!",
     events: [
-      { at: 30, kind: "gate", pair: [{ op: "add", k: 6 }, { op: "sub", k: 2 }] },
-      { at: 44, kind: "crate", layout: "pair", items: [
-        { type: "weapon", gun: "storm", hp: 900, x: -1.5 },
-        { type: "weapon", gun: "cone", hp: 900, x: 1.5 },
+      { at: 28, kind: "gate", side: 1, op: "add", k: 6 },
+      { at: 52, kind: "crate", layout: "row", items: [
+        { type: "volunteer", hp: 30, x: -3.0 },
+        { type: "weapon", gun: "storm", hp: 24, x: -0.4 },
+        { type: "weapon", gun: "cone", hp: 24, x: 2.6 },
       ] },
-      { at: 74, kind: "gate", pair: [{ op: "mul", k: 2 }, { op: "add", k: 6 }] },
+      { at: 76, kind: "gate", side: 0, op: "mul", k: 2 },
       { at: 118, kind: "wave", clog: 22, leafN: 1 },
-      { at: 196, kind: "gate", pair: [{ op: "add", k: 6 }, { op: "sub", k: 4 }] },
-      { at: 210, kind: "crate", layout: "pair", items: [
-        { type: "weapon", gun: "saw", hp: 520, x: -1.5 },
-        { type: "weapon", gun: "burst", hp: 520, x: 1.5 },
+      { at: 200, kind: "gate", side: 1, op: "add", k: 6 },
+      { at: 236, kind: "crate", layout: "pair", items: [
+        { type: "weapon", gun: "saw", hp: 28, x: -2.2 },
+        { type: "weapon", gun: "burst", hp: 28, x: 2.2 },
       ] },
-      { at: 232, kind: "gate", pair: [{ op: "add", k: 8 }, { op: "sub", k: 5 }] },
       { at: 278, kind: "wave", clog: 36, suds: 8, leaf: 1, duck: 1 },
-      { at: 360, kind: "gate", pair: [{ op: "add", k: 10 }, { op: "sub", k: 6 }] },
-      { at: 380, kind: "crate", layout: "single", items: [{ type: "tier", hp: 900, x: 0 }] },
-      { at: 404, kind: "gate", pair: [{ op: "add", k: 8 }, { op: "sub", k: 5 }] },
-      { at: 448, kind: "gate", pair: [{ op: "add", k: 10 }, { op: "sub", k: 6 }] },
+      { at: 370, kind: "gate", side: 0, op: "add", k: 10 },
+      { at: 400, kind: "crate", layout: "single", items: [{ type: "tier", hp: 36, x: 1.2 }] },
+      { at: 430, kind: "gate", side: 1, op: "sub", k: 5 },
       { at: 492, kind: "wave", clog: 36, suds: 6, hauler: 1, spit: 1, hair: 1, leaf: 1 },
-      { at: 572, kind: "gate", pair: [{ op: "add", k: 8 }, { op: "div", k: 2 }] },
-      { at: 616, kind: "gate", pair: [{ op: "add", k: 6 }, { op: "sub", k: 3 }] },
-      { at: 656, kind: "gate", pair: [{ op: "add", k: 8 }, { op: "sub", k: 4 }] },
-      { at: 696, kind: "gate", pair: [{ op: "add", k: 8 }, { op: "sub", k: 4 }] },
-      { at: 740, kind: "gate", pair: [{ op: "add", k: 10 }, { op: "sub", k: 6 }] },
-      { at: 780, kind: "gate", pair: [{ op: "add", k: 8 }, { op: "sub", k: 5 }] },
-      { at: 816, kind: "gate", pair: [{ op: "add", k: 8 }, { op: "sub", k: 4 }] },
+      { at: 580, kind: "gate", side: 1, op: "add", k: 8 },
+      { at: 610, kind: "crate", layout: "row", items: [
+        { type: "volunteer", hp: 40, x: -2.4 },
+        { type: "volunteer", hp: 36, x: 2.2 },
+      ] },
+      { at: 640, kind: "gate", side: 0, op: "add", k: 6 },
+      { at: 670, kind: "crate", layout: "row", items: [
+        { type: "volunteer", hp: 28, x: -1.2 },
+        { type: "volunteer", hp: 32, x: 2.8 },
+      ] },
+      { at: 700, kind: "gate", side: 1, op: "sub", k: 4 },
+      { at: 730, kind: "crate", layout: "single", items: [{ type: "volunteer", hp: 44, x: 0.6 }] },
+      { at: 760, kind: "gate", side: 0, op: "add", k: 10 },
+      { at: 790, kind: "crate", layout: "row", items: [
+        { type: "volunteer", hp: 24, x: -2.8 },
+        { type: "volunteer", hp: 20, x: 1.8 },
+      ] },
+      { at: 820, kind: "gate", side: 1, op: "add", k: 8 },
       { at: 860, kind: "boss" },
     ],
   },
@@ -381,17 +408,15 @@ export function crateHp(base, type, explicit) {
 }
 
 export function formationRadius(n, half) {
-  const shown = Math.max(1, Math.min(30, n | 0));
+  const shown = Math.max(1, Math.min(RENDER_CAP, n | 0));
   const spacing = FORM_GAP;
-  const rowH = spacing * 0.8660254;
   const cols = Math.max(1, Math.ceil(Math.sqrt(shown)));
   const rows = Math.max(1, Math.ceil(shown / cols));
-  const w = Math.max(0, cols - 1) * spacing + spacing * 0.5;
-  const h = Math.max(0, rows - 1) * rowH;
-  const r = Math.max(0.35, Math.hypot(w * 0.5, h * 0.5) + 0.05);
-  const cap = Math.min(r, LANE_BLOB * 0.5);
-  const road = Math.max(0.4, (half || DECK_HALF) - 0.55);
-  return Math.min(cap, road);
+  const w = Math.max(0, cols - 1) * spacing;
+  const h = Math.max(0, rows - 1) * spacing;
+  const r = Math.max(0.35, Math.hypot(w * 0.5, h * 0.5) + 0.22);
+  const road = Math.max(0.4, (half || DECK_HALF) - 0.7);
+  return Math.min(r, road);
 }
 
 export function clampLane(x, radius, half) {
@@ -609,10 +634,10 @@ export function formationOffsets(n, radius, outX, outZ) {
   const shown = shownCount(n);
   if (!shown) return 0;
   const spacing = FORM_GAP;
-  const rowH = spacing * 0.8660254;
+  const rowH = spacing;
   let cols = Math.max(1, Math.ceil(Math.sqrt(shown)));
   let rows = Math.ceil(shown / cols);
-  const w = Math.max(0, cols - 1) * spacing + spacing * 0.5;
+  const w = Math.max(0, cols - 1) * spacing;
   const h = Math.max(0, rows - 1) * rowH;
   const fit = Math.max(0.2, Math.hypot(w * 0.5, h * 0.5) + 0.05);
   let scale = radius > 0 && fit > radius ? radius / fit : 1;
@@ -622,7 +647,7 @@ export function formationOffsets(n, radius, outX, outZ) {
   let i = 0;
   for (let r = 0; r < rows && i < shown; r++) {
     const rowCols = Math.min(cols, shown - i);
-    const ox = ((r & 1) ? sx * 0.5 : 0) - (rowCols - 1) * sx * 0.5;
+    const ox = -(rowCols - 1) * sx * 0.5;
     const z = (r - (rows - 1) * 0.5) * sy;
     for (let c = 0; c < rowCols; c++) {
       outX[i] = ox + c * sx;
@@ -688,8 +713,7 @@ export function layoutIssues() {
           weapon = 1;
         }
         const x = item.x || 0;
-        const lane = Math.abs(x) < 0.05 || Math.abs(Math.abs(x) - LANE_X) < 0.05;
-        if (!lane) fails.push(id + " crate x " + x);
+        if (Math.abs(x) > DECK_HALF - 0.4) fails.push(id + " crate x " + x);
       }
       if (weapon) gunEvents++;
     }
@@ -749,16 +773,10 @@ export function expectedSquad(level, at) {
   const evs = (level && level.events) || [];
   for (let i = 0; i < evs.length; i++) {
     const ev = evs[i];
-    if (ev.kind !== "gate" || ev.at >= at) continue;
-    let best = n;
-    const pair = ev.pair || [];
-    for (let s = 0; s < pair.length; s++) {
-      const half = pair[s];
-      const tenths = half.op === "mul" ? Math.round(half.k * 10) : 0;
-      const out = applyGate(n, half.op, half.k, tenths);
-      if (out > best) best = out;
-    }
-    n = best;
+    if (ev.kind !== "gate" || ev.at >= at || !ev.op) continue;
+    const tenths = ev.op === "mul" ? Math.round(ev.k * 10) : 0;
+    const out = applyGate(n, ev.op, ev.k, tenths);
+    if (out > n) n = out;
   }
   return n;
 }
@@ -784,11 +802,7 @@ export function bossClogMul(expect) {
 }
 
 function gateSpecial(ev) {
-  const pair = ev.pair || [];
-  for (let s = 0; s < pair.length; s++) {
-    if (pair[s].op === "mul" || pair[s].op === "div") return 1;
-  }
-  return 0;
+  return ev.op === "mul" || ev.op === "div" ? 1 : 0;
 }
 
 export function rhythmIssues() {
@@ -813,14 +827,9 @@ export function rhythmIssues() {
     }
     items.push({ at: level.len, end: level.len, kind: "boss" });
     items.sort(function (a, b) { return a.at - b.at; });
-    let cursor = 0;
-    for (let i = 0; i < items.length; i++) {
-      const gap = items[i].at - cursor;
-      if (gap > 48.05) fails.push(id + " empty " + cursor.toFixed(1) + ".." + items[i].at + " " + gap.toFixed(1) + "m");
-      if (items[i].end > cursor) cursor = items[i].end;
-    }
     for (let i = 0; i < gates.length; i++) {
       const g = gates[i];
+      if (g.side !== 0 && g.side !== 1) fails.push(id + " gate side " + g.at);
       for (let w = 0; w < waves.length; w++) {
         const road = waves[w];
         if (g.at > road.front - 20 && g.at < road.end + 20) {
@@ -830,24 +839,13 @@ export function rhythmIssues() {
       if (i === 0) continue;
       const prev = gates[i - 1];
       const gap = g.at - prev.at;
-      let waveBetween = 0;
-      for (let w = 0; w < waves.length; w++) {
-        if (waves[w].front > prev.at && waves[w].front < g.at) waveBetween = 1;
-      }
-      if (!waveBetween && (gap < 29.9 || gap > 48.05)) {
-        fails.push(id + " gate gap " + prev.at + ".." + g.at);
-      }
-      if (gateSpecial(prev) && !waveBetween && (gap < 39.9 || gap > 48.05)) {
-        fails.push(id + " after special " + prev.at + ".." + g.at);
-      }
+      if (gap < 28) fails.push(id + " gate gap " + prev.at + ".." + g.at);
     }
     for (let i = 0; i < evs.length; i++) {
       if (evs[i].kind !== "crate") continue;
       for (let g = 0; g < gates.length; g++) {
         const at = gates[g].at;
-        if (evs[i].at > at - 10 && evs[i].at < at + 4) {
-          fails.push(id + " crate " + evs[i].at + " near gate " + at);
-        }
+        if (Math.abs(evs[i].at - at) < 20) fails.push(id + " crate " + evs[i].at + " near gate " + at);
       }
     }
   }
@@ -978,10 +976,10 @@ export function selfTestRules() {
   eq(weaponMods("saw", 1).bounces, 3, "saw bounce");
   eq(weaponMods("aurora", 1).pattern, "orb", "aurora orb");
   eq(GUN_ORDER.length, 12, "12 guns");
-  eq(DECK_HALF, 3, "deck half");
-  eq(BOSS_HALF, 3.6, "boss half");
-  eq(GATE_X, 1.75, "gate x");
-  eq(PANEL_W, 2, "panel");
+  eq(DECK_HALF, 4.5, "deck half");
+  eq(BOSS_HALF, 4.5, "boss half");
+  eq(GATE_X, 3, "gate x");
+  eq(PANEL_W, 2.6, "panel");
   eq(BOSS_TALL.grunk, 6, "grunk tall");
   eq(ENEMY[0].tall, 1.6, "clog tall");
   eq(ENEMY[1].tall, 2.0, "suds tall");
@@ -1061,7 +1059,7 @@ export function selfTestRules() {
   }
   if (wide * 2 > LANE_BLOB + 0.2) fails.push("blob wide " + wide);
   if (Math.abs(clampLane(9, 1, 5) - 4) > 1e-6) fails.push("clamp lane");
-  if (Math.abs(clampLane(9, 1, DECK_HALF) - 2) > 1e-6) fails.push("clamp deck");
+  if (Math.abs(clampLane(9, 1, DECK_HALF) - (DECK_HALF - 1)) > 1e-6) fails.push("clamp deck");
   for (let i = 0; i < ENEMY.length; i++) {
     if (ENEMY[i].id === "leaf") continue;
     if (ENEMY[i].tall < 0.95) fails.push("short " + ENEMY[i].id);

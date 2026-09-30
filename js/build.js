@@ -148,24 +148,13 @@ function box(w, h, d) {
   return new THREE.BoxGeometry(w, h, d);
 }
 
-function guardParts(s, scarf) {
-  const leg = box(0.11, 0.3, 0.12);
-  const foot = box(0.12, 0.06, 0.18);
-  const body = box(0.38, 0.4, 0.28);
-  const vest = box(0.4, 0.28, 0.12);
-  const head = box(0.32, 0.28, 0.3);
-  const muzzle = box(0.2, 0.12, 0.16);
-  const tooth = box(0.045, 0.07, 0.04);
-  const eye = box(0.055, 0.05, 0.03);
-  const glint = box(0.02, 0.02, 0.02);
-  const ear = cone(0.06, 0.14, 4);
-  const dome = cyl(0.12, 0.145, 0.07, 6);
-  const brim = cyl(0.16, 0.16, 0.018, 7);
-  const arm = box(0.08, 0.26, 0.08);
-  const paw = box(0.08, 0.07, 0.08);
-  const stock = box(0.07, 0.08, 0.28);
-  const barrel = box(0.045, 0.045, 0.34);
-  const tail = box(0.34, 0.06, 0.36);
+function guardParts(s, gold) {
+  const hat = gold ? "#F5C400" : "#2E7BFF";
+  const suit = gold ? "#FFF4CC" : "#F5F8FC";
+  const fur = "#E0A15C";
+  const furD = "#C4843E";
+  const eyeW = sph(0.055, 6, 4);
+  const pupil = sph(0.026, 5, 4);
   const put = (src, color, part, pivot, x, y, z, sx, sy, sz, yaw, rx) =>
     place(
       src,
@@ -182,33 +171,24 @@ function guardParts(s, scarf) {
       rx
     );
   const parts = [
-    put(leg, FUR_D, 0, null, -0.1, 0.16, 0.02),
-    put(leg, FUR_D, 0, null, 0.1, 0.16, 0.02),
-    put(foot, FUR_D, 0, null, -0.1, 0.03, -0.02),
-    put(foot, FUR_D, 0, null, 0.1, 0.03, -0.02),
-    put(body, FUR, 0, null, 0, 0.5, 0),
-    put(vest, "#5B6B3A", 0, null, 0, 0.52, -0.14),
-    put(head, FUR, 0, null, 0, 0.82, -0.02),
-    put(muzzle, CREAM, 0, null, 0, 0.76, -0.2),
-    put(tooth, TOOTH, 0, null, -0.04, 0.68, -0.28),
-    put(tooth, TOOTH, 0, null, 0.04, 0.68, -0.28),
-    put(eye, INK, 0, null, -0.08, 0.86, -0.18),
-    put(eye, INK, 0, null, 0.08, 0.86, -0.18),
-    put(glint, "#FFFFFF", 0, null, -0.06, 0.88, -0.2),
-    put(glint, "#FFFFFF", 0, null, 0.1, 0.88, -0.2),
-    put(ear, FUR_D, 0, null, -0.16, 0.98, 0),
-    put(ear, FUR_D, 0, null, 0.16, 0.98, 0),
-    put(dome, HAT, 0, null, 0, 0.99, -0.02),
-    put(brim, HAT, 0, null, 0, 0.95, -0.02),
-    put(arm, FUR, 0, null, -0.24, 0.5, -0.08),
-    put(arm, FUR, 0, null, 0.24, 0.5, -0.12),
-    put(paw, FUR_L, 0, null, -0.16, 0.4, -0.22),
-    put(paw, FUR_L, 0, null, 0.1, 0.4, -0.24),
-    put(stock, WOOD_D, 0, null, 0, 0.42, -0.28),
-    put(barrel, "#3C4148", 0, null, 0, 0.44, -0.52),
-    put(tail, "#3A2416", 5, { x: 0, y: 0.4, z: 0.16 }, 0, 0.4, 0.32),
+    put(sph(0.09, 6, 4), furD, 0, null, -0.07, 0.1, 0.02, 1, 0.62, 1.2),
+    put(sph(0.09, 6, 4), furD, 0, null, 0.07, 0.1, 0.02, 1, 0.62, 1.2),
+    put(sph(0.16, 6, 5), suit, 0, null, 0, 0.32, 0, 1.05, 0.82, 0.78),
+    put(sph(0.2, 8, 6), fur, 0, null, 0, 0.6, -0.02),
+    put(sph(0.175, 6, 5), hat, 0, null, 0, 0.72, 0.0, 1.08, 0.62, 1.08),
+    put(sph(0.075, 6, 4), "#F8D7B0", 0, null, 0, 0.52, -0.14, 1.15, 0.7, 0.85),
+    put(box(0.032, 0.07, 0.028), TOOTH, 0, null, -0.028, 0.45, -0.2),
+    put(box(0.032, 0.07, 0.028), TOOTH, 0, null, 0.028, 0.45, -0.2),
+    put(eyeW, "#FFFFFF", 0, null, -0.075, 0.62, -0.15),
+    put(eyeW, "#FFFFFF", 0, null, 0.075, 0.62, -0.15),
+    put(pupil, "#1A1C22", 0, null, -0.078, 0.615, -0.19),
+    put(pupil, "#1A1C22", 0, null, 0.078, 0.615, -0.19),
+    put(sph(0.04, 5, 4), furD, 0, null, -0.15, 0.84, 0.02, 0.65, 1.15, 0.65),
+    put(sph(0.04, 5, 4), furD, 0, null, 0.15, 0.84, 0.02, 0.65, 1.15, 0.65),
+    put(box(0.2, 0.03, 0.14), furD, 5, { x: 0, y: 0.26, z: 0.06 }, 0, 0.26, 0.18),
+    put(cyl(0.03, 0.03, 0.26, 6), "#3E4654", 0, null, 0.04, 0.38, -0.22, 1, 1, 1, 0, -Math.PI / 2),
   ];
-  if (scarf) parts.push(put(box(0.36, 0.08, 0.3), "#C23B4A", 0, null, 0, 0.7, 0.02));
+  if (gold) parts.push(put(box(0.14, 0.035, 0.1), "#E23B4A", 0, null, 0, 0.46, 0.02));
   return parts;
 }
 
@@ -218,7 +198,7 @@ export function buildSoldier() {
 }
 
 export function buildBober() {
-  const geo = mergeParts(guardParts(1.18, true));
+  const geo = mergeParts(guardParts(1, true));
   return { geo, tris: trisOf(geo) };
 }
 
@@ -720,46 +700,47 @@ export function streamGeo() {
 
 export function buildTile() {
   const parts = [];
-  const deck = "#B9B2A6";
-  const seam = "#8E877C";
-  const wet = "#7A746A";
+  const deck = "#C9C6D4";
+  const seam = "#B7B3C2";
+  const red = "#E23B32";
   for (let i = 0; i < 10; i++) {
     parts.push(place(box(10, 0.28, 2), deck, 0, null, 0, 0.14, -1 - i * 2));
-    parts.push(place(box(10, 0.035, 0.07), seam, 0, null, 0, 0.3, -i * 2));
-    if (i % 3 === 1) {
-      parts.push(place(box(2.4, 0.02, 1.15), wet, 0, null, i % 2 ? -1.6 : 1.5, 0.305, -1.4 - i * 2));
-    }
+    parts.push(place(box(10, 0.02, 0.05), seam, 0, null, 0, 0.29, -i * 2));
   }
-  const para = box(0.42, 0.8, 20);
-  parts.push(place(para, "#A39C90", 0, null, -5.12, 0.55, -10));
-  parts.push(place(para, "#A39C90", 0, null, 5.12, 0.55, -10));
-  const rail = box(0.05, 0.05, 20);
-  const post = box(0.07, 0.62, 0.07);
+  for (let i = 0; i < 5; i++) {
+    const z = -2 - i * 4;
+    parts.push(place(box(0.14, 0.025, 1.35), "#F7F8FA", 0, null, -1.7, 0.3, z));
+    parts.push(place(box(0.14, 0.025, 1.35), "#F7F8FA", 0, null, 1.7, 0.3, z));
+  }
+  const girder = box(0.28, 0.55, 20);
+  parts.push(place(girder, red, 0, null, -5.05, 0.48, -10));
+  parts.push(place(girder, red, 0, null, 5.05, 0.48, -10));
+  const rail = box(0.08, 0.08, 20);
   for (let k = 0; k < 2; k++) {
-    const x = k === 0 ? -5.12 : 5.12;
-    parts.push(place(rail, "#3C4148", 0, null, x, 0.78, -10));
-    parts.push(place(rail, "#3C4148", 0, null, x, 1.08, -10));
+    const x = k === 0 ? -5.05 : 5.05;
+    parts.push(place(rail, red, 0, null, x, 0.95, -10));
   }
+  const post = box(0.1, 0.7, 0.1);
   for (let i = 0; i < 10; i++) {
     const z = -1 - i * 2;
-    parts.push(place(post, "#3C4148", 0, null, -5.12, 0.9, z));
-    parts.push(place(post, "#3C4148", 0, null, 5.12, 0.9, z));
+    parts.push(place(post, red, 0, null, -5.05, 0.85, z));
+    parts.push(place(post, red, 0, null, 5.05, 0.85, z));
   }
-  const pole = box(0.09, 2.1, 0.09);
-  const arm = box(0.46, 0.06, 0.06);
-  parts.push(place(pole, "#3C4148", 0, null, -5.12, 1.55, -10));
-  parts.push(place(pole, "#3C4148", 0, null, 5.12, 1.55, -10));
-  parts.push(place(arm, "#3C4148", 0, null, -4.86, 2.5, -10));
-  parts.push(place(arm, "#3C4148", 0, null, 4.86, 2.5, -10));
   return mergeParts(parts);
 }
 
 export function buildCrateGeo() {
-  const parts = [place(box(2.15, 2.15, 1.15), "#E8B530", 0, null, 0, 1.08, 0)];
-  parts.push(place(box(2.22, 0.22, 1.22), "#C4922A", 0, null, 0, 1.55, 0));
-  parts.push(place(box(2.22, 0.14, 1.22), "#A97820", 0, null, 0, 0.14, 0));
-  parts.push(place(box(0.9, 0.06, 0.06), "#F3D27A", 0, null, 0, 1.78, 0.6));
-  return mergeParts(parts);
+  const wood = "#C9864A";
+  const woodD = "#A86A32";
+  const hoop = "#F2F4F6";
+  const body = cyl(0.46, 0.46, 1.1, 12);
+  const band = cyl(0.5, 0.5, 0.08, 12);
+  return mergeParts([
+    place(body, wood, 0, null, 0, 0.55, 0),
+    place(band, hoop, 0, null, 0, 0.28, 0),
+    place(band, hoop, 0, null, 0, 0.82, 0),
+    place(cyl(0.47, 0.47, 0.06, 12), woodD, 0, null, 0, 1.07, 0),
+  ]);
 }
 
 export function buildGateFrame() {

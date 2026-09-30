@@ -1,6 +1,6 @@
 import * as THREE from "three";
-import { toon, pineTexture, skyTexture, goldenSkyTexture, writeTRS } from "./mats.js?v=br9";
-import { buildTile } from "./build.js?v=br9";
+import { toon, pineTexture, skyTexture, goldenSkyTexture, writeTRS } from "./mats.js?v=br10";
+import { buildTile } from "./build.js?v=br10";
 
 const TILE = 20;
 const TILES = 10;
@@ -9,8 +9,8 @@ const PYLONS = 28;
 export function createWorld(scene) {
   const group = new THREE.Group();
   scene.add(group);
-  scene.background = new THREE.Color(0xc5d4df);
-  scene.fog = new THREE.Fog(0xc5d5e0, 60, 260);
+  scene.background = new THREE.Color(0x9fd4f5);
+  scene.fog = new THREE.Fog(0xc5e4f5, 80, 320);
 
   const runSky = skyTexture();
   const warmSky = goldenSkyTexture();
@@ -22,16 +22,16 @@ export function createWorld(scene) {
   sky.renderOrder = -2;
   group.add(sky);
 
-  const key = new THREE.DirectionalLight(0xffe6c4, 2.2);
-  const hemi = new THREE.HemisphereLight(0xcfe3ff, 0x6b5e4a, 0.6);
+  const key = new THREE.DirectionalLight(0xfff4e0, 2.6);
+  const hemi = new THREE.HemisphereLight(0xcfe6ff, 0x8a9390, 0.85);
   key.castShadow = true;
   key.shadow.mapSize.set(1024, 1024);
   key.shadow.camera.near = 1;
-  key.shadow.camera.far = 52;
-  key.shadow.camera.left = -12;
-  key.shadow.camera.right = 12;
-  key.shadow.camera.top = 20;
-  key.shadow.camera.bottom = -10;
+  key.shadow.camera.far = 80;
+  key.shadow.camera.left = -16;
+  key.shadow.camera.right = 16;
+  key.shadow.camera.top = 24;
+  key.shadow.camera.bottom = -16;
   key.shadow.bias = -0.0008;
   scene.add(key, key.target, hemi);
 
@@ -58,8 +58,8 @@ export function createWorld(scene) {
         varying vec3 vW;
         void main() {
           float n = sin(vW.x * 0.62 + uTime * 1.1) * sin(vW.z * 0.48 - uTime * 1.4);
-          vec3 deep = vec3(0.302, 0.435, 0.498);
-          vec3 teal = vec3(0.498, 0.639, 0.690);
+          vec3 deep = vec3(0.12, 0.48, 0.82);
+          vec3 teal = vec3(0.28, 0.72, 0.95);
           vec3 col = mix(deep, teal, n * 0.5 + 0.5);
           float rip = sin(vW.x * 1.15 + vW.z * 0.37 + uTime * 1.3);
           float rip2 = sin(vW.z * 0.83 - vW.x * 0.21 - uTime * 0.9);
@@ -149,8 +149,33 @@ export function createWorld(scene) {
     PYLONS
   );
   foam.frustumCulled = false;
-  foam.count = PYLONS;
+  foam.count = 0;
+  foam.visible = false;
   group.add(foam);
+
+  const SPAN = 26;
+  const T_N = 12;
+  const SEG = 8;
+  const posts = new THREE.InstancedMesh(new THREE.BoxGeometry(0.46, 16, 0.46), toon("#E23B32"), T_N * 2);
+  posts.frustumCulled = false;
+  posts.count = T_N * 2;
+  group.add(posts);
+  const beams = new THREE.InstancedMesh(new THREE.BoxGeometry(1, 0.28, 0.36), toon("#E23B32"), T_N);
+  beams.frustumCulled = false;
+  beams.count = T_N;
+  group.add(beams);
+  const cables = new THREE.InstancedMesh(new THREE.BoxGeometry(0.1, 0.1, SPAN / SEG + 0.14), toon("#6E1814"), T_N * 2 * SEG);
+  cables.frustumCulled = false;
+  cables.count = T_N * 2 * SEG;
+  group.add(cables);
+  const hangs = new THREE.InstancedMesh(new THREE.BoxGeometry(0.045, 1, 0.045), toon("#8A2420"), T_N * 2 * SEG);
+  hangs.frustumCulled = false;
+  hangs.count = T_N * 2 * SEG;
+  group.add(hangs);
+  const postMA = posts.instanceMatrix.array;
+  const beamMA = beams.instanceMatrix.array;
+  const cableMA = cables.instanceMatrix.array;
+  const hangMA = hangs.instanceMatrix.array;
 
   const treeGeo = new THREE.PlaneGeometry(3.2, 6.2);
   const trees = new THREE.InstancedMesh(
@@ -205,52 +230,31 @@ export function createWorld(scene) {
     const drop = river || 0;
     const scale = damScale || 1;
     water.position.y = -1.2 + drop;
-    dam.position.set(0, drop, z - 96);
-    dam.scale.set(scale, scale, scale);
+    dam.position.set(0, drop - 8, z - 220);
+    dam.scale.set(scale * 0.5, scale * 0.5, scale * 0.5);
     sky.position.set(x, 8, z);
-    if (titleMood) {
-      key.color.setHex(0xff7a32);
-      key.intensity = 1.55;
-      key.position.set(x + 2.8, 4.4, z - 6);
-      key.target.position.set(x, 0.8, z);
-      hemi.color.setHex(0xffb090);
-      hemi.groundColor.setHex(0x5a3020);
-      hemi.intensity = 0.62;
-      scene.background.setHex(0xf29a78);
-      if (scene.fog) {
-        scene.fog.color.setHex(0xf0b48a);
-        scene.fog.near = 26;
-        scene.fog.far = 96;
-      }
-      if (sky.material.map !== warmSky) sky.material.map = warmSky;
-      key.shadow.camera.left = -18;
-      key.shadow.camera.right = 18;
-      key.shadow.camera.top = 24;
-      key.shadow.camera.bottom = -16;
-      key.shadow.camera.far = 72;
-      key.shadow.camera.updateProjectionMatrix();
-    } else {
-      key.color.setHex(0xffe6c4);
-      key.intensity = 2.2;
-      key.position.set(x - 12, 22, z - 18);
-      key.target.position.set(x, 1.2, z - 18);
-      hemi.color.setHex(0xcfe3ff);
-      hemi.groundColor.setHex(0x6b5e4a);
-      hemi.intensity = 0.6;
-      scene.background.setHex(0xc5d4df);
-      if (scene.fog && scene.fog.far < 200) {
-        scene.fog.color.setHex(0xc5d5e0);
-        scene.fog.near = 60;
-        scene.fog.far = 260;
-      }
-      if (sky.material.map !== runSky) sky.material.map = runSky;
-      key.shadow.camera.left = -12;
-      key.shadow.camera.right = 12;
-      key.shadow.camera.top = 20;
-      key.shadow.camera.bottom = -10;
-      key.shadow.camera.far = 52;
-      key.shadow.camera.updateProjectionMatrix();
+    titleMood;
+    warmSky;
+    key.color.setHex(0xfff4e0);
+    key.intensity = 2.6;
+    key.position.set(x - 10, 24, z + 14);
+    key.target.position.set(x, 0.5, z - 24);
+    hemi.color.setHex(0xcfe6ff);
+    hemi.groundColor.setHex(0x8a9390);
+    hemi.intensity = 0.85;
+    scene.background.setHex(0x9fd4f5);
+    if (scene.fog) {
+      scene.fog.color.setHex(0xc5e4f5);
+      scene.fog.near = 80;
+      scene.fog.far = 320;
     }
+    if (sky.material.map !== runSky) sky.material.map = runSky;
+    key.shadow.camera.left = -16;
+    key.shadow.camera.right = 16;
+    key.shadow.camera.top = 24;
+    key.shadow.camera.bottom = -16;
+    key.shadow.camera.far = 80;
+    key.shadow.camera.updateProjectionMatrix();
     const dist = -z;
     const base = Math.floor(dist / TILE);
     const sx = half / 5;
@@ -264,20 +268,45 @@ export function createWorld(scene) {
       writeTRS(bulbM, bulbI++, -4.7 * sx, 2.55, origin - 10, 0, 1, 1, 1);
       writeTRS(bulbM, bulbI++, 4.7 * sx, 2.55, origin - 10, 0, 1, 1, 1);
     }
-    const pBase = Math.floor(dist / 25);
-    for (let i = 0; i < PYLONS; i++) {
-      const side = i % 2 === 0 ? -1 : 1;
-      const index = pBase - 1 + ((i / 2) | 0);
-      const pz = -index * 25;
-      const px = side * (half + 2.15);
-      writeTRS(pyM, i, px, -0.2 + drop, pz, 0, 1, 1, 1);
-      writeTRS(foM, i, px, -0.85 + drop, pz, 0, 1, 1, 1);
+    pylons.count = 0;
+    pylons.visible = false;
+    foam.count = 0;
+    foam.visible = false;
+    bulbs.count = 0;
+    bulbs.visible = false;
+    edges.count = 0;
+    edges.visible = false;
+    const tBase = Math.floor(dist / SPAN);
+    for (let i = 0; i < T_N; i++) {
+      const tz = -(tBase - 1 + i) * SPAN;
+      const tx = half + 0.05;
+      writeTRS(postMA, i * 2, -tx, 8, tz, 0, 1, 1, 1);
+      writeTRS(postMA, i * 2 + 1, tx, 8, tz, 0, 1, 1, 1);
+      const ahead = -tz - dist;
+      const showBeam = ahead < -8 || ahead > 18;
+      const bw = showBeam ? half * 2 + 0.9 : 0;
+      writeTRS(beamMA, i, 0, 15.6, tz, 0, bw, bw > 0 ? 1 : 0, bw > 0 ? 1 : 0);
+      for (let side = 0; side < 2; side++) {
+        const cx = side === 0 ? -tx : tx;
+        for (let s = 0; s < SEG; s++) {
+          const um = (s + 0.5) / SEG;
+          const sag = Math.sin(um * Math.PI) * 8.6;
+          const y = 14.9 - sag;
+          const cz = tz - um * SPAN;
+          const idx = (i * 2 + side) * SEG + s;
+          writeTRS(cableMA, idx, cx, y, cz, 0, 1, 1, 1);
+          const dropH = Math.max(0.3, y - 1.05);
+          writeTRS(hangMA, idx, cx, 1.05 + dropH * 0.5, cz, 0, 1, dropH, 1);
+        }
+      }
     }
     tile.instanceMatrix.needsUpdate = true;
-    edges.instanceMatrix.needsUpdate = true;
-    bulbs.instanceMatrix.needsUpdate = true;
-    pylons.instanceMatrix.needsUpdate = true;
-    foam.instanceMatrix.needsUpdate = true;
+    posts.instanceMatrix.needsUpdate = true;
+    beams.instanceMatrix.needsUpdate = true;
+    cables.instanceMatrix.needsUpdate = true;
+    hangs.instanceMatrix.needsUpdate = true;
+    pyM;
+    foM;
     if (water.material.normalMap) {
       water.material.normalMap.offset.set((time * 0.03) % 1, (time * 0.015) % 1);
     }
@@ -288,7 +317,7 @@ export function createWorld(scene) {
         const row = k;
         const side = (c + k) % 2 === 0 ? -1 : 1;
         const depth = (row === 0 ? 88 : 168) + (c % 5) * 10;
-        const shore = 6.5 + kit.halfX * kit.s + (c % 3) * 1.1;
+        const shore = half + 14 + kit.halfX * kit.s + (c % 3) * 1.1;
         const cx = side * shore;
         const cz = z - depth;
         const y = -1.15 - kit.minY * kit.s;
@@ -319,29 +348,7 @@ export function createWorld(scene) {
 
   function applyArt(renderer, env) {
     if (!env) return;
-    if (env.concrete) {
-      tile.material = new THREE.MeshStandardMaterial({
-        color: 0xa9b7c2,
-        map: env.concrete,
-        normalMap: env.concreteNor || null,
-        aoMap: env.concreteArm || null,
-        roughnessMap: env.concreteArm || null,
-        metalnessMap: env.concreteArm || null,
-        roughness: 1,
-        metalness: 1,
-        vertexColors: true,
-      });
-      const tint = tile.geometry.getAttribute("color");
-      if (tint) {
-        for (let i = 0; i < tint.count; i++) {
-          const lum = (tint.getX(i) + tint.getY(i) + tint.getZ(i)) / 3;
-          if (lum < 0.42) tint.setXYZ(i, 0.55, 0.58, 0.62);
-          else tint.setXYZ(i, 1, 1, 1);
-        }
-        tint.needsUpdate = true;
-      }
-      tile.receiveShadow = true;
-    }
+    if (env.concrete) tile.receiveShadow = true;
     if (env.hdr && renderer) {
       const pmrem = new THREE.PMREMGenerator(renderer);
       pmrem.compileEquirectangularShader();
@@ -355,10 +362,10 @@ export function createWorld(scene) {
       env.water.wrapS = env.water.wrapT = THREE.RepeatWrapping;
       env.water.repeat.set(4, 16);
       water.material = new THREE.MeshStandardMaterial({
-        color: 0x66899a,
+        color: 0x2e92e0,
         normalMap: env.water,
-        roughness: 0.2,
-        metalness: 0.64,
+        roughness: 0.32,
+        metalness: 0.08,
         transparent: true,
         opacity: 0.94,
       });

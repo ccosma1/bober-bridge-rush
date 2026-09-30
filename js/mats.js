@@ -855,11 +855,10 @@ export function skyTexture() {
   c.height = 256;
   const g = c.getContext("2d");
   const grd = g.createLinearGradient(0, 0, 0, 256);
-  grd.addColorStop(0, "#8ECAEF");
-  grd.addColorStop(0.28, "#C5DFF3");
-  grd.addColorStop(0.52, "#F6E7D0");
-  grd.addColorStop(0.68, "#F3D2AE");
-  grd.addColorStop(1, "#E7C49A");
+  grd.addColorStop(0, "#7EC8F8");
+  grd.addColorStop(0.42, "#B7E3FB");
+  grd.addColorStop(0.72, "#D7F0FC");
+  grd.addColorStop(1, "#EAF6FF");
   g.fillStyle = grd;
   g.fillRect(0, 0, 4, 256);
   const tex = new THREE.CanvasTexture(c);
