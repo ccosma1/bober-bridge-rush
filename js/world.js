@@ -1,6 +1,6 @@
 import * as THREE from "three";
-import { toon, pineTexture, skyTexture, goldenSkyTexture, writeTRS } from "./mats.js?v=br10";
-import { buildTile } from "./build.js?v=br10";
+import { toon, pineTexture, skyTexture, goldenSkyTexture, writeTRS } from "./mats.js?v=br11";
+import { buildTile } from "./build.js?v=br11";
 
 const TILE = 20;
 const TILES = 10;
@@ -164,7 +164,7 @@ export function createWorld(scene) {
   beams.frustumCulled = false;
   beams.count = T_N;
   group.add(beams);
-  const cables = new THREE.InstancedMesh(new THREE.BoxGeometry(0.1, 0.1, SPAN / SEG + 0.14), toon("#6E1814"), T_N * 2 * SEG);
+  const cables = new THREE.InstancedMesh(new THREE.BoxGeometry(0.1, 0.1, 1), toon("#6E1814"), T_N * 2 * SEG);
   cables.frustumCulled = false;
   cables.count = T_N * 2 * SEG;
   group.add(cables);
@@ -220,12 +220,37 @@ export function createWorld(scene) {
   const pyM = pylons.instanceMatrix.array;
   const foM = foam.instanceMatrix.array;
 
+  const _proj = new THREE.Vector3();
+  const _fwd = new THREE.Vector3();
+
+  function writeCable(el, i, x, y, z, pitch, len) {
+    const c = Math.cos(pitch);
+    const s = Math.sin(pitch);
+    const o = i * 16;
+    el[o] = 1;
+    el[o + 1] = 0;
+    el[o + 2] = 0;
+    el[o + 3] = 0;
+    el[o + 4] = 0;
+    el[o + 5] = c;
+    el[o + 6] = s;
+    el[o + 7] = 0;
+    el[o + 8] = 0;
+    el[o + 9] = -s * len;
+    el[o + 10] = c * len;
+    el[o + 11] = 0;
+    el[o + 12] = x;
+    el[o + 13] = y;
+    el[o + 14] = z;
+    el[o + 15] = 1;
+  }
+
   let titleMood = 0;
   function setTitleMood(on) {
     titleMood = on ? 1 : 0;
   }
 
-  function follow(x, z, half, time, river, damScale, theme) {
+  function follow(x, z, half, time, river, damScale, theme, cam) {
     waterUniforms.uTime.value = time;
     const drop = river || 0;
     const scale = damScale || 1;
@@ -276,27 +301,121 @@ export function createWorld(scene) {
     bulbs.visible = false;
     edges.count = 0;
     edges.visible = false;
+    const deckAhead = -(base + TILES - 1) * TILE;
+    const deckBehind = -(base - 1) * TILE;
+    const onDeck = (pz) => pz <= deckBehind - 1 && pz >= deckAhead + 1;
     const tBase = Math.floor(dist / SPAN);
-    for (let i = 0; i < T_N; i++) {
-      const tz = -(tBase - 1 + i) * SPAN;
-      const tx = half + 0.05;
-      writeTRS(postMA, i * 2, -tx, 8, tz, 0, 1, 1, 1);
-      writeTRS(postMA, i * 2 + 1, tx, 8, tz, 0, 1, 1, 1);
-      const ahead = -tz - dist;
-      const showBeam = ahead < -8 || ahead > 18;
-      const bw = showBeam ? half * 2 + 0.9 : 0;
-      writeTRS(beamMA, i, 0, 15.6, tz, 0, bw, bw > 0 ? 1 : 0, bw > 0 ? 1 : 0);
-      for (let side = 0; side < 2; side++) {
-        const cx = side === 0 ? -tx : tx;
-        for (let s = 0; s < SEG; s++) {
-          const um = (s + 0.5) / SEG;
-          const sag = Math.sin(um * Math.PI) * 8.6;
-          const y = 14.9 - sag;
-          const cz = tz - um * SPAN;
-          const idx = (i * 2 + side) * SEG + s;
-          writeTRS(cableMA, idx, cx, y, cz, 0, 1, 1, 1);
-          const dropH = Math.max(0.3, y - 1.05);
-          writeTRS(hangMA, idx, cx, 1.05 + dropH * 0.5, cz, 0, 1, dropH, 1);
+    const desktop = !!(cam && cam.aspect > 1.2 && cam.fov < 50);
+    if (!desktop) {
+      for (let i = 0; i < T_N; i++) {
+        const tz = -(tBase - 1 + i) * SPAN;
+        const tx = half + 0.05;
+        const towerOn = onDeck(tz);
+        if (towerOn) {
+          writeTRS(postMA, i * 2, -tx, 8, tz, 0, 1, 1, 1);
+          writeTRS(postMA, i * 2 + 1, tx, 8, tz, 0, 1, 1, 1);
+        } else {
+          writeTRS(postMA, i * 2, 0, -40, 0, 0, 0, 0, 0);
+          writeTRS(postMA, i * 2 + 1, 0, -40, 0, 0, 0, 0, 0);
+        }
+        const ahead = -tz - dist;
+        const showBeam = towerOn && (ahead < -8 || ahead > 18);
+        const bw = showBeam ? half * 2 + 0.9 : 0;
+        if (showBeam) writeTRS(beamMA, i, 0, 15.6, tz, 0, bw, 1, 1);
+        else writeTRS(beamMA, i, 0, -40, 0, 0, 0, 0, 0);
+        for (let side = 0; side < 2; side++) {
+          const cx = side === 0 ? -tx : tx;
+          for (let s = 0; s < SEG; s++) {
+            const idx = (i * 2 + side) * SEG + s;
+            const u0 = s / SEG;
+            const u1 = (s + 1) / SEG;
+            const z0 = tz - u0 * SPAN;
+            const z1 = tz - u1 * SPAN;
+            if (!onDeck(z0) || !onDeck(z1)) {
+              writeTRS(cableMA, idx, 0, -40, 0, 0, 0, 0, 0);
+              writeTRS(hangMA, idx, 0, -40, 0, 0, 0, 0, 0);
+              continue;
+            }
+            const y0 = 15.7 - Math.sin(u0 * Math.PI) * 9.4;
+            const y1 = 15.7 - Math.sin(u1 * Math.PI) * 9.4;
+            const dy = y1 - y0;
+            const dz = z1 - z0;
+            const len = Math.hypot(dy, dz) || 0.001;
+            writeCable(cableMA, idx, cx, (y0 + y1) * 0.5, (z0 + z1) * 0.5, Math.atan2(-dy, dz), len);
+            const dropH = Math.max(0.3, (y0 + y1) * 0.5 - 1.05);
+            writeTRS(hangMA, idx, cx, 1.05 + dropH * 0.5, (z0 + z1) * 0.5, 0, 1, dropH, 1);
+          }
+        }
+      }
+    } else {
+      cam.getWorldDirection(_fwd);
+      const cx0 = cam.position.x;
+      const cy0 = cam.position.y;
+      const cz0 = cam.position.z;
+      const inFront = (px, py, pz) => (px - cx0) * _fwd.x + (py - cy0) * _fwd.y + (pz - cz0) * _fwd.z > 1.5;
+      const normSy = (px, py, pz) => {
+        _proj.set(px, py, pz).project(cam);
+        return (1 - _proj.y) * 0.5;
+      };
+      const tops = new Array(T_N);
+      for (let i = 0; i < T_N; i++) {
+        const tz = -(tBase - 1 + i) * SPAN;
+        const tx = half + 0.05;
+        if (!onDeck(tz) || !inFront(tx, 1, tz) || normSy(tx, 0.4, tz) < 0.1) {
+          tops[i] = 0;
+          continue;
+        }
+        let lo = 0.4;
+        let hi = 16;
+        for (let k = 0; k < 8; k++) {
+          const mid = (lo + hi) * 0.5;
+          if (normSy(tx, mid, tz) >= 0.1) lo = mid;
+          else hi = mid;
+        }
+        tops[i] = lo >= 3.2 ? lo : 0;
+      }
+      for (let i = 0; i < T_N; i++) {
+        const tz = -(tBase - 1 + i) * SPAN;
+        const tx = half + 0.05;
+        const top = tops[i];
+        if (top > 0) {
+          const sy = top / 16;
+          writeTRS(postMA, i * 2, -tx, top * 0.5, tz, 0, 1, sy, 1);
+          writeTRS(postMA, i * 2 + 1, tx, top * 0.5, tz, 0, 1, sy, 1);
+        } else {
+          writeTRS(postMA, i * 2, 0, -40, 0, 0, 0, 0, 0);
+          writeTRS(postMA, i * 2 + 1, 0, -40, 0, 0, 0, 0, 0);
+        }
+        const ahead = -tz - dist;
+        const showBeam = top > 4.5 && (ahead < -8 || ahead > 18);
+        if (showBeam) writeTRS(beamMA, i, 0, top - 0.25, tz, 0, half * 2 + 0.9, 1, 1);
+        else writeTRS(beamMA, i, 0, -40, 0, 0, 0, 0, 0);
+        const farTop = i + 1 < T_N ? tops[i + 1] : 0;
+        const spanOn = top > 0 && farTop > 0;
+        const crown0 = top - 0.2;
+        const crown1 = farTop - 0.2;
+        const sag = spanOn ? Math.min(4.2, Math.max(0.6, (crown0 + crown1) * 0.5 - 1.85)) : 0;
+        for (let side = 0; side < 2; side++) {
+          const cx = side === 0 ? -tx : tx;
+          for (let s = 0; s < SEG; s++) {
+            const idx = (i * 2 + side) * SEG + s;
+            const u0 = s / SEG;
+            const u1 = (s + 1) / SEG;
+            const z0 = tz - u0 * SPAN;
+            const z1 = tz - u1 * SPAN;
+            if (!spanOn || !onDeck(z0) || !onDeck(z1)) {
+              writeTRS(cableMA, idx, 0, -40, 0, 0, 0, 0, 0);
+              writeTRS(hangMA, idx, 0, -40, 0, 0, 0, 0, 0);
+              continue;
+            }
+            const y0 = crown0 + (crown1 - crown0) * u0 - Math.sin(u0 * Math.PI) * sag;
+            const y1 = crown0 + (crown1 - crown0) * u1 - Math.sin(u1 * Math.PI) * sag;
+            const dy = y1 - y0;
+            const dz = z1 - z0;
+            const len = Math.hypot(dy, dz) || 0.001;
+            writeCable(cableMA, idx, cx, (y0 + y1) * 0.5, (z0 + z1) * 0.5, Math.atan2(-dy, dz), len * 1.08);
+            writeTRS(hangMA, idx, 0, -40, 0, 0, 0, 0, 0);
+          }
         }
       }
     }

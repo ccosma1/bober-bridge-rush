@@ -2,7 +2,7 @@
 // br3 gun table. Lab may multiply a tier's DMG; the comment block at the
 // bottom of weaponMods records the numbers that passed the gun lab.
 
-export const BUILD = "br10";
+export const BUILD = "br11";
 export const SIM_CAP = 300;
 export const RENDER_CAP = 60;
 export const LIVE_CAP = 320;
@@ -238,7 +238,7 @@ export const LEVELS = {
         { type: "volunteer", hp: 6, x: 2.4 },
       ] },
       { at: 86, kind: "gate", side: 0, op: "mul", k: 2 },
-      { at: 112, kind: "wave", clog: 40 },
+      { at: 124, kind: "wave", clog: 40 },
       { at: 128, kind: "crate", layout: "row", items: [
         { type: "volunteer", hp: 10, x: -3.1 },
         { type: "volunteer", hp: 12, x: 2.6 },
@@ -298,17 +298,17 @@ export const LEVELS = {
         { type: "weapon", gun: "flame", hp: 14, x: 1.8 },
       ] },
       { at: 84, kind: "gate", side: 0, op: "mul", k: 2 },
-      { at: 122, kind: "wave", clog: 52 },
+      { at: 122, kind: "wave", clog: 48 },
       { at: 200, kind: "gate", side: 1, op: "add", k: 5 },
       { at: 224, kind: "crate", layout: "single", items: [{ type: "weapon", gun: "glacier", hp: 18, x: -2.2 }] },
-      { at: 270, kind: "wave", clog: 74, suds: 16, hair: 2 },
+      { at: 270, kind: "wave", clog: 58, suds: 8, hair: 1 },
       { at: 360, kind: "gate", side: 0, op: "add", k: 10 },
       { at: 400, kind: "crate", layout: "pair", items: [
         { type: "weapon", gun: "barrage", hp: 20, x: -2.4 },
         { type: "weapon", gun: "aurora", hp: 20, x: 2.2 },
       ] },
       { at: 430, kind: "gate", side: 1, op: "sub", k: 4 },
-      { at: 470, kind: "wave", clog: 70, suds: 18, hauler: 1, spit: 1, duck: 1 },
+      { at: 470, kind: "wave", clog: 52, suds: 8, hauler: 1, duck: 1 },
       { at: 560, kind: "gate", side: 0, op: "add", k: 8 },
       { at: 588, kind: "crate", layout: "single", items: [{ type: "tier", hp: 24, x: 1.4 }] },
       { at: 620, kind: "gate", side: 1, op: "add", k: 8 },
@@ -376,9 +376,413 @@ export const LEVELS = {
       { at: 860, kind: "boss" },
     ],
   },
+  "1-4": {
+    id: "1-4",
+    name: "1-4 LOW WATER MARK",
+    chapter: "THE DAM RUNS DRY",
+    intro: "The gauge just lied. The water did not.",
+    len: 900,
+    river: -0.75,
+    dam: 1.9,
+    theme: 0,
+    hpMul: 1.25,
+    baseHp: 1100,
+    vol: 12,
+    starN: 55,
+    starSec: 38,
+    boss: "baron",
+    bossHp: 4200,
+    bossName: "BARON CLOG",
+    win: "BRIDGE HELD!",
+    events: [
+      { at: 26, kind: "gate", side: 1, op: "add", k: 6 },
+      { at: 50, kind: "crate", layout: "row", items: [
+        { type: "volunteer", hp: 12, x: -2.6 },
+        { type: "volunteer", hp: 10, x: 2.4 },
+      ] },
+      { at: 80, kind: "gate", side: 0, op: "mul", k: 2 },
+      { at: 124, kind: "wave", clog: 48 },
+      { at: 210, kind: "gate", side: 1, op: "add", k: 8 },
+      { at: 230, kind: "crate", layout: "single", items: [{ type: "weapon", gun: "mini", hp: 16, x: 1.8 }] },
+      { at: 250, kind: "gate", side: 0, op: "add", k: 6 },
+      { at: 290, kind: "gate", side: 1, op: "add", k: 6 },
+      { at: 340, kind: "wave", clog: 64, suds: 12 },
+      { at: 430, kind: "gate", side: 0, op: "add", k: 10 },
+      { at: 455, kind: "crate", layout: "row", items: [
+        { type: "volunteer", hp: 18, x: -2.8 },
+        { type: "volunteer", hp: 16, x: 2.2 },
+      ] },
+      { at: 480, kind: "gate", side: 1, op: "sub", k: 3 },
+      { at: 520, kind: "crate", layout: "single", items: [{ type: "weapon", gun: "beam", hp: 20, x: -2.0 }] },
+      { at: 580, kind: "wave", clog: 72, suds: 14, hauler: 1, spit: 1, duck: 1 },
+      { at: 670, kind: "gate", side: 0, op: "add", k: 8 },
+      { at: 695, kind: "crate", layout: "single", items: [{ type: "weapon", gun: "storm", hp: 22, x: 2.2 }] },
+      { at: 720, kind: "gate", side: 1, op: "add", k: 6 },
+      { at: 745, kind: "crate", layout: "single", items: [{ type: "tier", hp: 24, x: -1.6 }] },
+      { at: 770, kind: "gate", side: 0, op: "add", k: 8 },
+      { at: 800, kind: "crate", layout: "row", items: [
+        { type: "volunteer", hp: 20, x: -2.4 },
+        { type: "volunteer", hp: 18, x: 2.6 },
+      ] },
+      { at: 830, kind: "gate", side: 1, op: "sub", k: 2 },
+      { at: 855, kind: "crate", layout: "row", items: [
+        { type: "volunteer", hp: 16, x: -1.4 },
+        { type: "volunteer", hp: 22, x: 2.0 },
+      ] },
+      { at: 880, kind: "gate", side: 0, op: "add", k: 6 },
+      { at: 900, kind: "boss" },
+    ],
+  },
+  "1-5": {
+    id: "1-5",
+    name: "1-5 SLUICE RUN",
+    chapter: "THE DAM RUNS DRY",
+    intro: "Every sluice is open. None of them asked us.",
+    len: 940,
+    river: -0.9,
+    dam: 2.05,
+    theme: 1,
+    hpMul: 1.32,
+    baseHp: 1200,
+    vol: 12,
+    starN: 60,
+    starSec: 40,
+    boss: "tub",
+    bossHp: 3200,
+    bossName: "BIG TUB",
+    win: "BRIDGE HELD!",
+    events: [
+      { at: 26, kind: "gate", side: 1, op: "add", k: 6 },
+      { at: 50, kind: "crate", layout: "row", items: [
+        { type: "volunteer", hp: 12, x: -2.6 },
+        { type: "volunteer", hp: 14, x: 2.4 },
+      ] },
+      { at: 80, kind: "gate", side: 0, op: "mul", k: 2 },
+      { at: 128, kind: "wave", clog: 52 },
+      { at: 214, kind: "gate", side: 1, op: "add", k: 8 },
+      { at: 256, kind: "gate", side: 0, op: "add", k: 6 },
+      { at: 300, kind: "gate", side: 1, op: "add", k: 8 },
+      { at: 360, kind: "wave", clog: 70, suds: 16, hair: 2 },
+      { at: 450, kind: "gate", side: 0, op: "add", k: 10 },
+      { at: 475, kind: "crate", layout: "single", items: [{ type: "weapon", gun: "flame", hp: 20, x: 1.8 }] },
+      { at: 500, kind: "gate", side: 1, op: "sub", k: 3 },
+      { at: 545, kind: "crate", layout: "single", items: [{ type: "weapon", gun: "glacier", hp: 22, x: -2.2 }] },
+      { at: 610, kind: "wave", clog: 76, suds: 18, hauler: 2, spit: 1, leaf: 1 },
+      { at: 700, kind: "gate", side: 0, op: "add", k: 8 },
+      { at: 725, kind: "crate", layout: "single", items: [{ type: "weapon", gun: "rail", hp: 24, x: 2.0 }] },
+      { at: 750, kind: "gate", side: 1, op: "add", k: 6 },
+      { at: 780, kind: "crate", layout: "row", items: [
+        { type: "volunteer", hp: 22, x: -2.8 },
+        { type: "volunteer", hp: 18, x: 2.4 },
+      ] },
+      { at: 810, kind: "gate", side: 0, op: "add", k: 8 },
+      { at: 840, kind: "crate", layout: "single", items: [{ type: "tier", hp: 26, x: 1.4 }] },
+      { at: 870, kind: "gate", side: 1, op: "add", k: 6 },
+      { at: 895, kind: "crate", layout: "row", items: [
+        { type: "volunteer", hp: 20, x: -2.2 },
+        { type: "volunteer", hp: 24, x: 2.6 },
+      ] },
+      { at: 920, kind: "gate", side: 0, op: "sub", k: 2 },
+      { at: 940, kind: "boss" },
+    ],
+  },
+  "1-6": {
+    id: "1-6",
+    name: "1-6 RUST BOLTS",
+    chapter: "THE DAM RUNS DRY",
+    intro: "The bolts are singing. That is not a good song.",
+    len: 980,
+    river: -1.05,
+    dam: 2.2,
+    theme: 2,
+    hpMul: 1.4,
+    baseHp: 1350,
+    vol: 14,
+    starN: 65,
+    starSec: 42,
+    boss: "grunk",
+    bossHp: 3000,
+    bossName: "GRUNK THE PLUMBER",
+    win: "DAM HELD!",
+    events: [
+      { at: 26, kind: "gate", side: 1, op: "add", k: 6 },
+      { at: 50, kind: "crate", layout: "row", items: [
+        { type: "volunteer", hp: 14, x: -2.8 },
+        { type: "volunteer", hp: 12, x: 2.2 },
+      ] },
+      { at: 80, kind: "gate", side: 0, op: "mul", k: 2 },
+      { at: 132, kind: "wave", clog: 56, leafN: 6 },
+      { at: 222, kind: "gate", side: 1, op: "add", k: 8 },
+      { at: 268, kind: "gate", side: 0, op: "add", k: 6 },
+      { at: 316, kind: "gate", side: 1, op: "add", k: 8 },
+      { at: 370, kind: "wave", clog: 74, suds: 14, leaf: 1 },
+      { at: 460, kind: "gate", side: 0, op: "add", k: 10 },
+      { at: 485, kind: "crate", layout: "row", items: [
+        { type: "volunteer", hp: 20, x: -2.6 },
+        { type: "volunteer", hp: 18, x: 2.4 },
+      ] },
+      { at: 510, kind: "gate", side: 1, op: "sub", k: 4 },
+      { at: 535, kind: "crate", layout: "single", items: [{ type: "weapon", gun: "saw", hp: 22, x: -2.0 }] },
+      { at: 575, kind: "crate", layout: "single", items: [{ type: "weapon", gun: "cone", hp: 22, x: 2.2 }] },
+      { at: 640, kind: "wave", clog: 80, suds: 16, hauler: 2, spit: 1, leaf: 1, duck: 1 },
+      { at: 730, kind: "gate", side: 0, op: "add", k: 8 },
+      { at: 760, kind: "crate", layout: "single", items: [{ type: "weapon", gun: "barrage", hp: 24, x: 1.6 }] },
+      { at: 790, kind: "gate", side: 1, op: "add", k: 6 },
+      { at: 820, kind: "crate", layout: "single", items: [{ type: "tier", hp: 28, x: -1.4 }] },
+      { at: 850, kind: "gate", side: 0, op: "add", k: 8 },
+      { at: 880, kind: "crate", layout: "row", items: [
+        { type: "volunteer", hp: 22, x: -2.4 },
+        { type: "volunteer", hp: 20, x: 2.6 },
+      ] },
+      { at: 910, kind: "gate", side: 1, op: "sub", k: 2 },
+      { at: 935, kind: "crate", layout: "row", items: [
+        { type: "volunteer", hp: 18, x: -1.8 },
+        { type: "volunteer", hp: 24, x: 2.2 },
+      ] },
+      { at: 960, kind: "gate", side: 0, op: "add", k: 6 },
+      { at: 980, kind: "boss" },
+    ],
+  },
+  "1-7": {
+    id: "1-7",
+    name: "1-7 DRY BED",
+    chapter: "THE DAM RUNS DRY",
+    intro: "Fish are walking. We are not celebrating.",
+    len: 1020,
+    river: -1.2,
+    dam: 2.35,
+    theme: 0,
+    hpMul: 1.48,
+    baseHp: 1450,
+    vol: 14,
+    starN: 70,
+    starSec: 45,
+    boss: "baron",
+    bossHp: 5000,
+    bossName: "BARON CLOG",
+    win: "BRIDGE HELD!",
+    events: [
+      { at: 26, kind: "gate", side: 1, op: "add", k: 6 },
+      { at: 50, kind: "crate", layout: "row", items: [
+        { type: "volunteer", hp: 14, x: -2.6 },
+        { type: "volunteer", hp: 16, x: 2.4 },
+      ] },
+      { at: 80, kind: "gate", side: 0, op: "mul", k: 2 },
+      { at: 136, kind: "wave", clog: 58 },
+      { at: 224, kind: "gate", side: 1, op: "add", k: 8 },
+      { at: 270, kind: "gate", side: 0, op: "add", k: 8 },
+      { at: 318, kind: "gate", side: 1, op: "add", k: 6 },
+      { at: 380, kind: "wave", clog: 78, suds: 16, hauler: 2 },
+      { at: 470, kind: "gate", side: 0, op: "add", k: 10 },
+      { at: 495, kind: "crate", layout: "row", items: [
+        { type: "volunteer", hp: 22, x: -2.8 },
+        { type: "volunteer", hp: 18, x: 2.2 },
+      ] },
+      { at: 520, kind: "gate", side: 1, op: "sub", k: 4 },
+      { at: 548, kind: "crate", layout: "single", items: [{ type: "weapon", gun: "aurora", hp: 24, x: 1.8 }] },
+      { at: 588, kind: "crate", layout: "single", items: [{ type: "weapon", gun: "storm", hp: 24, x: -2.2 }] },
+      { at: 650, kind: "wave", clog: 84, suds: 18, hauler: 2, spit: 1 },
+      { at: 740, kind: "gate", side: 0, op: "add", k: 8 },
+      { at: 770, kind: "crate", layout: "single", items: [{ type: "weapon", gun: "dambust", hp: 26, x: 2.0 }] },
+      { at: 800, kind: "gate", side: 1, op: "add", k: 8 },
+      { at: 830, kind: "crate", layout: "single", items: [{ type: "tier", hp: 30, x: -1.6 }] },
+      { at: 880, kind: "wave", clog: 6 },
+      { at: 960, kind: "gate", side: 0, op: "add", k: 6 },
+      { at: 990, kind: "crate", layout: "row", items: [
+        { type: "volunteer", hp: 20, x: -2.4 },
+        { type: "volunteer", hp: 24, x: 2.4 },
+      ] },
+      { at: 1020, kind: "boss" },
+    ],
+  },
+  "1-8": {
+    id: "1-8",
+    name: "1-8 PIPE WORKS",
+    chapter: "THE DAM RUNS DRY",
+    intro: "Someone re-threaded the valley. Badly.",
+    len: 1060,
+    river: -1.35,
+    dam: 2.5,
+    theme: 1,
+    hpMul: 1.56,
+    baseHp: 1550,
+    vol: 16,
+    starN: 75,
+    starSec: 48,
+    boss: "tub",
+    bossHp: 4000,
+    bossName: "BIG TUB",
+    win: "BRIDGE HELD!",
+    events: [
+      { at: 26, kind: "gate", side: 1, op: "add", k: 6 },
+      { at: 50, kind: "crate", layout: "row", items: [
+        { type: "volunteer", hp: 16, x: -2.8 },
+        { type: "volunteer", hp: 14, x: 2.4 },
+      ] },
+      { at: 80, kind: "gate", side: 0, op: "mul", k: 2 },
+      { at: 140, kind: "wave", clog: 62, suds: 18, spit: 2 },
+      { at: 230, kind: "gate", side: 1, op: "add", k: 8 },
+      { at: 276, kind: "gate", side: 0, op: "add", k: 8 },
+      { at: 305, kind: "crate", layout: "row", items: [
+        { type: "volunteer", hp: 20, x: -2.4 },
+        { type: "volunteer", hp: 18, x: 2.6 },
+      ] },
+      { at: 330, kind: "gate", side: 1, op: "add", k: 6 },
+      { at: 400, kind: "wave", clog: 80, suds: 22, spit: 2 },
+      { at: 490, kind: "gate", side: 0, op: "add", k: 10 },
+      { at: 518, kind: "crate", layout: "single", items: [{ type: "weapon", gun: "mini", hp: 24, x: 1.8 }] },
+      { at: 545, kind: "gate", side: 1, op: "sub", k: 4 },
+      { at: 572, kind: "crate", layout: "single", items: [{ type: "weapon", gun: "barrage", hp: 26, x: -2.2 }] },
+      { at: 600, kind: "gate", side: 0, op: "add", k: 8 },
+      { at: 635, kind: "crate", layout: "single", items: [{ type: "weapon", gun: "cone", hp: 26, x: 2.0 }] },
+      { at: 680, kind: "wave", clog: 88, suds: 24, hauler: 2, spit: 2 },
+      { at: 770, kind: "gate", side: 1, op: "add", k: 8 },
+      { at: 800, kind: "crate", layout: "single", items: [{ type: "tier", hp: 32, x: -1.4 }] },
+      { at: 830, kind: "gate", side: 0, op: "add", k: 6 },
+      { at: 870, kind: "crate", layout: "row", items: [
+        { type: "volunteer", hp: 24, x: -2.6 },
+        { type: "volunteer", hp: 22, x: 2.4 },
+      ] },
+      { at: 920, kind: "wave", clog: 60, suds: 14, spit: 1 },
+      { at: 1008, kind: "gate", side: 1, op: "add", k: 8 },
+      { at: 1034, kind: "crate", layout: "row", items: [
+        { type: "volunteer", hp: 20, x: -2.2 },
+        { type: "volunteer", hp: 26, x: 1.8 },
+      ] },
+      { at: 1060, kind: "boss" },
+    ],
+  },
+  "1-9": {
+    id: "1-9",
+    name: "1-9 CRACKED APRON",
+    chapter: "THE DAM RUNS DRY",
+    intro: "The apron cracked. The plan did not.",
+    len: 1100,
+    river: -1.5,
+    dam: 2.65,
+    theme: 2,
+    hpMul: 1.65,
+    baseHp: 1700,
+    vol: 16,
+    starN: 80,
+    starSec: 50,
+    boss: "baron",
+    bossHp: 5500,
+    bossName: "BARON CLOG",
+    win: "BRIDGE HELD!",
+    events: [
+      { at: 26, kind: "gate", side: 1, op: "add", k: 6 },
+      { at: 50, kind: "crate", layout: "row", items: [
+        { type: "volunteer", hp: 16, x: -2.6 },
+        { type: "volunteer", hp: 18, x: 2.4 },
+      ] },
+      { at: 80, kind: "gate", side: 0, op: "mul", k: 2 },
+      { at: 148, kind: "wave", clog: 66, hair: 3 },
+      { at: 236, kind: "gate", side: 1, op: "add", k: 8 },
+      { at: 282, kind: "gate", side: 0, op: "add", k: 8 },
+      { at: 313, kind: "crate", layout: "row", items: [
+        { type: "volunteer", hp: 22, x: -2.8 },
+        { type: "volunteer", hp: 20, x: 2.2 },
+      ] },
+      { at: 340, kind: "gate", side: 1, op: "add", k: 6 },
+      { at: 370, kind: "crate", layout: "row", items: [
+        { type: "volunteer", hp: 18, x: -1.6 },
+        { type: "volunteer", hp: 22, x: 2.6 },
+      ] },
+      { at: 420, kind: "wave", clog: 84, suds: 12, hauler: 2, hair: 3, leaf: 1 },
+      { at: 510, kind: "gate", side: 0, op: "add", k: 10 },
+      { at: 535, kind: "crate", layout: "single", items: [{ type: "weapon", gun: "rail", hp: 26, x: -2.0 }] },
+      { at: 560, kind: "gate", side: 1, op: "sub", k: 4 },
+      { at: 590, kind: "crate", layout: "single", items: [{ type: "weapon", gun: "aurora", hp: 28, x: 2.2 }] },
+      { at: 620, kind: "gate", side: 0, op: "add", k: 8 },
+      { at: 655, kind: "crate", layout: "single", items: [{ type: "weapon", gun: "beam", hp: 28, x: 1.6 }] },
+      { at: 710, kind: "wave", clog: 92, suds: 14, hauler: 3, hair: 4, leaf: 1 },
+      { at: 800, kind: "gate", side: 1, op: "add", k: 8 },
+      { at: 830, kind: "crate", layout: "single", items: [{ type: "tier", hp: 34, x: -1.4 }] },
+      { at: 860, kind: "gate", side: 0, op: "add", k: 6 },
+      { at: 900, kind: "crate", layout: "row", items: [
+        { type: "volunteer", hp: 24, x: -2.4 },
+        { type: "volunteer", hp: 26, x: 2.4 },
+      ] },
+      { at: 960, kind: "wave", clog: 70, hauler: 2, hair: 3, leaf: 1 },
+      { at: 1048, kind: "gate", side: 1, op: "add", k: 8 },
+      { at: 1074, kind: "crate", layout: "row", items: [
+        { type: "volunteer", hp: 22, x: -2.2 },
+        { type: "volunteer", hp: 28, x: 2.0 },
+      ] },
+      { at: 1100, kind: "boss" },
+    ],
+  },
+  "1-10": {
+    id: "1-10",
+    name: "1-10 LAST GASKET",
+    chapter: "THE DAM RUNS DRY",
+    intro: "One gasket left. Grunk brought a bigger wrench.",
+    len: 1160,
+    river: -1.7,
+    dam: 2.85,
+    theme: 2,
+    hpMul: 1.75,
+    baseHp: 1850,
+    vol: 18,
+    starN: 90,
+    starSec: 55,
+    boss: "grunk",
+    bossHp: 4800,
+    bossName: "GRUNK THE PLUMBER",
+    win: "DAM HELD!",
+    events: [
+      { at: 26, kind: "gate", side: 1, op: "add", k: 6 },
+      { at: 50, kind: "crate", layout: "row", items: [
+        { type: "volunteer", hp: 18, x: -2.8 },
+        { type: "volunteer", hp: 16, x: 2.4 },
+      ] },
+      { at: 80, kind: "gate", side: 0, op: "mul", k: 2 },
+      { at: 108, kind: "crate", layout: "row", items: [
+        { type: "volunteer", hp: 16, x: -2.2 },
+        { type: "volunteer", hp: 20, x: 2.6 },
+      ] },
+      { at: 156, kind: "wave", clog: 72, suds: 10, hauler: 1, hair: 2, spit: 1, leaf: 1, duck: 1 },
+      { at: 246, kind: "gate", side: 1, op: "add", k: 8 },
+      { at: 271, kind: "crate", layout: "row", items: [
+        { type: "volunteer", hp: 22, x: -2.6 },
+        { type: "volunteer", hp: 18, x: 1.8 },
+      ] },
+      { at: 296, kind: "gate", side: 0, op: "add", k: 8 },
+      { at: 326, kind: "crate", layout: "single", items: [{ type: "tier", hp: 28, x: 1.2 }] },
+      { at: 356, kind: "gate", side: 1, op: "add", k: 6 },
+      { at: 388, kind: "crate", layout: "row", items: [
+        { type: "volunteer", hp: 20, x: -2.4 },
+        { type: "volunteer", hp: 24, x: 2.4 },
+      ] },
+      { at: 440, kind: "wave", clog: 88, suds: 16, hauler: 2, hair: 3, spit: 1, leaf: 1, duck: 1 },
+      { at: 530, kind: "gate", side: 0, op: "add", k: 10 },
+      { at: 555, kind: "crate", layout: "single", items: [{ type: "weapon", gun: "saw", hp: 28, x: -2.0 }] },
+      { at: 580, kind: "gate", side: 1, op: "sub", k: 4 },
+      { at: 610, kind: "crate", layout: "single", items: [{ type: "weapon", gun: "glacier", hp: 30, x: 2.2 }] },
+      { at: 640, kind: "gate", side: 0, op: "add", k: 8 },
+      { at: 680, kind: "crate", layout: "single", items: [{ type: "weapon", gun: "storm", hp: 30, x: 1.6 }] },
+      { at: 740, kind: "wave", clog: 96, suds: 18, hauler: 3, hair: 3, spit: 2, leaf: 1, duck: 1 },
+      { at: 832, kind: "gate", side: 1, op: "add", k: 8 },
+      { at: 861, kind: "crate", layout: "row", items: [
+        { type: "volunteer", hp: 26, x: -2.6 },
+        { type: "volunteer", hp: 22, x: 2.2 },
+      ] },
+      { at: 890, kind: "gate", side: 0, op: "sub", k: 3 },
+      { at: 935, kind: "crate", layout: "row", items: [
+        { type: "volunteer", hp: 24, x: -1.8 },
+        { type: "volunteer", hp: 28, x: 2.6 },
+      ] },
+      { at: 1000, kind: "wave", clog: 84, suds: 16, hauler: 3, hair: 3, spit: 2, leaf: 1, duck: 1 },
+      { at: 1090, kind: "gate", side: 1, op: "add", k: 10 },
+      { at: 1115, kind: "crate", layout: "single", items: [{ type: "tier", hp: 36, x: -1.4 }] },
+      { at: 1140, kind: "gate", side: 0, op: "add", k: 6 },
+      { at: 1160, kind: "boss" },
+    ],
+  },
 };
 
-export const LEVEL_IDS = ["1-1", "1-2", "1-3"];
+export const LEVEL_IDS = ["1-1", "1-2", "1-3", "1-4", "1-5", "1-6", "1-7", "1-8", "1-9", "1-10"];
 
 export function levelOf(id) {
   return LEVELS[id] || LEVELS["1-1"];
@@ -390,16 +794,17 @@ export function nextLevel(id) {
 }
 
 export function highestPlayable(cleared) {
-  if (cleared && cleared["1-2"]) return "1-3";
-  if (cleared && cleared["1-1"]) return "1-2";
-  return "1-1";
+  const done = cleared || {};
+  for (let i = 0; i < LEVEL_IDS.length; i++) {
+    if (!done[LEVEL_IDS[i]]) return LEVEL_IDS[i];
+  }
+  return "1-10";
 }
 
 export function isUnlockedLevel(id, cleared) {
-  if (id === "1-1") return true;
-  if (id === "1-2") return !!(cleared && cleared["1-1"]);
-  if (id === "1-3") return !!(cleared && cleared["1-2"]);
-  return false;
+  const i = LEVEL_IDS.indexOf(id);
+  if (i <= 0) return i === 0;
+  return !!(cleared && cleared[LEVEL_IDS[i - 1]]);
 }
 
 export function crateHp(base, type, explicit) {
@@ -1035,9 +1440,15 @@ export function selfTestRules() {
   const plan = volleyPlan(300);
   eq(plan.m, 5, "volley m");
   eq(plan.vis, 12, "volley vis");
+  eq(LEVEL_IDS.length, 10, "ten levels");
+  eq(nextLevel("1-3"), "1-4", "path 1-4");
+  eq(nextLevel("1-10"), "", "no chapter 2");
   eq(highestPlayable({}), "1-1", "highest fresh");
   eq(highestPlayable({ "1-1": true }), "1-2", "highest 2");
-  eq(nextLevel("1-3"), "", "no chapter 2");
+  eq(highestPlayable({ "1-1": true, "1-2": true, "1-3": true }), "1-4", "highest 4");
+  eq(highestPlayable(Object.fromEntries(LEVEL_IDS.slice(0, 9).map(function (id) { return [id, true]; }))), "1-10", "highest 10");
+  eq(isUnlockedLevel("1-10", { "1-9": true }), true, "unlock 10");
+  eq(isUnlockedLevel("1-10", { "1-8": true }), false, "lock 10");
   const layout = layoutIssues();
   for (let i = 0; i < layout.length; i++) fails.push(layout[i]);
   const rhythm = rhythmIssues();

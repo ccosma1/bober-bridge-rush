@@ -309,12 +309,16 @@ button {
 
 #level-row {
   display: flex;
+  flex-wrap: nowrap;
   gap: 8px;
   margin: 0 0 12px;
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
 }
 
 .level-tile {
-  flex: 1;
+  flex: 0 0 auto;
+  min-width: 92px;
   min-height: 72px;
   padding: 8px 4px;
   border-radius: 14px;
@@ -334,6 +338,7 @@ button {
   margin-top: 2px;
   font: 700 10px/1.2 "Segoe UI", Arial, sans-serif;
   letter-spacing: 0.04em;
+  white-space: nowrap;
 }
 
 .level-tile .lv-stars {
@@ -767,7 +772,7 @@ h2 {
     -webkit-text-stroke-width: 5px;
   }
   #title #level-row { margin-bottom: 8px; }
-  #title .level-tile { min-height: 48px; padding: 4px 2px; }
+  #title .level-tile { min-width: 84px; min-height: 48px; padding: 4px 6px; }
   #title .level-tile b { font-size: 14px; }
   #title #btn-start { min-height: 44px; font-size: 15px; }
   #title .meta { margin-top: 6px; gap: 8px; flex-wrap: wrap; }
@@ -785,7 +790,7 @@ h2 {
     padding: 6px 8px 6px;
   }
   #title #level-row { margin-bottom: 4px; gap: 4px; }
-  #title .level-tile { min-height: 36px; padding: 2px 2px 3px; border-radius: 10px; }
+  #title .level-tile { min-width: 78px; min-height: 36px; padding: 2px 6px 3px; border-radius: 10px; }
   #title .level-tile b { font-size: 13px; }
   #title .level-tile span { font-size: 9px; margin-top: 0; }
   #title .level-tile .lv-stars { margin-top: 1px; font-size: 10px; }
@@ -803,10 +808,11 @@ h2 {
     padding: 24px 24px 24px calc(24px + var(--safe-l));
   }
   #title .sheet {
-    width: 380px;
-    max-width: calc(100vw - 48px);
+    width: min(980px, calc(100vw - 48px));
     max-height: calc(100dvh - 48px);
     overflow: auto;
   }
-  #title h1 { width: 380px; font-size: 48px; }
+  #title h1 { width: min(520px, calc(100vw - 48px)); font-size: 48px; }
+  #title #level-row { gap: 6px; }
+  #title .level-tile { min-width: 86px; }
 }

@@ -1,6 +1,6 @@
 # Bober Bridge Rush
 
-Phone-first squad lane runner. Chapter 1, The Dam Runs Dry: Pine Bridge, Spillway Bridge, and Dam Face.
+Phone-first squad lane runner. Chapter 1, The Dam Runs Dry, runs 1-1 Pine Bridge through 1-10 Last Gasket.
 
 Fan game. Unofficial. The in-game currency is $BOBER. Nothing here is real money.
 
@@ -10,9 +10,9 @@ Open `index.html` through a static server. Three.js r170 loads from the jsDelivr
 START.bat
 ```
 
-That serves http://127.0.0.1:8792/?v=br10
+That serves http://127.0.0.1:8792/?v=br11
 
-Build tag: br10
+Build tag: br11
 
 ## Credits
 

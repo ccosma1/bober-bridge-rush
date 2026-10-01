@@ -1,11 +1,11 @@
 import * as THREE from "three";
-import { BUILD, GUN_COST, GUN_ORDER, WEAPONS, highestPlayable, isUnlockedLevel, rhythmText } from "./rules.js?v=br10";
-import { createWorld } from "./world.js?v=br10";
-import { createPlay } from "./play.js?v=br10";
-import { createAudio } from "./audio.js?v=br10";
-import { loadSave, rememberWin, rememberGun, writeSave, buyGun } from "./save.js?v=br10";
-import { drawWeaponIcon, setTime } from "./mats.js?v=br10";
-import { loadGame, CREDIT_LINES } from "./assets.js?v=br10";
+import { BUILD, GUN_COST, GUN_ORDER, WEAPONS, highestPlayable, isUnlockedLevel, rhythmText } from "./rules.js?v=br11";
+import { createWorld } from "./world.js?v=br11";
+import { createPlay } from "./play.js?v=br11";
+import { createAudio } from "./audio.js?v=br11";
+import { loadSave, rememberWin, rememberGun, writeSave, buyGun } from "./save.js?v=br11";
+import { drawWeaponIcon, setTime } from "./mats.js?v=br11";
+import { loadGame, CREDIT_LINES } from "./assets.js?v=br11";
 
 const save = loadSave();
 const canvas = document.getElementById("c");
@@ -78,7 +78,7 @@ const chipFamily = document.getElementById("chip-family");
 const wordEls = document.querySelectorAll("#words .word");
 const notesEl = document.getElementById("notes");
 const notesBtn = document.getElementById("btn-notes");
-const LEVEL_TILES = ["1-1", "1-2", "1-3"];
+const LEVEL_TILES = ["1-1", "1-2", "1-3", "1-4", "1-5", "1-6", "1-7", "1-8", "1-9", "1-10"];
 
 let mode = "title";
 let hold = false;
@@ -491,7 +491,7 @@ function frame(now) {
     camera.lookAt(camX, lookY, v.squadZ - ahead);
   }
   camera.updateMatrixWorld();
-  world.follow(v.squadX, v.squadZ, v.half, play.time, v.river, v.dam, v.theme);
+  world.follow(v.squadX, v.squadZ, v.half, play.time, v.river, v.dam, v.theme, mode === "title" ? null : camera);
   setTime(play.time);
   play.sync(camera);
   if (mode === "title" && composer) {

@@ -53,7 +53,7 @@ import {
   CHARGE_LEAD,
   PINCH_BLOB,
   volleyPlan,
-} from "./rules.js?v=br10";
+} from "./rules.js?v=br11";
 import {
   animToon,
   attachOutline,
@@ -73,7 +73,7 @@ import {
   writeLog,
   writeQuat,
   writeTRS,
-} from "./mats.js?v=br10";
+} from "./mats.js?v=br11";
 import {
   arrowGeo,
   buildBaron,
@@ -102,7 +102,7 @@ import {
   sawDiscGeo,
   streakGeo,
   streamGeo,
-} from "./build.js?v=br10";
+} from "./build.js?v=br11";
 
 const STRIDE = 320;
 const CAPS = [320, 320, 320, 120, 120, 120, 120];
@@ -1662,7 +1662,7 @@ export function createPlay(scene, camera, audio) {
         spawnEnemy(type, x0, cursor + spots[k][1]);
       }
       left -= size;
-      cursor -= 2.8;
+      cursor -= level.id === "1-2" ? 4.4 : 2.8;
       cluster++;
     }
     per;

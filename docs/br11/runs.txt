@@ -1,0 +1,67 @@
+Bober Bridge Rush br11 balance runs
+Build tag br11. Cache bust ?v=br11. Save key unchanged.
+Sensible bot is setBot only, after start. It is not locked and not autoPick.
+Standing still shoots and does not steer.
+Rail-hugging bot is setAxis(1) after start. It is not setBot.
+
+selfTest fails: none. rules selfTestRules printed RULES_OK. play.selfTest fails none. Soldier 536, Bober 548, boss 5875.
+
+Standing still, 1-1, fire on, no steer. Alive at 17s with n 3, then loses. 10/10 seeds. wrongGateHits 0. Gun burst T1.
+  At t=17 every seed was still n 3, dist 128.2, ended empty, burst, wrong 0.
+  seed 3 lose t 17.5 dist 129.1 n 0
+  seeds 1, 2, 4, 5, 6, 7, 8, 9, 10 lose t 18 dist 129.3 or 129.4 n 0
+
+Rail-hugging 1-2, setAxis(1), seeds 11/22/33. All wins. wrongGateHits 0. Gun aurora T2.
+  seed 11 win t 247 n 31 aurora T2 boss 8.7s dist 780 wrong 0
+  seed 22 win t 352 n 62 aurora T2 boss 8.0s dist 780 wrong 0
+  seed 33 win t 268 n 69 aurora T2 boss 8.7s dist 780 wrong 0
+
+Sensible 1-1:
+  seed 11 win t 123.5 n 123 mini T2 boss 6.0s dist 700 wrong 0
+  seed 22 win t 126.5 n 97 mini T2 boss 7.5s dist 700 wrong 0
+  seed 33 win t 126 n 113 mini T2 boss 6.0s dist 700 wrong 0
+
+Sensible 1-2:
+  seed 11 win t 138.5 n 101 burst T2 boss 6.1s dist 780 wrong 0
+  seed 22 win t 140.5 n 81 burst T2 boss 6.1s dist 780 wrong 0
+  seed 33 win t 139.5 n 101 burst T2 boss 6.1s dist 780 wrong 0
+
+Sensible 1-3:
+  seed 11 win t 126.5 n 253 burst T3 boss 6.1s dist 860 wrong 0
+  seed 22 win t 125.5 n 226 burst T3 boss 6.1s dist 860 wrong 0
+  seed 33 win t 126 n 252 burst T3 boss 6.1s dist 860 wrong 0
+
+Sensible 1-4:
+  seed 11 win t 153 n 148 mini T2 boss 7.5s dist 900 wrong 0
+  seed 22 win t 154 n 108 mini T2 boss 7.7s dist 900 wrong 0
+  seed 33 win t 153 n 129 mini T2 boss 7.3s dist 900 wrong 0
+
+Sensible 1-5:
+  seed 11 win t 158.5 n 205 burst T2 boss 6.1s dist 940 wrong 0
+  seed 22 win t 160.5 n 159 burst T2 boss 6.1s dist 940 wrong 0
+  seed 33 win t 160 n 183 burst T2 boss 6.1s dist 940 wrong 0
+
+Sensible 1-6:
+  seed 11 win t 165.5 n 185 burst T2 boss 6.1s dist 980 wrong 0
+  seed 22 win t 166.5 n 143 burst T2 boss 6.1s dist 980 wrong 0
+  seed 33 win t 167 n 167 burst T2 boss 6.1s dist 980 wrong 0
+
+Sensible 1-7:
+  seed 11 win t 175 n 135 dambust T2 boss 6.3s dist 1020 wrong 0
+  seed 22 win t 176.5 n 63 dambust T2 boss 8.3s dist 1020 wrong 0
+  seed 33 win t 176 n 113 dambust T2 boss 6.3s dist 1020 wrong 0
+
+Sensible 1-8:
+  seed 11 win t 203 n 174 mini T2 boss 6.1s dist 1060 wrong 0
+  seed 22 win t 205 n 131 mini T2 boss 6.1s dist 1060 wrong 0
+  seed 33 win t 199.5 n 157 mini T2 boss 6.1s dist 1060 wrong 0
+
+Sensible 1-9:
+  seed 11 win t 205 n 228 beam T2 boss 7.4s dist 1100 wrong 0
+  seed 22 win t 206 n 179 beam T2 boss 8.2s dist 1100 wrong 0
+  seed 33 win t 201 n 229 beam T2 boss 7.5s dist 1100 wrong 0
+
+Sensible 1-10:
+  seed 11 win t 220.5 n 228 burst T3 boss 6.1s dist 1160 wrong 0
+  seed 22 win t 219.5 n 146 burst T3 boss 6.9s dist 1160 wrong 0
+  seed 33 win t 220 n 214 burst T3 boss 6.1s dist 1160 wrong 0
