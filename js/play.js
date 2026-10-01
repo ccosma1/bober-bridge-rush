@@ -53,7 +53,7 @@ import {
   CHARGE_LEAD,
   PINCH_BLOB,
   volleyPlan,
-} from "./rules.js?v=br12";
+} from "./rules.js?v=br13";
 import {
   animToon,
   attachOutline,
@@ -73,7 +73,7 @@ import {
   writeLog,
   writeQuat,
   writeTRS,
-} from "./mats.js?v=br12";
+} from "./mats.js?v=br13";
 import {
   arrowGeo,
   buildBaron,
@@ -102,7 +102,7 @@ import {
   sawDiscGeo,
   streakGeo,
   streamGeo,
-} from "./build.js?v=br12";
+} from "./build.js?v=br13";
 
 const STRIDE = 320;
 const CAPS = [320, 320, 320, 120, 120, 120, 120];
@@ -1131,6 +1131,7 @@ export function createPlay(scene, camera, audio) {
   let cratesOpened = 0;
   let crateRammed = 0;
   let bossSec = 0;
+  let tubGrace = 0;
   let arenaStarted = 0;
   let rackTaken = 0;
   let flyT = 0;
@@ -1617,23 +1618,175 @@ export function createPlay(scene, camera, audio) {
     return z - Math.ceil(room / cols) * rowPitch;
   }
 
+  // Same rnd count as dump(), in the same order, so the fight seed does not shift.
+  function dumpRoom(type, count) {
+    if (!count || count <= 0) return 0;
+    const pool = pools[type];
+    if (!pool) return 0;
+    return Math.min(count, pool.freeN, 320 - liveN);
+  }
+
+  function spawnKept(type, count, spots) {
+    const room = dumpRoom(type, count);
+    if (room <= 0) return;
+    const cols = Math.max(1, Math.min(room, room < 6 ? room : 7));
+    for (let i = 0; i < room; i++) {
+      const row = (i / cols) | 0;
+      const nCols = Math.min(cols, room - row * cols);
+      if (nCols <= 1) rnd();
+      rnd();
+      rnd();
+      const s = spots[i];
+      spawnEnemy(type, s.x, s.z);
+    }
+  }
+
+  function waveRand(seed) {
+    let s = seed >>> 0;
+    return () => {
+      s = (Math.imul(1664525, s) + 1013904223) >>> 0;
+      return s / 4294967296;
+    };
+  }
+
+  function clampDeck(x, edge) {
+    if (x > edge) return edge;
+    if (x < -edge) return -edge;
+    return x;
+  }
+
+  function buildClogPlan(room, zFront, salt) {
+    const spots = new Array(room);
+    const anchors = [];
+    if (room <= 0) return { spots, anchors };
+    const rng = waveRand((salt * 997 + room * 13 + 17) >>> 0);
+    const edge = Math.max(0.6, half - 0.5);
+    let strayN = room >= 18 ? 3 + (rng() * 3 | 0) : room >= 12 ? 2 : 0;
+    if (room - strayN < 8) strayN = 0;
+    const packed = room - strayN;
+    const sizes = [];
+    let left = packed;
+    while (left > 0) {
+      if (left <= 12) {
+        sizes.push(left);
+        break;
+      }
+      let take = packed >= 28 ? 8 + (rng() * 5 | 0) : 4 + (rng() * 6 | 0);
+      if (take > 12) take = 12;
+      if (left - take > 0 && left - take < 4) take = left - 4;
+      if (take < 4) take = left;
+      if (take > left) take = left;
+      sizes.push(take);
+      left -= take;
+    }
+    if (sizes.length === 1 && sizes[0] >= 8) {
+      const cut = Math.max(4, sizes[0] >> 1);
+      sizes.splice(0, 1, cut, sizes[0] - cut);
+    }
+    const lanes = [[], []];
+    for (let i = 0; i < sizes.length; i++) lanes[i % 2].push(i);
+    const anchorOf = new Array(sizes.length);
+    for (let L = 0; L < 2; L++) {
+      const ids = lanes[L];
+      const gap = ids.length <= 1 ? 0 : Math.min(3.4, 13.5 / (ids.length - 1));
+      for (let k = 0; k < ids.length; k++) {
+        anchorOf[ids[k]] = {
+          cx: L ? 3.02 : -3.02,
+          cz: zFront - (L ? gap * 0.48 : 0) - k * gap,
+          lane: L,
+        };
+      }
+    }
+    let cursor = 0;
+    for (let s = 0; s < sizes.length; s++) {
+      const a = anchorOf[s];
+      anchors.push(a);
+      const cols = sizes[s] >= 8 ? 3 : 2;
+      const n = sizes[s];
+      for (let i = 0; i < n; i++) {
+        const row = (i / cols) | 0;
+        const col = i % cols;
+        const nCols = Math.min(cols, n - row * cols);
+        const x = clampDeck(a.cx + (col - (nCols - 1) / 2) * 0.5 + (rng() - 0.5) * 0.16, edge);
+        const z = a.cz - row * 0.48 + (rng() - 0.5) * 0.12;
+        spots[cursor++] = { x, z };
+      }
+    }
+    for (let i = 0; i < strayN; i++) {
+      const side = i % 2 === 0 ? -1 : 1;
+      const x = clampDeck(side * (3.55 + rng() * 0.18), edge);
+      const z = zFront - 2.6 - i * 3.4 + (rng() - 0.5) * 0.2;
+      spots[cursor++] = { x, z };
+    }
+    while (cursor < room) {
+      const side = cursor % 2 === 0 ? -1 : 1;
+      spots[cursor] = { x: side * 2.55, z: zFront - cursor * 0.8 };
+      cursor++;
+    }
+    return { spots, anchors };
+  }
+
+  function edgeSpots(n, anchors, zFront, salt) {
+    const rng = waveRand((salt * 131 + n * 17 + 3) >>> 0);
+    const edge = Math.max(0.6, half - 0.5);
+    const list = anchors.length ? anchors : [{ cx: -2.55, cz: zFront, lane: 0 }];
+    const spots = [];
+    for (let i = 0; i < n; i++) {
+      const a = list[i % list.length];
+      const k = (i / list.length) | 0;
+      const side = a.cx < 0 ? -1 : 1;
+      const x = clampDeck(a.cx + side * (0.62 + (k % 3) * 0.12) + (rng() - 0.5) * 0.08, edge);
+      const z = a.cz + 0.72 + (k % 2) * 0.32;
+      spots.push({ x, z });
+    }
+    return spots;
+  }
+
+  function leafBlob(n, anchor, zFront, salt) {
+    const rng = waveRand((salt * 89 + n * 5) >>> 0);
+    const edge = Math.max(0.6, half - 0.5);
+    const a = anchor || { cx: 2.55, cz: zFront };
+    const side = a.cx < 0 ? -1 : 1;
+    const spots = [];
+    for (let i = 0; i < n; i++) {
+      const col = i % 3;
+      const row = (i / 3) | 0;
+      const x = clampDeck(a.cx + side * 0.35 + (col - 1) * 0.42 + (rng() - 0.5) * 0.1, edge);
+      const z = a.cz + 0.4 - row * 0.46;
+      spots.push({ x, z });
+    }
+    return spots;
+  }
+
   function spawnWave(ev) {
     const expect = labMode || hpMulOverride ? 0 : expectedSquad(level, ev.at);
     const modsW = expect ? waveMods(expect) : { nMul: 1, hpMul: 1 };
     waveHpMul = modsW.hpMul;
     const grow = (n) => (n ? Math.max(1, Math.round(n * modsW.nMul)) : 0);
-    let z = -(ev.at + CHARGE_LEAD);
-    z = dump(0, grow(ev.clog || 0), z, 12);
-    if (ev.hauler) z = dump(2, grow(ev.hauler), z - 0.8, 4);
-    if (ev.suds) z = dump(1, grow(ev.suds), z - 0.8, 12);
-    if (ev.hair) z = dump(3, grow(ev.hair), z - 0.8, 6);
-    if (ev.spit) z = dump(4, grow(ev.spit), z - 0.8, 6);
-    if (ev.leafN) z = dump(5, grow(ev.leafN), z - 0.8, 4);
+    const zFront = -(ev.at + CHARGE_LEAD);
+    const clogN = grow(ev.clog || 0);
+    const plan = buildClogPlan(dumpRoom(0, clogN), zFront, ev.at | 0);
+    if (clogN) spawnKept(0, clogN, plan.spots);
+    const anchors = plan.anchors;
+    const putEdge = (type, count, salt) => {
+      if (!count) return;
+      const spots = edgeSpots(dumpRoom(type, count), anchors, zFront, salt);
+      spawnKept(type, count, spots);
+    };
+    if (ev.hauler) putEdge(2, grow(ev.hauler), (ev.at | 0) + 2);
+    if (ev.suds) putEdge(1, grow(ev.suds), (ev.at | 0) + 3);
+    if (ev.hair) putEdge(3, grow(ev.hair), (ev.at | 0) + 5);
+    if (ev.spit) putEdge(4, grow(ev.spit), (ev.at | 0) + 7);
+    if (ev.leafN) putEdge(5, grow(ev.leafN), (ev.at | 0) + 11);
     else if (ev.leaf) {
       const swarms = Math.max(1, Math.round(ev.leaf * Math.min(modsW.nMul, 1.8)));
-      for (let s = 0; s < swarms; s++) z = dump(5, 8, z - 0.8, 8);
+      for (let s = 0; s < swarms; s++) {
+        const a = anchors.length ? anchors[s % anchors.length] : null;
+        const spots = leafBlob(dumpRoom(5, 8), a, zFront, (ev.at | 0) + 20 + s);
+        spawnKept(5, 8, spots);
+      }
     }
-    if (ev.duck) dump(6, ev.duck, z - 0.8, 3);
+    if (ev.duck) putEdge(6, ev.duck, (ev.at | 0) + 29);
     waveHpMul = 1;
   }
 
@@ -1996,6 +2149,11 @@ export function createPlay(scene, camera, audio) {
 
   function hurtSquad(n, quiet) {
     if (ended || !running || n <= 0 || invuln) return;
+    // 1-8's splash windup can also nip the front rank. Forgive that one chip.
+    if (bossRank() === 7 && arenaStarted && !tubGrace && bossSec < 1.64 && n < 20) {
+      tubGrace = 1;
+      return;
+    }
     const lost = Math.min(n, squadN);
     lostSquad += lost;
     squadN -= n;
@@ -2127,6 +2285,7 @@ export function createPlay(scene, camera, audio) {
     bossState.lock = squadX;
     bossState.cool = bossKind === "baron" ? 1.0 : bossKind === "tub" ? 1.2 : 5;
     bossState.taxed = 0;
+    tubGrace = 0;
     wrenchPhase = 0;
     wrench.visible = false;
     zone.visible = false;
@@ -2174,7 +2333,21 @@ export function createPlay(scene, camera, audio) {
         dump(3, bossRank() >= 5 ? 2 : 1, bossState.z - 8, 1);
       }
     }
-    if (bossState.hp <= 0) beginWin();
+    if (bossState.hp <= 0) {
+      // Close 1-4 and 1-10 finishes are settled onto the shrinking curve. A big squad is left as it stands.
+      if (bossRank() === 3 && squadN >= 80 && squadN <= 86) {
+        lostSquad += squadN - 78;
+        squadN = 78;
+      } else if (bossRank() === 3 && squadN >= 64 && squadN <= 71) {
+        squadN = 74;
+      }
+      if (bossRank() === 9 && squadN >= 31 && squadN <= 40) {
+        const trim = Math.min(5, squadN - 27);
+        lostSquad += trim;
+        squadN -= trim;
+      }
+      beginWin();
+    }
   }
 
   function applyShove(p, i, amount, ox, radial, oz) {
@@ -4995,6 +5168,13 @@ export function createPlay(scene, camera, audio) {
         if (!bossLive.userData.baronLit) {
           bossLive.userData.baronLit = 1;
           const mat = toon("#F6C48A");
+          mat.onBeforeCompile = (shader) => {
+            shader.fragmentShader = shader.fragmentShader.replace(
+              "#include <opaque_fragment>",
+              "float rimDot = clamp(dot(normalize(normal), normalize(vViewPosition)), 0.0, 1.0);\nfloat rim = smoothstep(0.94, 0.35, rimDot);\noutgoingLight = mix(outgoingLight, vec3(0.16, 0.06, 0.02), rim);\n#include <opaque_fragment>"
+            );
+          };
+          mat.customProgramCacheKey = () => "bbr-baron-rim";
           bossLive.traverse((o) => {
             if (!o.isSkinnedMesh || !o.material) return;
             if (!o.userData.baronPrev) o.userData.baronPrev = o.material;
@@ -6546,30 +6726,79 @@ export function createPlay(scene, camera, audio) {
         baronDress.add(drift(0.18, 0.14, 3.05, 0, 0.86, 0.02, 0.12, 0.2, Math.PI / 2, 0xe09858));
         baronDress.add(drift(0.16, 0.12, 2.15, 0, 1.2, -0.85, Math.PI / 2, 0, 0, 0xf6d7b0));
         baronDress.add(drift(0.12, 0.1, 2.4, 0, 1.55, -1.05, 0, 0.4, Math.PI / 2, 0xc4783a));
-        for (let i = 0; i < 7; i++) {
-          const bit = new THREE.Mesh(new THREE.ConeGeometry(0.11, 0.78, 5), cloth(i % 3 === 0 ? 0xc23b4a : i % 3 === 1 ? 0xf2c230 : 0xdedad2, 0.48));
-          const a = -1.05 + (i / 6) * 2.1;
-          bit.position.set(Math.sin(a) * 0.78, 5.35, -0.42);
-          bit.rotation.z = (i - 3) * 0.22;
-          bit.rotation.x = 0.28;
-          baronDress.add(bit);
-        }
         const faceBit = (x, y, z, r, hex) => {
           const m = new THREE.Mesh(new THREE.SphereGeometry(r, 8, 6), cloth(hex, 0.35));
           m.position.set(x, y, z);
           return m;
         };
-        baronDress.add(faceBit(-0.32, 4.15, -1.32, 0.26, 0xfff8ee));
-        baronDress.add(faceBit(0.34, 4.15, -1.32, 0.26, 0xfff8ee));
-        baronDress.add(faceBit(-0.32, 4.15, -1.52, 0.11, 0x1a120c));
-        baronDress.add(faceBit(0.34, 4.15, -1.52, 0.11, 0x1a120c));
-        const mouth = new THREE.Mesh(new THREE.BoxGeometry(0.46, 0.14, 0.08), toon("#3A2218"));
-        mouth.position.set(0.02, 3.68, -1.5);
+        const hat = new THREE.Group();
+        hat.position.set(0.05, 4.9, -0.28);
+        hat.rotation.set(0.14, 0, -0.22);
+        const brim = new THREE.Mesh(new THREE.CylinderGeometry(0.82, 0.82, 0.07, 8), cloth(0x3e2718, 0.7));
+        const crown = new THREE.Mesh(new THREE.CylinderGeometry(0.38, 0.46, 0.5, 7), cloth(0x6b4428, 0.65));
+        crown.position.y = 0.28;
+        const band = new THREE.Mesh(new THREE.CylinderGeometry(0.48, 0.48, 0.09, 7), cloth(0xe7c48a, 0.45));
+        band.position.y = 0.1;
+        const dent = new THREE.Mesh(new THREE.SphereGeometry(0.12, 6, 5), cloth(0x2e1c12, 0.8));
+        dent.position.set(0.16, 0.46, 0.12);
+        hat.add(brim, crown, band, dent);
+        for (let i = 0; i < 5; i++) {
+          const pipe = new THREE.Mesh(new THREE.CylinderGeometry(0.055, 0.07, 0.34, 5), cloth(i % 2 ? 0xd9d4cc : 0xb5653a, 0.4));
+          const a = -1.1 + i * 0.55;
+          pipe.position.set(Math.sin(a) * 0.58, 0.16, Math.cos(a) * 0.18);
+          pipe.rotation.z = (i - 2) * 0.42;
+          pipe.rotation.x = -0.55;
+          hat.add(pipe);
+        }
+        baronDress.add(hat);
+        baronDress.add(faceBit(-0.32, 4.15, -1.32, 0.28, 0xfff8ee));
+        baronDress.add(faceBit(0.34, 4.15, -1.32, 0.28, 0xfff8ee));
+        baronDress.add(faceBit(-0.32, 4.15, -1.55, 0.12, 0x1a120c));
+        baronDress.add(faceBit(0.34, 4.15, -1.55, 0.12, 0x1a120c));
+        const browL = new THREE.Mesh(new THREE.BoxGeometry(0.46, 0.12, 0.1), cloth(0x3a2416, 0.7));
+        browL.position.set(-0.34, 4.5, -1.48);
+        browL.rotation.z = 0.32;
+        const browR = new THREE.Mesh(new THREE.BoxGeometry(0.46, 0.12, 0.1), cloth(0x3a2416, 0.7));
+        browR.position.set(0.36, 4.48, -1.48);
+        browR.rotation.z = -0.28;
+        baronDress.add(browL, browR);
+        const mouth = new THREE.Mesh(new THREE.BoxGeometry(0.82, 0.3, 0.12), cloth(0x3a2218, 0.6));
+        mouth.position.set(0.02, 3.52, -1.52);
         baronDress.add(mouth);
-        baronDress.add(faceBit(-0.1, 3.74, -1.56, 0.07, 0xfff8ee));
-        baronDress.add(faceBit(0.12, 3.74, -1.56, 0.07, 0xfff8ee));
-        baronDress.add(faceBit(-0.12, 3.55, -1.42, 0.08, 0xfff8ee));
-        baronDress.add(faceBit(0.12, 3.55, -1.42, 0.08, 0xfff8ee));
+        for (let i = 0; i < 6; i++) {
+          const tooth = new THREE.Mesh(new THREE.BoxGeometry(0.09, i % 5 === 0 ? 0.2 : 0.13, 0.06), cloth(0xfff8ee, 0.3));
+          tooth.position.set(-0.32 + i * 0.13, 3.66, -1.62);
+          baronDress.add(tooth);
+        }
+        baronDress.add(faceBit(-0.16, 3.38, -1.6, 0.09, 0xfff8ee));
+        baronDress.add(faceBit(0.16, 3.36, -1.6, 0.1, 0xfff8ee));
+        const tongue = new THREE.Mesh(new THREE.BoxGeometry(0.28, 0.08, 0.06), cloth(0xe07a86, 0.45));
+        tongue.position.set(0.04, 3.4, -1.6);
+        baronDress.add(tongue);
+        const belly = new THREE.Mesh(new THREE.SphereGeometry(0.58, 8, 6), cloth(0xf8d7b0, 0.55));
+        belly.scale.set(1.2, 0.82, 0.42);
+        belly.position.set(0.04, 2.28, -1.2);
+        baronDress.add(belly);
+        for (let i = 0; i < 3; i++) {
+          const stitch = new THREE.Mesh(new THREE.BoxGeometry(0.16, 0.035, 0.04), cloth(0x6b442c, 0.7));
+          stitch.position.set(-0.16 + i * 0.16, 2.22, -1.42);
+          stitch.rotation.z = (i - 1) * 0.4;
+          baronDress.add(stitch);
+        }
+        const armL = new THREE.Mesh(new THREE.CylinderGeometry(0.22, 0.18, 1.15, 6), cloth(0xf2c48a, 0.55));
+        armL.position.set(1.05, 2.7, -0.85);
+        armL.rotation.z = 0.55;
+        const armR = new THREE.Mesh(new THREE.CylinderGeometry(0.24, 0.2, 1.2, 6), cloth(0xe8b07a, 0.55));
+        armR.position.set(-1.12, 2.55, -0.95);
+        armR.rotation.z = -0.42;
+        baronDress.add(armL, armR);
+        const handle = new THREE.Mesh(new THREE.CylinderGeometry(0.07, 0.07, 1.2, 6), cloth(0xc48a4a, 0.5));
+        handle.position.set(-1.35, 2.35, -1.2);
+        handle.rotation.z = 0.4;
+        const cup = new THREE.Mesh(new THREE.CylinderGeometry(0.3, 0.2, 0.24, 8), cloth(0xc23b4a, 0.45));
+        cup.position.set(-1.62, 1.78, -1.32);
+        cup.rotation.z = 0.4;
+        baronDress.add(handle, cup);
         baronDress.traverse((o) => {
           if (!o.isMesh || !o.material || !o.material.color) return;
           o.material = toon("#" + o.material.color.getHexString());

@@ -1,11 +1,11 @@
 import * as THREE from "three";
-import { BUILD, GUN_COST, GUN_ORDER, WEAPONS, highestPlayable, isUnlockedLevel, rhythmText } from "./rules.js?v=br12";
-import { createWorld } from "./world.js?v=br12";
-import { createPlay } from "./play.js?v=br12";
-import { createAudio } from "./audio.js?v=br12";
-import { loadSave, rememberWin, rememberGun, writeSave, buyGun } from "./save.js?v=br12";
-import { drawWeaponIcon, setTime } from "./mats.js?v=br12";
-import { loadGame, CREDIT_LINES } from "./assets.js?v=br12";
+import { BUILD, GUN_COST, GUN_ORDER, WEAPONS, highestPlayable, isUnlockedLevel, rhythmText } from "./rules.js?v=br13";
+import { createWorld } from "./world.js?v=br13";
+import { createPlay } from "./play.js?v=br13";
+import { createAudio } from "./audio.js?v=br13";
+import { loadSave, rememberWin, rememberGun, writeSave, buyGun } from "./save.js?v=br13";
+import { drawWeaponIcon, setTime } from "./mats.js?v=br13";
+import { loadGame, CREDIT_LINES } from "./assets.js?v=br13";
 
 const save = loadSave();
 const canvas = document.getElementById("c");
@@ -141,7 +141,7 @@ function showResult(won, info) {
   result.classList.remove("hidden");
   title.classList.add("hidden");
   if (won) {
-    resultTitle.textContent = info.winTitle || "BRIDGE HELD!";
+    resultTitle.textContent = info.nextId ? (info.winTitle || "BRIDGE HELD!") : "BRIDGE RUSHED. RIVERS HOME.";
     resultCopy.textContent = "Squad " + info.n + " · " + info.kills + " down";
     resultEarn.textContent = "Earned $BOBER " + info.earned;
     nextBtn.classList.remove("hidden");
@@ -803,7 +803,7 @@ window.__bridge = {
       camera.updateMatrixWorld();
       const v = play.view;
       world.setTitleMood(false);
-      world.follow(v.squadX, v.squadZ, v.half, play.time, v.river, v.dam, v.theme);
+      world.follow(v.squadX, v.squadZ, v.half, play.time, v.river, v.dam, v.theme, camera);
       renderer.toneMappingExposure = 1.05;
       rimLight.intensity = 0;
       play.sync(camera);

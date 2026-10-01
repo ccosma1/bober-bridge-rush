@@ -652,6 +652,19 @@ h2 {
   flex-direction: column;
 }
 
+#logo-tag {
+  position: relative;
+  z-index: 2;
+  margin: 0 0 8px;
+  max-width: 440px;
+  text-align: center;
+  font: 800 14px/1.2 "Segoe UI", Arial, sans-serif;
+  letter-spacing: 0.02em;
+  color: #fff4d2;
+  text-shadow: 0 2px 0 #1a0e08, 0 0 10px rgba(255, 160, 40, 0.45);
+  pointer-events: none;
+}
+
 #title h1 {
   position: relative;
   z-index: 2;
@@ -762,15 +775,16 @@ h2 {
     width: min(100%, 440px);
     min-height: 0;
     flex-shrink: 1;
-    max-height: calc(100dvh - 118px - var(--safe-b));
+    max-height: calc(100dvh - 142px - var(--safe-b));
     overflow: auto;
     padding: 8px 10px 8px;
   }
   #title h1 {
     font-size: 32px;
-    margin-bottom: 6px;
+    margin-bottom: 4px;
     -webkit-text-stroke-width: 5px;
   }
+  #title #logo-tag { font-size: 13px; margin-bottom: 6px; }
   #title #level-row { margin-bottom: 8px; }
   #title .level-tile { min-width: 84px; min-height: 48px; padding: 4px 6px; }
   #title .level-tile b { font-size: 14px; }
@@ -782,11 +796,12 @@ h2 {
   #title { padding-bottom: calc(6px + var(--safe-b)); }
   #title h1 {
     font-size: 24px;
-    margin-bottom: 4px;
+    margin-bottom: 2px;
     -webkit-text-stroke-width: 4px;
   }
+  #title #logo-tag { font-size: 11px; margin-bottom: 2px; }
   #title .sheet {
-    max-height: calc(100dvh - 86px - var(--safe-b));
+    max-height: calc(100dvh - 104px - var(--safe-b));
     padding: 6px 8px 6px;
   }
   #title #level-row { margin-bottom: 4px; gap: 4px; }
