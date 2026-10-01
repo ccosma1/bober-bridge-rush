@@ -307,19 +307,49 @@ button {
   letter-spacing: 0.04em;
 }
 
-#level-row {
+#level-screen {
+  position: fixed;
+  inset: 0;
+  z-index: 16;
   display: flex;
-  flex-wrap: nowrap;
+  align-items: stretch;
+  justify-content: center;
+  padding: 10px 10px calc(10px + var(--safe-b));
+  background: rgba(18, 12, 32, 0.62);
+  pointer-events: auto;
+}
+
+#level-screen .sheet {
+  width: min(960px, 100%);
+  max-height: 100%;
+  overflow-x: hidden;
+  overflow-y: auto;
+}
+
+#levels-back {
+  min-height: 44px;
+  min-width: 96px;
+  margin: 0 0 8px;
+  padding: 0 16px;
+  border-radius: 999px;
+  border: 2px solid var(--cream);
+  background: #2a2148;
+  color: var(--cream);
+  font: 800 14px/1 "Segoe UI", Arial, sans-serif;
+}
+
+#level-row {
+  display: grid;
+  grid-template-columns: repeat(5, minmax(0, 1fr));
   gap: 8px;
-  margin: 0 0 12px;
-  overflow-x: auto;
-  -webkit-overflow-scrolling: touch;
+  margin: 0;
+  overflow: visible;
 }
 
 .level-tile {
-  flex: 0 0 auto;
-  min-width: 92px;
-  min-height: 72px;
+  width: 100%;
+  min-width: 0;
+  min-height: 64px;
   padding: 8px 4px;
   border-radius: 14px;
   border: 2px solid var(--ink);
@@ -336,9 +366,9 @@ button {
 .level-tile span {
   display: block;
   margin-top: 2px;
-  font: 700 10px/1.2 "Segoe UI", Arial, sans-serif;
-  letter-spacing: 0.04em;
-  white-space: nowrap;
+  font: 700 11px/1.2 "Segoe UI", Arial, sans-serif;
+  letter-spacing: 0.03em;
+  white-space: normal;
 }
 
 .level-tile .lv-stars {
@@ -370,6 +400,30 @@ h2 {
   color: var(--cream);
   text-shadow: 0 3px 0 var(--ink);
 }
+
+#btn-open-levels {
+  width: 100%;
+  min-height: 48px;
+  margin-top: 8px;
+  border-radius: 16px;
+  border: 3px solid var(--ink);
+  background: #2a2148;
+  color: var(--cream);
+  box-shadow: 0 4px 0 #1e1410;
+  font: 900 18px/1.1 "Arial Black", Arial, sans-serif;
+  letter-spacing: 0.04em;
+}
+
+#btn-open-levels:disabled { opacity: 0.55; }
+
+#enemy-book {
+  margin: 0 0 10px;
+  text-align: left;
+  font: 700 13px/1.35 "Segoe UI", Arial, sans-serif;
+  color: var(--cream);
+}
+
+#enemy-book p { margin: 0 0 6px; }
 
 #btn-start, #btn-resume, #btn-retry, #btn-next, #btn-restart, #btn-levels, #btn-menu, #btn-quit, #btn-cancel {
   width: 100%;
@@ -785,10 +839,7 @@ h2 {
     -webkit-text-stroke-width: 5px;
   }
   #title #logo-tag { font-size: 13px; margin-bottom: 6px; }
-  #title #level-row { margin-bottom: 8px; }
-  #title .level-tile { min-width: 84px; min-height: 48px; padding: 4px 6px; }
-  #title .level-tile b { font-size: 14px; }
-  #title #btn-start { min-height: 44px; font-size: 15px; }
+  #title #btn-start, #title #btn-open-levels { min-height: 48px; font-size: 16px; }
   #title .meta { margin-top: 6px; gap: 8px; flex-wrap: wrap; }
 }
 
@@ -804,12 +855,7 @@ h2 {
     max-height: calc(100dvh - 104px - var(--safe-b));
     padding: 6px 8px 6px;
   }
-  #title #level-row { margin-bottom: 4px; gap: 4px; }
-  #title .level-tile { min-width: 78px; min-height: 36px; padding: 2px 6px 3px; border-radius: 10px; }
-  #title .level-tile b { font-size: 13px; }
-  #title .level-tile span { font-size: 9px; margin-top: 0; }
-  #title .level-tile .lv-stars { margin-top: 1px; font-size: 10px; }
-  #title #btn-start { min-height: 36px; font-size: 13px; border-radius: 12px; }
+  #title #btn-start, #title #btn-open-levels { min-height: 44px; font-size: 15px; border-radius: 12px; }
   #title .meta { margin-top: 4px; gap: 6px; }
   #title #bober-total { font-size: 12px; }
   #title #btn-mute, #title #btn-notes { min-height: 28px; padding: 0 8px; font-size: 11px; }
@@ -823,11 +869,14 @@ h2 {
     padding: 24px 24px 24px calc(24px + var(--safe-l));
   }
   #title .sheet {
-    width: min(980px, calc(100vw - 48px));
+    width: min(440px, calc(100vw - 48px));
     max-height: calc(100dvh - 48px);
     overflow: auto;
   }
   #title h1 { width: min(520px, calc(100vw - 48px)); font-size: 48px; }
-  #title #level-row { gap: 6px; }
-  #title .level-tile { min-width: 86px; }
+}
+
+@media (max-width: 800px) {
+  #level-row { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .level-tile { min-height: 56px; }
 }

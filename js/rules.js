@@ -2,7 +2,7 @@
 // br3 gun table. Lab may multiply a tier's DMG; the comment block at the
 // bottom of weaponMods records the numbers that passed the gun lab.
 
-export const BUILD = "br13";
+export const BUILD = "br14";
 export const SIM_CAP = 300;
 export const RENDER_CAP = 60;
 export const LIVE_CAP = 320;
@@ -13,6 +13,8 @@ export const RANGE = 28;
 export const DECK_HALF = 4.5;
 export const BOSS_HALF = 4.5;
 export const FORM_GAP = 0.58;
+export const FORM_MAX_W = 2.6;
+export const LANE_EDGE = 1.5;
 export const LANE_BLOB = 7.2;
 export const LANE_X = 2.2;
 export const GATE_X = 3;
@@ -229,38 +231,46 @@ export const LEVELS = {
     starSec: 20,
     boss: "baron",
     bossHp: 3800,
-    bossName: "BARON CLOG",
+    bossName: "LORD DRIP",
     win: "BRIDGE HELD!",
     events: [
       { at: 24, kind: "gate", side: 1, op: "add", k: 5 },
-      { at: 52, kind: "crate", layout: "row", items: [
-        { type: "volunteer", hp: 8, x: -2.6 },
-        { type: "volunteer", hp: 6, x: 2.4 },
+      { at: 52, kind: "gate", side: 0, op: "add", k: 5 },
+      { at: 72, kind: "crate", layout: "row", items: [
+        { type: "volunteer", hp: 14, x: -3 },
+        { type: "volunteer", hp: 14, x: 0 },
+        { type: "volunteer", hp: 14, x: 3 },
       ] },
-      { at: 86, kind: "gate", side: 0, op: "mul", k: 2 },
+      { at: 94, kind: "gate", side: 0, op: "mul", k: 2 },
       { at: 124, kind: "wave", clog: 40 },
       { at: 128, kind: "crate", layout: "row", items: [
-        { type: "volunteer", hp: 10, x: -3.1 },
-        { type: "volunteer", hp: 12, x: 2.6 },
+        { type: "volunteer", hp: 12, x: -3 },
+        { type: "volunteer", hp: 12, x: 0 },
+        { type: "volunteer", hp: 12, x: 3 },
       ] },
-      { at: 150, kind: "crate", layout: "single", items: [{ type: "weapon", gun: "dambust", hp: 12, x: 1.8 }] },
+      { at: 150, kind: "crate", layout: "single", items: [{ type: "weapon", gun: "dambust", hp: 12, x: 0 }] },
       { at: 190, kind: "gate", side: 1, op: "add", k: 8 },
       { at: 214, kind: "crate", layout: "row", items: [
-        { type: "volunteer", hp: 14, x: -2.4 },
-        { type: "volunteer", hp: 16, x: 0.2 },
-        { type: "volunteer", hp: 14, x: 2.8 },
+        { type: "volunteer", hp: 12, x: -3 },
+        { type: "volunteer", hp: 12, x: 0 },
+        { type: "volunteer", hp: 12, x: 3 },
       ] },
-      { at: 236, kind: "crate", layout: "single", items: [{ type: "weapon", gun: "mini", hp: 16, x: -2.0 }] },
+      { at: 236, kind: "crate", layout: "single", items: [{ type: "weapon", gun: "mini", hp: 12, x: -3 }] },
       { at: 248, kind: "wave", clog: 72, suds: 22 },
       { at: 300, kind: "crate", layout: "row", items: [
-        { type: "volunteer", hp: 18, x: -3.0 },
-        { type: "volunteer", hp: 20, x: 1.6 },
+        { type: "volunteer", hp: 12, x: -3 },
+        { type: "volunteer", hp: 12, x: 0 },
+        { type: "volunteer", hp: 12, x: 3 },
       ] },
       { at: 340, kind: "gate", side: 0, op: "add", k: 6 },
-      { at: 366, kind: "crate", layout: "single", items: [{ type: "weapon", gun: "beam", hp: 18, x: 2.4 }] },
+      { at: 366, kind: "crate", layout: "single", items: [{ type: "weapon", gun: "beam", hp: 12, x: 3 }] },
       { at: 392, kind: "gate", side: 1, op: "sub", k: 3 },
-      { at: 428, kind: "wave", clog: 80, suds: 24, hauler: 2, duck: 1 },
-      { at: 456, kind: "crate", layout: "single", items: [{ type: "tier", hp: 20, x: -1.6 }] },
+      { at: 428, kind: "wave", clog: 80, suds: 24, duck: 1 },
+      { at: 456, kind: "crate", layout: "row", items: [
+        { type: "tier", hp: 10, x: -3 },
+        { type: "tier", hp: 10, x: 0 },
+        { type: "tier", hp: 10, x: 3 },
+      ] },
       { at: 520, kind: "gate", side: 0, op: "add", k: 10 },
       { at: 560, kind: "gate", side: 1, op: "add", k: 8 },
       { at: 600, kind: "gate", side: 0, op: "sub", k: 2 },
@@ -289,33 +299,65 @@ export const LEVELS = {
     win: "BRIDGE HELD!",
     events: [
       { at: 26, kind: "gate", side: 1, op: "add", k: 6 },
-      { at: 48, kind: "crate", layout: "row", items: [
-        { type: "volunteer", hp: 8, x: -2.8 },
-        { type: "volunteer", hp: 10, x: 2.5 },
+      { at: 54, kind: "gate", side: 0, op: "add", k: 5 },
+      { at: 74, kind: "crate", layout: "row", items: [
+        { type: "volunteer", hp: 10, x: -3 },
+        { type: "volunteer", hp: 10, x: 0 },
+        { type: "volunteer", hp: 10, x: 3 },
       ] },
-      { at: 54, kind: "crate", layout: "pair", items: [
-        { type: "weapon", gun: "rail", hp: 14, x: -1.6 },
-        { type: "weapon", gun: "flame", hp: 14, x: 1.8 },
+      { at: 96, kind: "gate", side: 0, op: "mul", k: 2 },
+      { at: 140, kind: "crate", layout: "row", items: [
+        { type: "weapon", gun: "rail", hp: 12, x: -3 },
+        { type: "weapon", gun: "rail", hp: 12, x: 0 },
+        { type: "weapon", gun: "rail", hp: 12, x: 3 },
       ] },
-      { at: 84, kind: "gate", side: 0, op: "mul", k: 2 },
-      { at: 122, kind: "wave", clog: 32 },
-      { at: 200, kind: "gate", side: 1, op: "add", k: 5 },
-      { at: 224, kind: "crate", layout: "single", items: [{ type: "weapon", gun: "glacier", hp: 18, x: -2.2 }] },
+      { at: 122, kind: "wave", clog: 28 },
+      { at: 200, kind: "gate", side: 1, op: "add", k: 6 },
+      { at: 224, kind: "crate", layout: "row", items: [
+        { type: "weapon", gun: "glacier", hp: 12, x: -3 },
+        { type: "weapon", gun: "glacier", hp: 12, x: 0 },
+        { type: "weapon", gun: "glacier", hp: 12, x: 3 },
+      ] },
       { at: 248, kind: "gate", side: 0, op: "add", k: 6 },
       { at: 270, kind: "wave", clog: 40, suds: 6 },
-      { at: 360, kind: "gate", side: 0, op: "add", k: 10 },
-      { at: 400, kind: "crate", layout: "pair", items: [
-        { type: "weapon", gun: "barrage", hp: 20, x: -2.4 },
-        { type: "weapon", gun: "aurora", hp: 20, x: 2.2 },
+      { at: 360, kind: "crate", layout: "row", items: [
+        { type: "volunteer", hp: 19, x: -3 },
+        { type: "volunteer", hp: 14, x: 0 },
+        { type: "volunteer", hp: 14, x: 3 },
+      ] },
+      { at: 400, kind: "crate", layout: "row", items: [
+        { type: "weapon", gun: "barrage", hp: 12, x: -3 },
+        { type: "weapon", gun: "barrage", hp: 12, x: 0 },
+        { type: "weapon", gun: "barrage", hp: 12, x: 3 },
       ] },
       { at: 430, kind: "gate", side: 1, op: "sub", k: 4 },
-      { at: 470, kind: "wave", clog: 44, suds: 6, hauler: 1, duck: 1 },
-      { at: 560, kind: "gate", side: 0, op: "add", k: 8 },
-      { at: 588, kind: "crate", layout: "single", items: [{ type: "tier", hp: 24, x: 1.4 }] },
-      { at: 620, kind: "gate", side: 1, op: "add", k: 8 },
+      { at: 470, kind: "wave", clog: 44, suds: 6, duck: 1 },
+      { at: 560, kind: "crate", layout: "row", items: [
+        { type: "volunteer", hp: 19, x: -3 },
+        { type: "volunteer", hp: 14, x: 0 },
+        { type: "volunteer", hp: 14, x: 3 },
+      ] },
+      { at: 588, kind: "crate", layout: "row", items: [
+        { type: "tier", hp: 10, x: -3 },
+        { type: "tier", hp: 10, x: 0 },
+        { type: "tier", hp: 10, x: 3 },
+      ] },
+      { at: 620, kind: "crate", layout: "row", items: [
+        { type: "volunteer", hp: 19, x: -3 },
+        { type: "volunteer", hp: 14, x: 0 },
+        { type: "volunteer", hp: 14, x: 3 },
+      ] },
       { at: 660, kind: "gate", side: 0, op: "sub", k: 3 },
-      { at: 700, kind: "gate", side: 1, op: "add", k: 6 },
-      { at: 740, kind: "gate", side: 0, op: "add", k: 10 },
+      { at: 700, kind: "crate", layout: "row", items: [
+        { type: "volunteer", hp: 3, x: -3 },
+        { type: "volunteer", hp: 3, x: 0 },
+        { type: "volunteer", hp: 3, x: 3 },
+      ] },
+      { at: 740, kind: "crate", layout: "row", items: [
+        { type: "volunteer", hp: 3, x: -3 },
+        { type: "volunteer", hp: 3, x: 0 },
+        { type: "volunteer", hp: 3, x: 3 },
+      ] },
       { at: 780, kind: "boss" },
     ],
   },
@@ -339,41 +381,79 @@ export const LEVELS = {
     win: "DAM HELD!",
     events: [
       { at: 28, kind: "gate", side: 1, op: "add", k: 6 },
-      { at: 52, kind: "crate", layout: "row", items: [
-        { type: "volunteer", hp: 30, x: -3.0 },
-        { type: "weapon", gun: "storm", hp: 24, x: -0.4 },
-        { type: "weapon", gun: "cone", hp: 24, x: 2.6 },
+      { at: 56, kind: "gate", side: 0, op: "add", k: 5 },
+      { at: 76, kind: "crate", layout: "row", items: [
+        { type: "volunteer", hp: 8, x: -3 },
+        { type: "volunteer", hp: 8, x: 0 },
+        { type: "volunteer", hp: 8, x: 3 },
       ] },
-      { at: 76, kind: "gate", side: 0, op: "mul", k: 2 },
+      { at: 96, kind: "gate", side: 0, op: "mul", k: 2 },
       { at: 118, kind: "wave", clog: 22, leafN: 1 },
       { at: 200, kind: "gate", side: 1, op: "add", k: 6 },
-      { at: 236, kind: "crate", layout: "pair", items: [
-        { type: "weapon", gun: "saw", hp: 28, x: -2.2 },
-        { type: "weapon", gun: "burst", hp: 28, x: 2.2 },
+      { at: 236, kind: "crate", layout: "row", items: [
+        { type: "weapon", gun: "burst", hp: 12, x: -3 },
+        { type: "weapon", gun: "burst", hp: 12, x: 0 },
+        { type: "weapon", gun: "burst", hp: 12, x: 3 },
+      ] },
+      { at: 320, kind: "crate", layout: "row", items: [
+        { type: "weapon", gun: "storm", hp: 12, x: -3 },
+        { type: "weapon", gun: "storm", hp: 12, x: 0 },
+        { type: "weapon", gun: "storm", hp: 12, x: 3 },
       ] },
       { at: 278, kind: "wave", clog: 36, suds: 8, leaf: 1, duck: 1 },
-      { at: 370, kind: "gate", side: 0, op: "add", k: 10 },
-      { at: 400, kind: "crate", layout: "single", items: [{ type: "tier", hp: 36, x: 1.2 }] },
+      { at: 370, kind: "crate", layout: "row", items: [
+        { type: "volunteer", hp: 8, x: -3 },
+        { type: "volunteer", hp: 2, x: 0 },
+        { type: "volunteer", hp: 2, x: 3 },
+      ] },
+      { at: 400, kind: "crate", layout: "row", items: [
+        { type: "tier", hp: 10, x: -3 },
+        { type: "tier", hp: 10, x: 0 },
+        { type: "tier", hp: 10, x: 3 },
+      ] },
       { at: 430, kind: "gate", side: 1, op: "sub", k: 5 },
-      { at: 492, kind: "wave", clog: 36, suds: 6, hauler: 1, spit: 1, hair: 1, leaf: 1 },
-      { at: 580, kind: "gate", side: 1, op: "add", k: 8 },
+      { at: 492, kind: "wave", clog: 36, suds: 6, spit: 1, hair: 1, leaf: 1 },
+      { at: 580, kind: "crate", layout: "row", items: [
+        { type: "volunteer", hp: 8, x: -3 },
+        { type: "volunteer", hp: 2, x: 0 },
+        { type: "volunteer", hp: 2, x: 3 },
+      ] },
       { at: 610, kind: "crate", layout: "row", items: [
-        { type: "volunteer", hp: 40, x: -2.4 },
-        { type: "volunteer", hp: 36, x: 2.2 },
+        { type: "volunteer", hp: 11, x: -3 },
+        { type: "volunteer", hp: 5, x: 0 },
+        { type: "volunteer", hp: 5, x: 3 },
       ] },
-      { at: 640, kind: "gate", side: 0, op: "add", k: 6 },
+      { at: 640, kind: "crate", layout: "row", items: [
+        { type: "volunteer", hp: 6, x: -3 },
+        { type: "volunteer", hp: 2, x: 0 },
+        { type: "volunteer", hp: 2, x: 3 },
+      ] },
       { at: 670, kind: "crate", layout: "row", items: [
-        { type: "volunteer", hp: 28, x: -1.2 },
-        { type: "volunteer", hp: 32, x: 2.8 },
+        { type: "volunteer", hp: 5, x: -3 },
+        { type: "volunteer", hp: 5, x: 0 },
+        { type: "volunteer", hp: 5, x: 3 },
       ] },
-      { at: 700, kind: "gate", side: 1, op: "sub", k: 4 },
-      { at: 730, kind: "crate", layout: "single", items: [{ type: "volunteer", hp: 44, x: 0.6 }] },
-      { at: 760, kind: "gate", side: 0, op: "add", k: 10 },
+      { at: 700, kind: "gate", side: 1, op: "sub", k: 6 },
+      { at: 730, kind: "crate", layout: "row", items: [
+        { type: "volunteer", hp: 5, x: -3 },
+        { type: "volunteer", hp: 5, x: 0 },
+        { type: "volunteer", hp: 5, x: 3 },
+      ] },
+      { at: 760, kind: "crate", layout: "row", items: [
+        { type: "volunteer", hp: 2, x: -3 },
+        { type: "volunteer", hp: 2, x: 0 },
+        { type: "volunteer", hp: 2, x: 3 },
+      ] },
       { at: 790, kind: "crate", layout: "row", items: [
-        { type: "volunteer", hp: 24, x: -2.8 },
-        { type: "volunteer", hp: 20, x: 1.8 },
+        { type: "volunteer", hp: 4, x: -3 },
+        { type: "volunteer", hp: 4, x: 0 },
+        { type: "volunteer", hp: 4, x: 3 },
       ] },
-      { at: 820, kind: "gate", side: 1, op: "add", k: 8 },
+      { at: 820, kind: "crate", layout: "row", items: [
+        { type: "volunteer", hp: 2, x: -3 },
+        { type: "volunteer", hp: 2, x: 0 },
+        { type: "volunteer", hp: 2, x: 3 },
+      ] },
       { at: 860, kind: "boss" },
     ],
   },
@@ -397,40 +477,89 @@ export const LEVELS = {
     win: "BRIDGE HELD!",
     events: [
       { at: 26, kind: "gate", side: 1, op: "add", k: 6 },
-      { at: 50, kind: "crate", layout: "row", items: [
-        { type: "volunteer", hp: 12, x: -2.6 },
-        { type: "volunteer", hp: 10, x: 2.4 },
+      { at: 54, kind: "gate", side: 0, op: "add", k: 5 },
+      { at: 74, kind: "crate", layout: "row", items: [
+        { type: "volunteer", hp: 8, x: -3 },
+        { type: "volunteer", hp: 8, x: 0 },
+        { type: "volunteer", hp: 8, x: 3 },
       ] },
-      { at: 80, kind: "gate", side: 0, op: "mul", k: 2 },
-      { at: 124, kind: "wave", clog: 48 },
-      { at: 210, kind: "gate", side: 1, op: "add", k: 8 },
-      { at: 230, kind: "crate", layout: "single", items: [{ type: "weapon", gun: "mini", hp: 16, x: 1.8 }] },
-      { at: 250, kind: "gate", side: 0, op: "add", k: 6 },
-      { at: 290, kind: "gate", side: 1, op: "add", k: 6 },
+      { at: 96, kind: "gate", side: 0, op: "mul", k: 2 },
+      { at: 124, kind: "wave", clog: 56 },
+      { at: 210, kind: "crate", layout: "single", items: [{ type: "volunteer", hp: 1, x: 0 }] },
+      { at: 230, kind: "crate", layout: "row", items: [
+        { type: "weapon", gun: "mini", hp: 12, x: -3 },
+        { type: "weapon", gun: "mini", hp: 12, x: 0 },
+        { type: "weapon", gun: "mini", hp: 12, x: 3 },
+      ] },
+      { at: 250, kind: "crate", layout: "row", items: [
+        { type: "volunteer", hp: 6, x: -3 },
+        { type: "volunteer", hp: 2, x: 0 },
+        { type: "volunteer", hp: 9, x: 3 },
+      ] },
+      { at: 290, kind: "crate", layout: "row", items: [
+        { type: "volunteer", hp: 7, x: -3 },
+        { type: "volunteer", hp: 3, x: 0 },
+        { type: "volunteer", hp: 9, x: 3 },
+      ] },
       { at: 340, kind: "wave", clog: 64, suds: 12 },
-      { at: 430, kind: "gate", side: 0, op: "add", k: 10 },
+      { at: 430, kind: "crate", layout: "row", items: [
+        { type: "volunteer", hp: 7, x: -3 },
+        { type: "volunteer", hp: 3, x: 0 },
+        { type: "volunteer", hp: 9, x: 3 },
+      ] },
       { at: 455, kind: "crate", layout: "row", items: [
-        { type: "volunteer", hp: 18, x: -2.8 },
-        { type: "volunteer", hp: 16, x: 2.2 },
+        { type: "volunteer", hp: 6, x: -3 },
+        { type: "volunteer", hp: 2, x: 0 },
+        { type: "volunteer", hp: 6, x: 3 },
       ] },
-      { at: 480, kind: "gate", side: 1, op: "sub", k: 3 },
-      { at: 520, kind: "crate", layout: "single", items: [{ type: "weapon", gun: "beam", hp: 20, x: -2.0 }] },
-      { at: 580, kind: "wave", clog: 72, suds: 14, hauler: 1, spit: 1, duck: 1 },
-      { at: 670, kind: "gate", side: 0, op: "add", k: 8 },
-      { at: 695, kind: "crate", layout: "single", items: [{ type: "weapon", gun: "storm", hp: 22, x: 2.2 }] },
-      { at: 720, kind: "gate", side: 1, op: "add", k: 6 },
-      { at: 745, kind: "crate", layout: "single", items: [{ type: "tier", hp: 24, x: -1.6 }] },
-      { at: 770, kind: "gate", side: 0, op: "add", k: 8 },
+      { at: 480, kind: "crate", layout: "single", items: [{ type: "volunteer", hp: 1, x: 0 }] },
+      { at: 520, kind: "crate", layout: "row", items: [
+        { type: "weapon", gun: "beam", hp: 12, x: -3 },
+        { type: "weapon", gun: "beam", hp: 12, x: 0 },
+        { type: "weapon", gun: "beam", hp: 12, x: 3 },
+      ] },
+      { at: 580, kind: "wave", clog: 72, suds: 14, spit: 1, duck: 1 },
+      { at: 670, kind: "crate", layout: "row", items: [
+        { type: "volunteer", hp: 5, x: -3 },
+        { type: "volunteer", hp: 3, x: 0 },
+        { type: "volunteer", hp: 3, x: 3 },
+      ] },
+      { at: 695, kind: "crate", layout: "row", items: [
+        { type: "weapon", gun: "storm", hp: 12, x: -3 },
+        { type: "weapon", gun: "storm", hp: 12, x: 0 },
+        { type: "weapon", gun: "storm", hp: 12, x: 3 },
+      ] },
+      { at: 720, kind: "crate", layout: "row", items: [
+        { type: "volunteer", hp: 3, x: -3 },
+        { type: "volunteer", hp: 3, x: 0 },
+        { type: "volunteer", hp: 3, x: 3 },
+      ] },
+      { at: 745, kind: "crate", layout: "row", items: [
+        { type: "tier", hp: 10, x: -3 },
+        { type: "tier", hp: 10, x: 0 },
+        { type: "tier", hp: 10, x: 3 },
+      ] },
+      { at: 770, kind: "crate", layout: "row", items: [
+        { type: "volunteer", hp: 3, x: -3 },
+        { type: "volunteer", hp: 3, x: 0 },
+        { type: "volunteer", hp: 3, x: 3 },
+      ] },
       { at: 800, kind: "crate", layout: "row", items: [
-        { type: "volunteer", hp: 20, x: -2.4 },
-        { type: "volunteer", hp: 18, x: 2.6 },
+        { type: "volunteer", hp: 5, x: -3 },
+        { type: "volunteer", hp: 5, x: 0 },
+        { type: "volunteer", hp: 5, x: 3 },
       ] },
-      { at: 830, kind: "gate", side: 1, op: "sub", k: 2 },
+      { at: 830, kind: "gate", side: 1, op: "sub", k: 4 },
       { at: 855, kind: "crate", layout: "row", items: [
-        { type: "volunteer", hp: 16, x: -1.4 },
-        { type: "volunteer", hp: 22, x: 2.0 },
+        { type: "volunteer", hp: 4, x: -3 },
+        { type: "volunteer", hp: 4, x: 0 },
+        { type: "volunteer", hp: 4, x: 3 },
       ] },
-      { at: 880, kind: "gate", side: 0, op: "add", k: 6 },
+      { at: 880, kind: "crate", layout: "row", items: [
+        { type: "volunteer", hp: 3, x: -3 },
+        { type: "volunteer", hp: 3, x: 0 },
+        { type: "volunteer", hp: 3, x: 3 },
+      ] },
       { at: 900, kind: "boss" },
     ],
   },
@@ -454,36 +583,92 @@ export const LEVELS = {
     win: "BRIDGE HELD!",
     events: [
       { at: 26, kind: "gate", side: 1, op: "add", k: 6 },
-      { at: 50, kind: "crate", layout: "row", items: [
-        { type: "volunteer", hp: 12, x: -2.6 },
-        { type: "volunteer", hp: 14, x: 2.4 },
+      { at: 54, kind: "gate", side: 0, op: "add", k: 5 },
+      { at: 74, kind: "crate", layout: "row", items: [
+        { type: "volunteer", hp: 10, x: -3 },
+        { type: "volunteer", hp: 10, x: 0 },
+        { type: "volunteer", hp: 10, x: 3 },
       ] },
-      { at: 80, kind: "gate", side: 0, op: "mul", k: 2 },
-      { at: 128, kind: "wave", clog: 52 },
-      { at: 214, kind: "gate", side: 1, op: "add", k: 8 },
-      { at: 256, kind: "gate", side: 0, op: "add", k: 6 },
-      { at: 300, kind: "gate", side: 1, op: "add", k: 8 },
-      { at: 360, kind: "wave", clog: 70, suds: 16, hair: 2 },
-      { at: 450, kind: "gate", side: 0, op: "add", k: 10 },
-      { at: 475, kind: "crate", layout: "single", items: [{ type: "weapon", gun: "flame", hp: 20, x: 1.8 }] },
-      { at: 500, kind: "gate", side: 1, op: "sub", k: 3 },
-      { at: 545, kind: "crate", layout: "single", items: [{ type: "weapon", gun: "glacier", hp: 22, x: -2.2 }] },
-      { at: 610, kind: "wave", clog: 76, suds: 18, hauler: 2, spit: 1, leaf: 1 },
-      { at: 700, kind: "gate", side: 0, op: "add", k: 8 },
-      { at: 725, kind: "crate", layout: "single", items: [{ type: "weapon", gun: "rail", hp: 24, x: 2.0 }] },
-      { at: 750, kind: "gate", side: 1, op: "add", k: 6 },
+      { at: 96, kind: "gate", side: 0, op: "mul", k: 2 },
+      { at: 128, kind: "wave", clog: 36 },
+      { at: 214, kind: "crate", layout: "single", items: [{ type: "volunteer", hp: 1, x: 0 }] },
+      { at: 256, kind: "crate", layout: "row", items: [
+        { type: "volunteer", hp: 12, x: -3 },
+        { type: "volunteer", hp: 7, x: 0 },
+        { type: "volunteer", hp: 12, x: 3 },
+      ] },
+      { at: 300, kind: "crate", layout: "row", items: [
+        { type: "volunteer", hp: 14, x: -3 },
+        { type: "volunteer", hp: 7, x: 0 },
+        { type: "volunteer", hp: 6, x: 3 },
+      ] },
+      { at: 360, kind: "wave", clog: 48, suds: 8, hair: 1 },
+      { at: 450, kind: "crate", layout: "row", items: [
+        { type: "volunteer", hp: 14, x: -3 },
+        { type: "volunteer", hp: 6, x: 0 },
+        { type: "volunteer", hp: 6, x: 3 },
+      ] },
+      { at: 475, kind: "crate", layout: "row", items: [
+        { type: "weapon", gun: "flame", hp: 12, x: -3 },
+        { type: "weapon", gun: "flame", hp: 12, x: 0 },
+        { type: "weapon", gun: "flame", hp: 12, x: 3 },
+      ] },
+      { at: 500, kind: "crate", layout: "row", items: [
+        { type: "volunteer", hp: 2, x: -3 },
+        { type: "volunteer", hp: 2, x: 0 },
+        { type: "volunteer", hp: 6, x: 3 },
+      ] },
+      { at: 545, kind: "crate", layout: "row", items: [
+        { type: "weapon", gun: "glacier", hp: 12, x: -3 },
+        { type: "weapon", gun: "glacier", hp: 12, x: 0 },
+        { type: "weapon", gun: "glacier", hp: 12, x: 3 },
+      ] },
+      { at: 610, kind: "wave", clog: 52, suds: 10 },
+      { at: 700, kind: "crate", layout: "row", items: [
+        { type: "volunteer", hp: 2, x: -3 },
+        { type: "volunteer", hp: 2, x: 0 },
+        { type: "volunteer", hp: 2, x: 3 },
+      ] },
+      { at: 725, kind: "crate", layout: "row", items: [
+        { type: "weapon", gun: "rail", hp: 12, x: -3 },
+        { type: "weapon", gun: "rail", hp: 12, x: 0 },
+        { type: "weapon", gun: "rail", hp: 12, x: 3 },
+      ] },
+      { at: 750, kind: "crate", layout: "row", items: [
+        { type: "volunteer", hp: 2, x: -3 },
+        { type: "volunteer", hp: 2, x: 0 },
+        { type: "volunteer", hp: 2, x: 3 },
+      ] },
       { at: 780, kind: "crate", layout: "row", items: [
-        { type: "volunteer", hp: 22, x: -2.8 },
-        { type: "volunteer", hp: 18, x: 2.4 },
+        { type: "volunteer", hp: 8, x: -3 },
+        { type: "volunteer", hp: 8, x: 0 },
+        { type: "volunteer", hp: 8, x: 3 },
       ] },
-      { at: 810, kind: "gate", side: 0, op: "add", k: 8 },
-      { at: 840, kind: "crate", layout: "single", items: [{ type: "tier", hp: 26, x: 1.4 }] },
-      { at: 870, kind: "gate", side: 1, op: "add", k: 6 },
+      { at: 810, kind: "crate", layout: "row", items: [
+        { type: "volunteer", hp: 2, x: -3 },
+        { type: "volunteer", hp: 2, x: 0 },
+        { type: "volunteer", hp: 2, x: 3 },
+      ] },
+      { at: 840, kind: "crate", layout: "row", items: [
+        { type: "tier", hp: 10, x: -3 },
+        { type: "tier", hp: 10, x: 0 },
+        { type: "tier", hp: 10, x: 3 },
+      ] },
+      { at: 870, kind: "crate", layout: "row", items: [
+        { type: "volunteer", hp: 2, x: -3 },
+        { type: "volunteer", hp: 2, x: 0 },
+        { type: "volunteer", hp: 2, x: 3 },
+      ] },
       { at: 895, kind: "crate", layout: "row", items: [
-        { type: "volunteer", hp: 20, x: -2.2 },
-        { type: "volunteer", hp: 24, x: 2.6 },
+        { type: "volunteer", hp: 8, x: -3 },
+        { type: "volunteer", hp: 8, x: 0 },
+        { type: "volunteer", hp: 8, x: 3 },
       ] },
-      { at: 920, kind: "gate", side: 0, op: "sub", k: 2 },
+      { at: 920, kind: "crate", layout: "row", items: [
+        { type: "volunteer", hp: 2, x: -3 },
+        { type: "volunteer", hp: 2, x: 0 },
+        { type: "volunteer", hp: 2, x: 3 },
+      ] },
       { at: 940, kind: "boss" },
     ],
   },
@@ -507,40 +692,97 @@ export const LEVELS = {
     win: "DAM HELD!",
     events: [
       { at: 26, kind: "gate", side: 1, op: "add", k: 6 },
-      { at: 50, kind: "crate", layout: "row", items: [
-        { type: "volunteer", hp: 14, x: -2.8 },
-        { type: "volunteer", hp: 12, x: 2.2 },
+      { at: 54, kind: "gate", side: 0, op: "add", k: 5 },
+      { at: 74, kind: "crate", layout: "row", items: [
+        { type: "volunteer", hp: 9, x: -3 },
+        { type: "volunteer", hp: 9, x: 0 },
+        { type: "volunteer", hp: 9, x: 3 },
       ] },
-      { at: 80, kind: "gate", side: 0, op: "mul", k: 2 },
-      { at: 132, kind: "wave", clog: 56, leafN: 6 },
-      { at: 222, kind: "gate", side: 1, op: "add", k: 8 },
-      { at: 268, kind: "gate", side: 0, op: "add", k: 6 },
-      { at: 316, kind: "gate", side: 1, op: "add", k: 8 },
-      { at: 370, kind: "wave", clog: 74, suds: 14, leaf: 1 },
-      { at: 460, kind: "gate", side: 0, op: "add", k: 10 },
+      { at: 96, kind: "gate", side: 0, op: "mul", k: 2 },
+      { at: 132, kind: "wave", clog: 40, leafN: 3 },
+      { at: 222, kind: "crate", layout: "single", items: [{ type: "volunteer", hp: 13, x: -3 }] },
+      { at: 268, kind: "crate", layout: "row", items: [
+        { type: "volunteer", hp: 11, x: -3 },
+        { type: "volunteer", hp: 7, x: 0 },
+        { type: "volunteer", hp: 2, x: 3 },
+      ] },
+      { at: 316, kind: "crate", layout: "row", items: [
+        { type: "volunteer", hp: 11, x: -3 },
+        { type: "volunteer", hp: 7, x: 0 },
+        { type: "volunteer", hp: 2, x: 3 },
+      ] },
+      { at: 370, kind: "wave", clog: 52, suds: 8, leaf: 1 },
+      { at: 460, kind: "crate", layout: "row", items: [
+        { type: "volunteer", hp: 12, x: -3 },
+        { type: "volunteer", hp: 7, x: 0 },
+        { type: "volunteer", hp: 2, x: 3 },
+      ] },
       { at: 485, kind: "crate", layout: "row", items: [
-        { type: "volunteer", hp: 20, x: -2.6 },
-        { type: "volunteer", hp: 18, x: 2.4 },
+        { type: "volunteer", hp: 13, x: -3 },
+        { type: "volunteer", hp: 10, x: 0 },
+        { type: "volunteer", hp: 1, x: 3 },
       ] },
-      { at: 510, kind: "gate", side: 1, op: "sub", k: 4 },
-      { at: 535, kind: "crate", layout: "single", items: [{ type: "weapon", gun: "saw", hp: 22, x: -2.0 }] },
-      { at: 575, kind: "crate", layout: "single", items: [{ type: "weapon", gun: "cone", hp: 22, x: 2.2 }] },
-      { at: 640, kind: "wave", clog: 80, suds: 16, hauler: 2, spit: 1, leaf: 1, duck: 1 },
-      { at: 730, kind: "gate", side: 0, op: "add", k: 8 },
-      { at: 760, kind: "crate", layout: "single", items: [{ type: "weapon", gun: "barrage", hp: 24, x: 1.6 }] },
-      { at: 790, kind: "gate", side: 1, op: "add", k: 6 },
-      { at: 820, kind: "crate", layout: "single", items: [{ type: "tier", hp: 28, x: -1.4 }] },
-      { at: 850, kind: "gate", side: 0, op: "add", k: 8 },
+      { at: 510, kind: "crate", layout: "row", items: [
+        { type: "volunteer", hp: 10, x: -3 },
+        { type: "volunteer", hp: 8, x: 0 },
+        { type: "volunteer", hp: 2, x: 3 },
+      ] },
+      { at: 535, kind: "crate", layout: "row", items: [
+        { type: "weapon", gun: "saw", hp: 12, x: -3 },
+        { type: "weapon", gun: "saw", hp: 12, x: 0 },
+        { type: "weapon", gun: "saw", hp: 12, x: 3 },
+      ] },
+      { at: 575, kind: "crate", layout: "row", items: [
+        { type: "weapon", gun: "cone", hp: 12, x: -3 },
+        { type: "weapon", gun: "cone", hp: 12, x: 0 },
+        { type: "weapon", gun: "cone", hp: 12, x: 3 },
+      ] },
+      { at: 640, kind: "wave", clog: 56, suds: 10, leaf: 1 },
+      { at: 730, kind: "crate", layout: "row", items: [
+        { type: "volunteer", hp: 2, x: -3 },
+        { type: "volunteer", hp: 2, x: 0 },
+        { type: "volunteer", hp: 2, x: 3 },
+      ] },
+      { at: 760, kind: "crate", layout: "row", items: [
+        { type: "weapon", gun: "barrage", hp: 12, x: -3 },
+        { type: "weapon", gun: "barrage", hp: 12, x: 0 },
+        { type: "weapon", gun: "barrage", hp: 12, x: 3 },
+      ] },
+      { at: 790, kind: "crate", layout: "row", items: [
+        { type: "volunteer", hp: 2, x: -3 },
+        { type: "volunteer", hp: 2, x: 0 },
+        { type: "volunteer", hp: 2, x: 3 },
+      ] },
+      { at: 820, kind: "crate", layout: "row", items: [
+        { type: "tier", hp: 10, x: -3 },
+        { type: "tier", hp: 10, x: 0 },
+        { type: "tier", hp: 10, x: 3 },
+      ] },
+      { at: 850, kind: "crate", layout: "row", items: [
+        { type: "volunteer", hp: 2, x: -3 },
+        { type: "volunteer", hp: 2, x: 0 },
+        { type: "volunteer", hp: 2, x: 3 },
+      ] },
       { at: 880, kind: "crate", layout: "row", items: [
-        { type: "volunteer", hp: 22, x: -2.4 },
-        { type: "volunteer", hp: 20, x: 2.6 },
+        { type: "volunteer", hp: 6, x: -3 },
+        { type: "volunteer", hp: 6, x: 0 },
+        { type: "volunteer", hp: 6, x: 3 },
       ] },
-      { at: 910, kind: "gate", side: 1, op: "sub", k: 2 },
+      { at: 910, kind: "crate", layout: "row", items: [
+        { type: "volunteer", hp: 2, x: -3 },
+        { type: "volunteer", hp: 2, x: 0 },
+        { type: "volunteer", hp: 2, x: 3 },
+      ] },
       { at: 935, kind: "crate", layout: "row", items: [
-        { type: "volunteer", hp: 18, x: -1.8 },
-        { type: "volunteer", hp: 24, x: 2.2 },
+        { type: "volunteer", hp: 6, x: -3 },
+        { type: "volunteer", hp: 6, x: 0 },
+        { type: "volunteer", hp: 6, x: 3 },
       ] },
-      { at: 960, kind: "gate", side: 0, op: "add", k: 6 },
+      { at: 960, kind: "crate", layout: "row", items: [
+        { type: "volunteer", hp: 2, x: -3 },
+        { type: "volunteer", hp: 2, x: 0 },
+        { type: "volunteer", hp: 2, x: 3 },
+      ] },
       { at: 980, kind: "boss" },
     ],
   },
@@ -564,34 +806,86 @@ export const LEVELS = {
     win: "BRIDGE HELD!",
     events: [
       { at: 26, kind: "gate", side: 1, op: "add", k: 6 },
-      { at: 50, kind: "crate", layout: "row", items: [
-        { type: "volunteer", hp: 14, x: -2.6 },
-        { type: "volunteer", hp: 16, x: 2.4 },
+      { at: 54, kind: "gate", side: 0, op: "add", k: 5 },
+      { at: 74, kind: "crate", layout: "row", items: [
+        { type: "volunteer", hp: 5, x: -3 },
+        { type: "volunteer", hp: 5, x: 0 },
+        { type: "volunteer", hp: 5, x: 3 },
       ] },
-      { at: 80, kind: "gate", side: 0, op: "mul", k: 2 },
-      { at: 136, kind: "wave", clog: 58 },
-      { at: 224, kind: "gate", side: 1, op: "add", k: 8 },
-      { at: 270, kind: "gate", side: 0, op: "add", k: 8 },
-      { at: 318, kind: "gate", side: 1, op: "add", k: 6 },
-      { at: 380, kind: "wave", clog: 78, suds: 16, hauler: 2 },
-      { at: 470, kind: "gate", side: 0, op: "add", k: 10 },
+      { at: 96, kind: "gate", side: 0, op: "mul", k: 2 },
+      { at: 136, kind: "wave", clog: 42 },
+      { at: 224, kind: "crate", layout: "row", items: [
+        { type: "volunteer", hp: 5, x: -3 },
+        { type: "volunteer", hp: 11, x: 0 },
+        { type: "volunteer", hp: 4, x: 3 },
+      ] },
+      { at: 270, kind: "crate", layout: "row", items: [
+        { type: "volunteer", hp: 5, x: -3 },
+        { type: "volunteer", hp: 11, x: 0 },
+        { type: "volunteer", hp: 9, x: 3 },
+      ] },
+      { at: 318, kind: "crate", layout: "row", items: [
+        { type: "volunteer", hp: 5, x: -3 },
+        { type: "volunteer", hp: 7, x: 0 },
+        { type: "volunteer", hp: 9, x: 3 },
+      ] },
+      { at: 380, kind: "wave", clog: 56, suds: 8 },
+      { at: 470, kind: "crate", layout: "row", items: [
+        { type: "volunteer", hp: 5, x: -3 },
+        { type: "volunteer", hp: 5, x: 0 },
+        { type: "volunteer", hp: 4, x: 3 },
+      ] },
       { at: 495, kind: "crate", layout: "row", items: [
-        { type: "volunteer", hp: 22, x: -2.8 },
-        { type: "volunteer", hp: 18, x: 2.2 },
+        { type: "volunteer", hp: 5, x: -3 },
+        { type: "volunteer", hp: 6, x: 0 },
+        { type: "volunteer", hp: 4, x: 3 },
       ] },
-      { at: 520, kind: "gate", side: 1, op: "sub", k: 4 },
-      { at: 548, kind: "crate", layout: "single", items: [{ type: "weapon", gun: "aurora", hp: 24, x: 1.8 }] },
-      { at: 588, kind: "crate", layout: "single", items: [{ type: "weapon", gun: "storm", hp: 24, x: -2.2 }] },
-      { at: 650, kind: "wave", clog: 84, suds: 18, hauler: 2, spit: 1 },
-      { at: 740, kind: "gate", side: 0, op: "add", k: 8 },
-      { at: 770, kind: "crate", layout: "single", items: [{ type: "weapon", gun: "dambust", hp: 26, x: 2.0 }] },
-      { at: 800, kind: "gate", side: 1, op: "add", k: 8 },
-      { at: 830, kind: "crate", layout: "single", items: [{ type: "tier", hp: 30, x: -1.6 }] },
-      { at: 880, kind: "wave", clog: 6 },
-      { at: 960, kind: "gate", side: 0, op: "add", k: 6 },
+      { at: 520, kind: "crate", layout: "row", items: [
+        { type: "volunteer", hp: 7, x: -3 },
+        { type: "volunteer", hp: 5, x: 0 },
+        { type: "volunteer", hp: 9, x: 3 },
+      ] },
+      { at: 548, kind: "crate", layout: "row", items: [
+        { type: "weapon", gun: "aurora", hp: 12, x: -3 },
+        { type: "weapon", gun: "aurora", hp: 12, x: 0 },
+        { type: "weapon", gun: "aurora", hp: 12, x: 3 },
+      ] },
+      { at: 588, kind: "crate", layout: "row", items: [
+        { type: "weapon", gun: "storm", hp: 12, x: -3 },
+        { type: "weapon", gun: "storm", hp: 12, x: 0 },
+        { type: "weapon", gun: "storm", hp: 12, x: 3 },
+      ] },
+      { at: 650, kind: "wave", clog: 60, suds: 10 },
+      { at: 740, kind: "crate", layout: "row", items: [
+        { type: "volunteer", hp: 2, x: -3 },
+        { type: "volunteer", hp: 2, x: 0 },
+        { type: "volunteer", hp: 2, x: 3 },
+      ] },
+      { at: 770, kind: "crate", layout: "row", items: [
+        { type: "weapon", gun: "dambust", hp: 12, x: -3 },
+        { type: "weapon", gun: "dambust", hp: 12, x: 0 },
+        { type: "weapon", gun: "dambust", hp: 12, x: 3 },
+      ] },
+      { at: 800, kind: "crate", layout: "row", items: [
+        { type: "volunteer", hp: 2, x: -3 },
+        { type: "volunteer", hp: 2, x: 0 },
+        { type: "volunteer", hp: 2, x: 3 },
+      ] },
+      { at: 830, kind: "crate", layout: "row", items: [
+        { type: "tier", hp: 10, x: -3 },
+        { type: "tier", hp: 10, x: 0 },
+        { type: "tier", hp: 10, x: 3 },
+      ] },
+      { at: 880, kind: "wave", clog: 36 },
+      { at: 960, kind: "crate", layout: "row", items: [
+        { type: "volunteer", hp: 2, x: -3 },
+        { type: "volunteer", hp: 2, x: 0 },
+        { type: "volunteer", hp: 2, x: 3 },
+      ] },
       { at: 990, kind: "crate", layout: "row", items: [
-        { type: "volunteer", hp: 20, x: -2.4 },
-        { type: "volunteer", hp: 24, x: 2.4 },
+        { type: "volunteer", hp: 5, x: -3 },
+        { type: "volunteer", hp: 5, x: 0 },
+        { type: "volunteer", hp: 5, x: 3 },
       ] },
       { at: 1020, kind: "boss" },
     ],
@@ -616,39 +910,96 @@ export const LEVELS = {
     win: "BRIDGE HELD!",
     events: [
       { at: 26, kind: "gate", side: 1, op: "add", k: 6 },
-      { at: 50, kind: "crate", layout: "row", items: [
-        { type: "volunteer", hp: 16, x: -2.8 },
-        { type: "volunteer", hp: 14, x: 2.4 },
+      { at: 54, kind: "gate", side: 0, op: "add", k: 5 },
+      { at: 74, kind: "crate", layout: "row", items: [
+        { type: "volunteer", hp: 12, x: -3 },
+        { type: "volunteer", hp: 1, x: 0 },
+        { type: "volunteer", hp: 12, x: 3 },
       ] },
-      { at: 80, kind: "gate", side: 0, op: "mul", k: 2 },
-      { at: 140, kind: "wave", clog: 62, suds: 18, spit: 2 },
-      { at: 230, kind: "gate", side: 1, op: "add", k: 8 },
-      { at: 276, kind: "gate", side: 0, op: "add", k: 8 },
+      { at: 96, kind: "gate", side: 0, op: "mul", k: 2 },
+      { at: 140, kind: "wave", clog: 44, suds: 8, spit: 1 },
+      { at: 230, kind: "crate", layout: "row", items: [
+        { type: "volunteer", hp: 2, x: -3 },
+        { type: "volunteer", hp: 1, x: 0 },
+        { type: "volunteer", hp: 2, x: 3 },
+      ] },
+      { at: 276, kind: "crate", layout: "row", items: [
+        { type: "volunteer", hp: 2, x: -3 },
+        { type: "volunteer", hp: 1, x: 0 },
+        { type: "volunteer", hp: 2, x: 3 },
+      ] },
       { at: 305, kind: "crate", layout: "row", items: [
-        { type: "volunteer", hp: 20, x: -2.4 },
-        { type: "volunteer", hp: 18, x: 2.6 },
+        { type: "volunteer", hp: 5, x: -3 },
+        { type: "volunteer", hp: 1, x: 0 },
+        { type: "volunteer", hp: 5, x: 3 },
       ] },
-      { at: 330, kind: "gate", side: 1, op: "add", k: 6 },
-      { at: 400, kind: "wave", clog: 64, suds: 14, spit: 1 },
-      { at: 490, kind: "gate", side: 0, op: "add", k: 10 },
-      { at: 518, kind: "crate", layout: "single", items: [{ type: "weapon", gun: "mini", hp: 24, x: 1.8 }] },
-      { at: 545, kind: "gate", side: 1, op: "sub", k: 4 },
-      { at: 572, kind: "crate", layout: "single", items: [{ type: "weapon", gun: "barrage", hp: 26, x: -2.2 }] },
-      { at: 600, kind: "gate", side: 0, op: "add", k: 8 },
-      { at: 635, kind: "crate", layout: "single", items: [{ type: "weapon", gun: "cone", hp: 26, x: 2.0 }] },
-      { at: 680, kind: "wave", clog: 68, suds: 16, hauler: 1, spit: 1 },
-      { at: 770, kind: "gate", side: 1, op: "add", k: 8 },
-      { at: 800, kind: "crate", layout: "single", items: [{ type: "tier", hp: 32, x: -1.4 }] },
-      { at: 830, kind: "gate", side: 0, op: "add", k: 6 },
+      { at: 330, kind: "crate", layout: "row", items: [
+        { type: "volunteer", hp: 2, x: -3 },
+        { type: "volunteer", hp: 1, x: 0 },
+        { type: "volunteer", hp: 2, x: 3 },
+      ] },
+      { at: 400, kind: "wave", clog: 48, suds: 8, spit: 1 },
+      { at: 490, kind: "crate", layout: "row", items: [
+        { type: "volunteer", hp: 2, x: -3 },
+        { type: "volunteer", hp: 1, x: 0 },
+        { type: "volunteer", hp: 2, x: 3 },
+      ] },
+      { at: 518, kind: "crate", layout: "row", items: [
+        { type: "weapon", gun: "mini", hp: 12, x: -3 },
+        { type: "weapon", gun: "mini", hp: 12, x: 0 },
+        { type: "weapon", gun: "mini", hp: 12, x: 3 },
+      ] },
+      { at: 545, kind: "crate", layout: "row", items: [
+        { type: "volunteer", hp: 2, x: -3 },
+        { type: "volunteer", hp: 1, x: 0 },
+        { type: "volunteer", hp: 2, x: 3 },
+      ] },
+      { at: 572, kind: "crate", layout: "row", items: [
+        { type: "weapon", gun: "barrage", hp: 12, x: -3 },
+        { type: "weapon", gun: "barrage", hp: 12, x: 0 },
+        { type: "weapon", gun: "barrage", hp: 12, x: 3 },
+      ] },
+      { at: 600, kind: "crate", layout: "row", items: [
+        { type: "volunteer", hp: 2, x: -3 },
+        { type: "volunteer", hp: 2, x: 0 },
+        { type: "volunteer", hp: 2, x: 3 },
+      ] },
+      { at: 635, kind: "crate", layout: "row", items: [
+        { type: "weapon", gun: "cone", hp: 12, x: -3 },
+        { type: "weapon", gun: "cone", hp: 12, x: 0 },
+        { type: "weapon", gun: "cone", hp: 12, x: 3 },
+      ] },
+      { at: 680, kind: "wave", clog: 52, suds: 10 },
+      { at: 770, kind: "crate", layout: "row", items: [
+        { type: "volunteer", hp: 2, x: -3 },
+        { type: "volunteer", hp: 2, x: 0 },
+        { type: "volunteer", hp: 2, x: 3 },
+      ] },
+      { at: 800, kind: "crate", layout: "row", items: [
+        { type: "tier", hp: 10, x: -3 },
+        { type: "tier", hp: 10, x: 0 },
+        { type: "tier", hp: 10, x: 3 },
+      ] },
+      { at: 830, kind: "crate", layout: "row", items: [
+        { type: "volunteer", hp: 2, x: -3 },
+        { type: "volunteer", hp: 2, x: 0 },
+        { type: "volunteer", hp: 2, x: 3 },
+      ] },
       { at: 870, kind: "crate", layout: "row", items: [
-        { type: "volunteer", hp: 24, x: -2.6 },
-        { type: "volunteer", hp: 22, x: 2.4 },
+        { type: "volunteer", hp: 5, x: -3 },
+        { type: "volunteer", hp: 5, x: 0 },
+        { type: "volunteer", hp: 5, x: 3 },
       ] },
-      { at: 920, kind: "wave", clog: 48, suds: 10, spit: 1 },
-      { at: 1008, kind: "gate", side: 1, op: "add", k: 8 },
+      { at: 920, kind: "wave", clog: 40, suds: 8 },
+      { at: 1008, kind: "crate", layout: "row", items: [
+        { type: "volunteer", hp: 2, x: -3 },
+        { type: "volunteer", hp: 2, x: 0 },
+        { type: "volunteer", hp: 2, x: 3 },
+      ] },
       { at: 1034, kind: "crate", layout: "row", items: [
-        { type: "volunteer", hp: 20, x: -2.2 },
-        { type: "volunteer", hp: 26, x: 1.8 },
+        { type: "volunteer", hp: 5, x: -3 },
+        { type: "volunteer", hp: 5, x: 0 },
+        { type: "volunteer", hp: 5, x: 3 },
       ] },
       { at: 1060, kind: "boss" },
     ],
@@ -673,43 +1024,101 @@ export const LEVELS = {
     win: "BRIDGE HELD!",
     events: [
       { at: 26, kind: "gate", side: 1, op: "add", k: 6 },
-      { at: 50, kind: "crate", layout: "row", items: [
-        { type: "volunteer", hp: 16, x: -2.6 },
-        { type: "volunteer", hp: 18, x: 2.4 },
+      { at: 54, kind: "gate", side: 0, op: "add", k: 5 },
+      { at: 74, kind: "crate", layout: "row", items: [
+        { type: "volunteer", hp: 14, x: -3 },
+        { type: "volunteer", hp: 6, x: 0 },
+        { type: "volunteer", hp: 12, x: 3 },
       ] },
-      { at: 80, kind: "gate", side: 0, op: "mul", k: 2 },
-      { at: 148, kind: "wave", clog: 66, hair: 3 },
-      { at: 236, kind: "gate", side: 1, op: "add", k: 8 },
-      { at: 282, kind: "gate", side: 0, op: "add", k: 8 },
+      { at: 96, kind: "crate", layout: "single", items: [{ type: "volunteer", hp: 4, x: 0 }] },
+      { at: 148, kind: "wave", clog: 36, hair: 1 },
+      { at: 236, kind: "crate", layout: "row", items: [
+        { type: "volunteer", hp: 14, x: -3 },
+        { type: "volunteer", hp: 6, x: 0 },
+        { type: "volunteer", hp: 8, x: 3 },
+      ] },
+      { at: 282, kind: "crate", layout: "row", items: [
+        { type: "volunteer", hp: 16, x: -3 },
+        { type: "volunteer", hp: 6, x: 0 },
+        { type: "volunteer", hp: 6, x: 3 },
+      ] },
       { at: 313, kind: "crate", layout: "row", items: [
-        { type: "volunteer", hp: 22, x: -2.8 },
-        { type: "volunteer", hp: 20, x: 2.2 },
+        { type: "volunteer", hp: 14, x: -3 },
+        { type: "volunteer", hp: 6, x: 0 },
+        { type: "volunteer", hp: 6, x: 3 },
       ] },
-      { at: 340, kind: "gate", side: 1, op: "add", k: 6 },
+      { at: 340, kind: "crate", layout: "row", items: [
+        { type: "volunteer", hp: 3, x: -3 },
+        { type: "volunteer", hp: 6, x: 0 },
+        { type: "volunteer", hp: 5, x: 3 },
+      ] },
       { at: 370, kind: "crate", layout: "row", items: [
-        { type: "volunteer", hp: 18, x: -1.6 },
-        { type: "volunteer", hp: 22, x: 2.6 },
+        { type: "volunteer", hp: 1, x: -3 },
+        { type: "volunteer", hp: 6, x: 0 },
+        { type: "volunteer", hp: 5, x: 3 },
       ] },
-      { at: 420, kind: "wave", clog: 84, suds: 12, hauler: 2, hair: 3, leaf: 1 },
-      { at: 510, kind: "gate", side: 0, op: "add", k: 10 },
-      { at: 535, kind: "crate", layout: "single", items: [{ type: "weapon", gun: "rail", hp: 26, x: -2.0 }] },
-      { at: 560, kind: "gate", side: 1, op: "sub", k: 4 },
-      { at: 590, kind: "crate", layout: "single", items: [{ type: "weapon", gun: "aurora", hp: 28, x: 2.2 }] },
-      { at: 620, kind: "gate", side: 0, op: "add", k: 8 },
-      { at: 655, kind: "crate", layout: "single", items: [{ type: "weapon", gun: "beam", hp: 28, x: 1.6 }] },
-      { at: 710, kind: "wave", clog: 92, suds: 14, hauler: 3, hair: 4, leaf: 1 },
-      { at: 800, kind: "gate", side: 1, op: "add", k: 8 },
-      { at: 830, kind: "crate", layout: "single", items: [{ type: "tier", hp: 34, x: -1.4 }] },
-      { at: 860, kind: "gate", side: 0, op: "add", k: 6 },
+      { at: 420, kind: "wave", clog: 44, suds: 6, hair: 1 },
+      { at: 510, kind: "crate", layout: "row", items: [
+        { type: "volunteer", hp: 1, x: -3 },
+        { type: "volunteer", hp: 6, x: 0 },
+        { type: "volunteer", hp: 5, x: 3 },
+      ] },
+      { at: 535, kind: "crate", layout: "row", items: [
+        { type: "weapon", gun: "rail", hp: 12, x: -3 },
+        { type: "weapon", gun: "rail", hp: 12, x: 0 },
+        { type: "weapon", gun: "rail", hp: 12, x: 3 },
+      ] },
+      { at: 560, kind: "crate", layout: "row", items: [
+        { type: "volunteer", hp: 2, x: -3 },
+        { type: "volunteer", hp: 2, x: 0 },
+        { type: "volunteer", hp: 2, x: 3 },
+      ] },
+      { at: 590, kind: "crate", layout: "row", items: [
+        { type: "weapon", gun: "aurora", hp: 12, x: -3 },
+        { type: "weapon", gun: "aurora", hp: 12, x: 0 },
+        { type: "weapon", gun: "aurora", hp: 12, x: 3 },
+      ] },
+      { at: 620, kind: "crate", layout: "row", items: [
+        { type: "volunteer", hp: 2, x: -3 },
+        { type: "volunteer", hp: 2, x: 0 },
+        { type: "volunteer", hp: 2, x: 3 },
+      ] },
+      { at: 655, kind: "crate", layout: "row", items: [
+        { type: "weapon", gun: "beam", hp: 12, x: -3 },
+        { type: "weapon", gun: "beam", hp: 12, x: 0 },
+        { type: "weapon", gun: "beam", hp: 12, x: 3 },
+      ] },
+      { at: 710, kind: "wave", clog: 48, suds: 8, hair: 1 },
+      { at: 800, kind: "crate", layout: "row", items: [
+        { type: "volunteer", hp: 2, x: -3 },
+        { type: "volunteer", hp: 2, x: 0 },
+        { type: "volunteer", hp: 2, x: 3 },
+      ] },
+      { at: 830, kind: "crate", layout: "row", items: [
+        { type: "tier", hp: 10, x: -3 },
+        { type: "tier", hp: 10, x: 0 },
+        { type: "tier", hp: 10, x: 3 },
+      ] },
+      { at: 860, kind: "crate", layout: "row", items: [
+        { type: "volunteer", hp: 2, x: -3 },
+        { type: "volunteer", hp: 2, x: 0 },
+        { type: "volunteer", hp: 2, x: 3 },
+      ] },
       { at: 900, kind: "crate", layout: "row", items: [
-        { type: "volunteer", hp: 24, x: -2.4 },
-        { type: "volunteer", hp: 26, x: 2.4 },
+        { type: "volunteer", hp: 3, x: -3 },
+        { type: "volunteer", hp: 3, x: 0 },
+        { type: "volunteer", hp: 3, x: 3 },
       ] },
-      { at: 960, kind: "wave", clog: 70, hauler: 2, hair: 3, leaf: 1 },
-      { at: 1048, kind: "gate", side: 1, op: "add", k: 8 },
+      { at: 960, kind: "wave", clog: 40, hair: 1 },
+      { at: 1048, kind: "crate", layout: "row", items: [
+        { type: "volunteer", hp: 2, x: -3 },
+        { type: "volunteer", hp: 2, x: 0 },
+        { type: "volunteer", hp: 2, x: 3 },
+      ] },
       { at: 1074, kind: "crate", layout: "row", items: [
-        { type: "volunteer", hp: 22, x: -2.2 },
-        { type: "volunteer", hp: 28, x: 2.0 },
+        { type: "volunteer", hp: 3, x: -3 },
+        { type: "volunteer", hp: 3, x: 0 },
+        { type: "volunteer", hp: 3, x: 3 },
       ] },
       { at: 1100, kind: "boss" },
     ],
@@ -734,50 +1143,113 @@ export const LEVELS = {
     win: "DAM HELD!",
     events: [
       { at: 26, kind: "gate", side: 1, op: "add", k: 6 },
-      { at: 50, kind: "crate", layout: "row", items: [
-        { type: "volunteer", hp: 18, x: -2.8 },
-        { type: "volunteer", hp: 16, x: 2.4 },
+      { at: 54, kind: "gate", side: 0, op: "add", k: 5 },
+      { at: 74, kind: "crate", layout: "row", items: [
+        { type: "volunteer", hp: 10, x: -3 },
+        { type: "volunteer", hp: 3, x: 0 },
+        { type: "volunteer", hp: 18, x: 3 },
       ] },
-      { at: 80, kind: "gate", side: 0, op: "mul", k: 2 },
-      { at: 108, kind: "crate", layout: "row", items: [
-        { type: "volunteer", hp: 16, x: -2.2 },
-        { type: "volunteer", hp: 20, x: 2.6 },
+      { at: 96, kind: "crate", layout: "single", items: [{ type: "volunteer", hp: 1, x: 0 }] },
+      { at: 118, kind: "crate", layout: "row", items: [
+        { type: "volunteer", hp: 8, x: -3 },
+        { type: "volunteer", hp: 3, x: 0 },
+        { type: "volunteer", hp: 11, x: 3 },
       ] },
-      { at: 156, kind: "wave", clog: 72, suds: 10, hauler: 1, hair: 2, spit: 1, leaf: 1, duck: 1 },
-      { at: 246, kind: "gate", side: 1, op: "add", k: 8 },
+      { at: 156, kind: "wave", clog: 40, suds: 6 },
+      { at: 246, kind: "crate", layout: "row", items: [
+        { type: "volunteer", hp: 8, x: -3 },
+        { type: "volunteer", hp: 3, x: 0 },
+        { type: "volunteer", hp: 8, x: 3 },
+      ] },
       { at: 271, kind: "crate", layout: "row", items: [
-        { type: "volunteer", hp: 22, x: -2.6 },
-        { type: "volunteer", hp: 18, x: 1.8 },
+        { type: "volunteer", hp: 6, x: -3 },
+        { type: "volunteer", hp: 2, x: 0 },
+        { type: "volunteer", hp: 11, x: 3 },
       ] },
-      { at: 296, kind: "gate", side: 0, op: "add", k: 8 },
-      { at: 326, kind: "crate", layout: "single", items: [{ type: "tier", hp: 28, x: 1.2 }] },
-      { at: 356, kind: "gate", side: 1, op: "add", k: 6 },
+      { at: 296, kind: "crate", layout: "row", items: [
+        { type: "volunteer", hp: 6, x: -3 },
+        { type: "volunteer", hp: 2, x: 0 },
+        { type: "volunteer", hp: 6, x: 3 },
+      ] },
+      { at: 326, kind: "crate", layout: "row", items: [
+        { type: "weapon", gun: "saw", hp: 12, x: -3 },
+        { type: "weapon", gun: "saw", hp: 12, x: 0 },
+        { type: "weapon", gun: "saw", hp: 12, x: 3 },
+      ] },
+      { at: 356, kind: "crate", layout: "row", items: [
+        { type: "volunteer", hp: 4, x: -3 },
+        { type: "volunteer", hp: 2, x: 0 },
+        { type: "volunteer", hp: 4, x: 3 },
+      ] },
       { at: 388, kind: "crate", layout: "row", items: [
-        { type: "volunteer", hp: 20, x: -2.4 },
-        { type: "volunteer", hp: 24, x: 2.4 },
+        { type: "volunteer", hp: 4, x: -3 },
+        { type: "volunteer", hp: 2, x: 0 },
+        { type: "volunteer", hp: 4, x: 3 },
       ] },
-      { at: 440, kind: "wave", clog: 88, suds: 16, hauler: 2, hair: 3, spit: 1, leaf: 1, duck: 1 },
-      { at: 530, kind: "gate", side: 0, op: "add", k: 10 },
-      { at: 555, kind: "crate", layout: "single", items: [{ type: "weapon", gun: "saw", hp: 28, x: -2.0 }] },
-      { at: 580, kind: "gate", side: 1, op: "sub", k: 4 },
-      { at: 610, kind: "crate", layout: "single", items: [{ type: "weapon", gun: "glacier", hp: 30, x: 2.2 }] },
-      { at: 640, kind: "gate", side: 0, op: "add", k: 8 },
-      { at: 680, kind: "crate", layout: "single", items: [{ type: "weapon", gun: "storm", hp: 30, x: 1.6 }] },
-      { at: 740, kind: "wave", clog: 96, suds: 18, hauler: 3, hair: 3, spit: 2, leaf: 1, duck: 1 },
-      { at: 832, kind: "gate", side: 1, op: "add", k: 8 },
+      { at: 440, kind: "wave", clog: 48, suds: 8 },
+      { at: 530, kind: "crate", layout: "row", items: [
+        { type: "volunteer", hp: 2, x: -3 },
+        { type: "volunteer", hp: 2, x: 0 },
+        { type: "volunteer", hp: 2, x: 3 },
+      ] },
+      { at: 555, kind: "crate", layout: "single", items: [{ type: "volunteer", hp: 2, x: 0 }] },
+      { at: 580, kind: "crate", layout: "row", items: [
+        { type: "volunteer", hp: 2, x: -3 },
+        { type: "volunteer", hp: 2, x: 0 },
+        { type: "volunteer", hp: 2, x: 3 },
+      ] },
+      { at: 610, kind: "crate", layout: "row", items: [
+        { type: "weapon", gun: "glacier", hp: 12, x: -3 },
+        { type: "weapon", gun: "glacier", hp: 12, x: 0 },
+        { type: "weapon", gun: "glacier", hp: 12, x: 3 },
+      ] },
+      { at: 640, kind: "crate", layout: "row", items: [
+        { type: "volunteer", hp: 2, x: -3 },
+        { type: "volunteer", hp: 2, x: 0 },
+        { type: "volunteer", hp: 2, x: 3 },
+      ] },
+      { at: 680, kind: "crate", layout: "row", items: [
+        { type: "weapon", gun: "storm", hp: 12, x: -3 },
+        { type: "weapon", gun: "storm", hp: 12, x: 0 },
+        { type: "weapon", gun: "storm", hp: 12, x: 3 },
+      ] },
+      { at: 740, kind: "wave", clog: 52, suds: 8, hair: 1 },
+      { at: 832, kind: "crate", layout: "row", items: [
+        { type: "volunteer", hp: 2, x: -3 },
+        { type: "volunteer", hp: 2, x: 0 },
+        { type: "volunteer", hp: 2, x: 3 },
+      ] },
       { at: 861, kind: "crate", layout: "row", items: [
-        { type: "volunteer", hp: 26, x: -2.6 },
-        { type: "volunteer", hp: 22, x: 2.2 },
+        { type: "volunteer", hp: 3, x: -3 },
+        { type: "volunteer", hp: 3, x: 0 },
+        { type: "volunteer", hp: 3, x: 3 },
       ] },
-      { at: 890, kind: "gate", side: 0, op: "sub", k: 3 },
+      { at: 890, kind: "crate", layout: "row", items: [
+        { type: "volunteer", hp: 2, x: -3 },
+        { type: "volunteer", hp: 2, x: 0 },
+        { type: "volunteer", hp: 2, x: 3 },
+      ] },
       { at: 935, kind: "crate", layout: "row", items: [
-        { type: "volunteer", hp: 24, x: -1.8 },
-        { type: "volunteer", hp: 28, x: 2.6 },
+        { type: "volunteer", hp: 3, x: -3 },
+        { type: "volunteer", hp: 3, x: 0 },
+        { type: "volunteer", hp: 3, x: 3 },
       ] },
-      { at: 1000, kind: "wave", clog: 84, suds: 16, hauler: 3, hair: 3, spit: 2, leaf: 1, duck: 1 },
-      { at: 1090, kind: "gate", side: 1, op: "add", k: 10 },
-      { at: 1115, kind: "crate", layout: "single", items: [{ type: "tier", hp: 36, x: -1.4 }] },
-      { at: 1140, kind: "gate", side: 0, op: "add", k: 6 },
+      { at: 1000, kind: "wave", clog: 48, suds: 8, hair: 1 },
+      { at: 1090, kind: "crate", layout: "row", items: [
+        { type: "volunteer", hp: 2, x: -3 },
+        { type: "volunteer", hp: 2, x: 0 },
+        { type: "volunteer", hp: 2, x: 3 },
+      ] },
+      { at: 1115, kind: "crate", layout: "row", items: [
+        { type: "tier", hp: 10, x: -3 },
+        { type: "tier", hp: 10, x: 0 },
+        { type: "tier", hp: 10, x: 3 },
+      ] },
+      { at: 1140, kind: "crate", layout: "row", items: [
+        { type: "volunteer", hp: 2, x: -3 },
+        { type: "volunteer", hp: 2, x: 0 },
+        { type: "volunteer", hp: 2, x: 3 },
+      ] },
       { at: 1160, kind: "boss" },
     ],
   },
@@ -813,16 +1285,34 @@ export function crateHp(base, type, explicit) {
   return Math.max(1, Math.round(base * (CRATE_MUL[type] || 1)));
 }
 
-export function formationRadius(n, half) {
-  const shown = Math.max(1, Math.min(RENDER_CAP, n | 0));
-  const spacing = FORM_GAP;
-  const cols = Math.max(1, Math.ceil(Math.sqrt(shown)));
+export function laneOf(x) {
+  if (x < -LANE_EDGE) return "LEFT";
+  if (x > LANE_EDGE) return "RIGHT";
+  return "CENTER";
+}
+
+// Columns stay inside one 3 m lane. Extra soldiers add rows, not width.
+export function formationLayout(n) {
+  const shown = Math.max(1, shownCount(n) || 1);
+  const maxCols = 1 + Math.floor((FORM_MAX_W + 1e-6) / FORM_GAP);
+  const ideal = Math.max(1, Math.ceil(Math.sqrt(shown)));
+  const cols = Math.max(1, Math.min(maxCols, ideal, shown));
   const rows = Math.max(1, Math.ceil(shown / cols));
-  const w = Math.max(0, cols - 1) * spacing;
-  const h = Math.max(0, rows - 1) * spacing;
-  const r = Math.max(0.35, Math.hypot(w * 0.5, h * 0.5) + 0.22);
+  const w = Math.max(0, cols - 1) * FORM_GAP;
+  const h = Math.max(0, rows - 1) * FORM_GAP;
+  return { shown, cols, rows, w, h };
+}
+
+export function formationRadius(n, half) {
+  const lay = formationLayout(n);
+  const r = Math.max(0.35, Math.hypot(lay.w * 0.5, lay.h * 0.5) + 0.22);
   const road = Math.max(0.4, (half || DECK_HALF) - 0.7);
   return Math.min(r, road);
+}
+
+export function formationHalfX(n) {
+  const lay = formationLayout(n);
+  return Math.min(1.35, lay.w * 0.5 + 0.24);
 }
 
 export function clampLane(x, radius, half) {
@@ -1039,17 +1529,16 @@ export function mysteryPick(unlocked, rnd) {
 export function formationOffsets(n, radius, outX, outZ) {
   const shown = shownCount(n);
   if (!shown) return 0;
-  const spacing = FORM_GAP;
-  const rowH = spacing;
-  let cols = Math.max(1, Math.ceil(Math.sqrt(shown)));
-  let rows = Math.ceil(shown / cols);
-  const w = Math.max(0, cols - 1) * spacing;
-  const h = Math.max(0, rows - 1) * rowH;
+  const lay = formationLayout(shown);
+  const cols = lay.cols;
+  const rows = lay.rows;
+  const w = lay.w;
+  const h = lay.h;
   const fit = Math.max(0.2, Math.hypot(w * 0.5, h * 0.5) + 0.05);
   let scale = radius > 0 && fit > radius ? radius / fit : 1;
-  if (w > LANE_BLOB) scale = Math.min(scale, LANE_BLOB / w);
-  const sx = spacing * scale;
-  const sy = rowH * scale;
+  if (w > FORM_MAX_W) scale = Math.min(scale, FORM_MAX_W / w);
+  const sx = FORM_GAP * scale;
+  const sy = FORM_GAP * scale;
   let i = 0;
   for (let r = 0; r < rows && i < shown; r++) {
     const rowCols = Math.min(cols, shown - i);
@@ -1382,6 +1871,14 @@ export function selfTestRules() {
   eq(weaponMods("saw", 1).bounces, 3, "saw bounce");
   eq(weaponMods("aurora", 1).pattern, "orb", "aurora orb");
   eq(GUN_ORDER.length, 12, "12 guns");
+  eq(laneOf(-3), "LEFT", "lane left");
+  eq(laneOf(-1.51), "LEFT", "lane left edge");
+  eq(laneOf(-1.5), "CENTER", "lane center left");
+  eq(laneOf(0), "CENTER", "lane center");
+  eq(laneOf(1.5), "CENTER", "lane center right");
+  eq(laneOf(3), "RIGHT", "lane right");
+  const wide200 = formationLayout(200);
+  if (wide200.w > FORM_MAX_W) fails.push("form width " + wide200.w);
   eq(DECK_HALF, 4.5, "deck half");
   eq(BOSS_HALF, 4.5, "boss half");
   eq(GATE_X, 3, "gate x");

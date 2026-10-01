@@ -1,11 +1,11 @@
 import * as THREE from "three";
-import { BUILD, GUN_COST, GUN_ORDER, WEAPONS, highestPlayable, isUnlockedLevel, rhythmText } from "./rules.js?v=br13";
-import { createWorld } from "./world.js?v=br13";
-import { createPlay } from "./play.js?v=br13";
-import { createAudio } from "./audio.js?v=br13";
-import { loadSave, rememberWin, rememberGun, writeSave, buyGun } from "./save.js?v=br13";
-import { drawWeaponIcon, setTime } from "./mats.js?v=br13";
-import { loadGame, CREDIT_LINES } from "./assets.js?v=br13";
+import { BUILD, GUN_COST, GUN_ORDER, WEAPONS, highestPlayable, isUnlockedLevel, rhythmText } from "./rules.js?v=br14";
+import { createWorld } from "./world.js?v=br14";
+import { createPlay } from "./play.js?v=br14";
+import { createAudio } from "./audio.js?v=br14";
+import { loadSave, rememberWin, rememberGun, writeSave, buyGun } from "./save.js?v=br14";
+import { drawWeaponIcon, setTime } from "./mats.js?v=br14";
+import { loadGame, CREDIT_LINES } from "./assets.js?v=br14";
 
 const save = loadSave();
 const canvas = document.getElementById("c");
@@ -231,7 +231,12 @@ function startRun(id) {
   mode = "intro";
   armed = 0;
   document.getElementById("intro-name").textContent = play.view.levelName;
-  document.getElementById("intro-line").textContent = play.view.intro;
+  const freshRun = !save.levelsCleared || !Object.keys(save.levelsCleared).some((key) => save.levelsCleared[key]);
+  document.getElementById("intro-line").textContent = freshRun && levelId === "1-1"
+    ? "Rush the bridges. Blast the Clogs. Plug the Drain."
+    : play.view.intro;
+  const levelScreen = document.getElementById("level-screen");
+  if (levelScreen) levelScreen.classList.add("hidden");
   introEl.classList.remove("hidden");
   toastEl.classList.add("hidden");
   barkEl.classList.add("hidden");
@@ -607,6 +612,18 @@ window.addEventListener("keyup", (e) => {
 });
 
 document.getElementById("btn-start").addEventListener("click", () => startRun(highestPlayable(save.levelsCleared)));
+const openLevels = document.getElementById("btn-open-levels");
+const levelScreen = document.getElementById("level-screen");
+const levelsBack = document.getElementById("levels-back");
+if (openLevels && levelScreen) {
+  openLevels.addEventListener("click", () => {
+    paintLevels();
+    levelScreen.classList.remove("hidden");
+  });
+}
+if (levelsBack && levelScreen) {
+  levelsBack.addEventListener("click", () => levelScreen.classList.add("hidden"));
+}
 document.getElementById("btn-retry").addEventListener("click", () => startRun(play.view.levelId));
 document.getElementById("btn-next").addEventListener("click", () => {
   const id = nextBtn.dataset.level;
@@ -616,6 +633,7 @@ document.getElementById("btn-next").addEventListener("click", () => {
 document.getElementById("level-row").addEventListener("click", (e) => {
   const btn = e.target.closest("button");
   if (!btn || btn.disabled) return;
+  if (levelScreen) levelScreen.classList.add("hidden");
   startRun(btn.dataset.level);
 });
 const pauseActions = document.getElementById("pause-actions");
@@ -859,6 +877,7 @@ const assets = loadGame((step, total) => {
 });
 assets.critical.then(() => {
   document.getElementById("btn-start").disabled = false;
+  if (openLevels) openLevels.disabled = false;
 });
 assets.done.then((pack) => {
   try {
@@ -889,6 +908,7 @@ assets.done.then((pack) => {
 }).catch((err) => {
   console.warn("asset load failed", err);
   document.getElementById("btn-start").disabled = false;
+  if (openLevels) openLevels.disabled = false;
   if (loadWrap) loadWrap.classList.add("hidden");
   artReady = true;
   window.__bridge.ready = true;

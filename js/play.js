@@ -19,6 +19,8 @@ import {
   crateHp,
   formationOffsets,
   formationRadius,
+  formationHalfX,
+  laneOf,
   freshGate,
   gateBlue,
   gateLabel,
@@ -53,7 +55,7 @@ import {
   CHARGE_LEAD,
   PINCH_BLOB,
   volleyPlan,
-} from "./rules.js?v=br13";
+} from "./rules.js?v=br14";
 import {
   animToon,
   attachOutline,
@@ -73,7 +75,7 @@ import {
   writeLog,
   writeQuat,
   writeTRS,
-} from "./mats.js?v=br13";
+} from "./mats.js?v=br14";
 import {
   arrowGeo,
   buildBaron,
@@ -102,7 +104,7 @@ import {
   sawDiscGeo,
   streakGeo,
   streamGeo,
-} from "./build.js?v=br13";
+} from "./build.js?v=br14";
 
 const STRIDE = 320;
 const CAPS = [320, 320, 320, 120, 120, 120, 120];
@@ -511,7 +513,7 @@ export function createPlay(scene, camera, audio) {
   const ringCol = new Uint8Array(16);
   let ringN = 0;
   const puddles = makeShots(new THREE.CircleGeometry(0.45, 8), new THREE.MeshBasicMaterial({ color: 0xe0a030, transparent: true, opacity: 0.85, depthWrite: false, toneMapped: false }), PUDN);
-  const hazards = makeShots(new THREE.CircleGeometry(1, 16), new THREE.MeshBasicMaterial({ color: 0xff4f5e, transparent: true, opacity: 0.55, depthWrite: false, toneMapped: false }), HAZN);
+  const hazards = makeShots(new THREE.RingGeometry(0.62, 1, 28), new THREE.MeshBasicMaterial({ color: 0xff4f5e, transparent: true, opacity: 0.72, depthWrite: false, toneMapped: false, side: THREE.DoubleSide }), HAZN);
   const vducks = makeShots(builtE[6].geo, toon("#ffffff", { vertexColors: true }), DUCKN);
   const stuckMesh = new THREE.InstancedMesh(builtE[5].geo, animToon(), 16);
   stuckMesh.frustumCulled = false;
@@ -1131,7 +1133,6 @@ export function createPlay(scene, camera, audio) {
   let cratesOpened = 0;
   let crateRammed = 0;
   let bossSec = 0;
-  let tubGrace = 0;
   let arenaStarted = 0;
   let rackTaken = 0;
   let flyT = 0;
@@ -1683,16 +1684,17 @@ export function createPlay(scene, camera, audio) {
       const cut = Math.max(4, sizes[0] >> 1);
       sizes.splice(0, 1, cut, sizes[0] - cut);
     }
-    const lanes = [[], []];
-    for (let i = 0; i < sizes.length; i++) lanes[i % 2].push(i);
+    const lanes = [[], [], []];
+    for (let i = 0; i < sizes.length; i++) lanes[i % 3].push(i);
+    const laneX = [-3.02, 0, 3.02];
     const anchorOf = new Array(sizes.length);
-    for (let L = 0; L < 2; L++) {
+    for (let L = 0; L < 3; L++) {
       const ids = lanes[L];
-      const gap = ids.length <= 1 ? 0 : Math.min(3.4, 13.5 / (ids.length - 1));
+      const gap = ids.length <= 1 ? 0 : Math.min(3.4, 13.5 / Math.max(1, ids.length - 1));
       for (let k = 0; k < ids.length; k++) {
         anchorOf[ids[k]] = {
-          cx: L ? 3.02 : -3.02,
-          cz: zFront - (L ? gap * 0.48 : 0) - k * gap,
+          cx: laneX[L],
+          cz: zFront - L * 1.55 - k * gap,
           lane: L,
         };
       }
@@ -1713,14 +1715,14 @@ export function createPlay(scene, camera, audio) {
       }
     }
     for (let i = 0; i < strayN; i++) {
-      const side = i % 2 === 0 ? -1 : 1;
-      const x = clampDeck(side * (3.55 + rng() * 0.18), edge);
-      const z = zFront - 2.6 - i * 3.4 + (rng() - 0.5) * 0.2;
+      const lane = i % 3;
+      const x = clampDeck(laneX[lane] + (rng() - 0.5) * 0.28, edge);
+      const z = zFront - 4.4 - i * 2.8 + (rng() - 0.5) * 0.2;
       spots[cursor++] = { x, z };
     }
     while (cursor < room) {
-      const side = cursor % 2 === 0 ? -1 : 1;
-      spots[cursor] = { x: side * 2.55, z: zFront - cursor * 0.8 };
+      const lane = cursor % 3;
+      spots[cursor] = { x: laneX[lane], z: zFront - (cursor % 8) * 0.8 };
       cursor++;
     }
     return { spots, anchors };
@@ -1798,6 +1800,7 @@ export function createPlay(scene, camera, audio) {
     hazards.y[i] = 0.36;
     hazards.extra[i] = r;
     hazards.life[i] = delay;
+    hazards.ox[i] = Math.max(0.05, delay);
     hazards.extra2[i] = maxKill;
   }
 
@@ -2149,11 +2152,6 @@ export function createPlay(scene, camera, audio) {
 
   function hurtSquad(n, quiet) {
     if (ended || !running || n <= 0 || invuln) return;
-    // 1-8's splash windup can also nip the front rank. Forgive that one chip.
-    if (bossRank() === 7 && arenaStarted && !tubGrace && bossSec < 1.64 && n < 20) {
-      tubGrace = 1;
-      return;
-    }
     const lost = Math.min(n, squadN);
     lostSquad += lost;
     squadN -= n;
@@ -2222,7 +2220,7 @@ export function createPlay(scene, camera, audio) {
     audio.endFire();
     audio.bossOut();
     if (bossKind === "baron") {
-      say("THIS IS MERELY A FIRST NOTICE.");
+      say(level.id === "1-1" ? "UNCLE WILL HEAR OF THIS!" : "THIS IS MERELY A FIRST NOTICE.");
       manhole.visible = true;
       manhole.position.set(bossState.x, 0.24, bossState.z);
     } else if (bossKind === "grunk") {
@@ -2285,7 +2283,6 @@ export function createPlay(scene, camera, audio) {
     bossState.lock = squadX;
     bossState.cool = bossKind === "baron" ? 1.0 : bossKind === "tub" ? 1.2 : 5;
     bossState.taxed = 0;
-    tubGrace = 0;
     wrenchPhase = 0;
     wrench.visible = false;
     zone.visible = false;
@@ -2333,21 +2330,7 @@ export function createPlay(scene, camera, audio) {
         dump(3, bossRank() >= 5 ? 2 : 1, bossState.z - 8, 1);
       }
     }
-    if (bossState.hp <= 0) {
-      // Close 1-4 and 1-10 finishes are settled onto the shrinking curve. A big squad is left as it stands.
-      if (bossRank() === 3 && squadN >= 80 && squadN <= 86) {
-        lostSquad += squadN - 78;
-        squadN = 78;
-      } else if (bossRank() === 3 && squadN >= 64 && squadN <= 71) {
-        squadN = 74;
-      }
-      if (bossRank() === 9 && squadN >= 31 && squadN <= 40) {
-        const trim = Math.min(5, squadN - 27);
-        lostSquad += trim;
-        squadN -= trim;
-      }
-      beginWin();
-    }
+    if (bossState.hp <= 0) beginWin();
   }
 
   function applyShove(p, i, amount, ox, radial, oz) {
@@ -2549,6 +2532,7 @@ export function createPlay(scene, camera, audio) {
       if (g.passed) continue;
       if (tag && g.stamp === tag) continue;
       if (g.z < lo - 0.6 || g.z > hi + 0.6) continue;
+      if (laneOf(g.x) !== laneOf(squadX)) continue;
       if (Math.abs(x0 - g.x) > PANEL_W * 0.5 + 0.2) continue;
       if (!inAimCone(originX, originZ, g.x, g.z)) continue;
       if (tag) g.stamp = tag;
@@ -2570,6 +2554,7 @@ export function createPlay(scene, camera, audio) {
       const c = crates[i];
       if (c.state !== "idle") continue;
       if (tag && c.stamp === tag) continue;
+      if (laneOf(c.x) !== laneOf(squadX)) continue;
       if (Math.abs(x0 - c.x) > 1.15) continue;
       if (Math.abs(z0 - c.z) > 0.85) continue;
       if (ox != null && Math.abs(c.x - ox) > 0.95) continue;
@@ -4355,10 +4340,11 @@ export function createPlay(scene, camera, audio) {
     }
     if (!running || ended === "lose") return;
     radius = formationRadius(Math.max(squadN, 1), half);
+    const lat = formationHalfX(Math.max(squadN, 1));
     if (!ended) {
       if (bot) targetX = botX();
       else if (axis && !pointing) targetX += axis * STEER_MAX * h;
-      targetX = clampLane(targetX, radius, half);
+      targetX = clampLane(targetX, lat, half);
       if (bot) squadX = targetX;
       else {
         const maxStep = STEER_MAX * h;
@@ -4367,13 +4353,13 @@ export function createPlay(scene, camera, audio) {
         else if (dx < -maxStep) squadX -= maxStep;
         else squadX = targetX;
       }
-      squadX = clampLane(squadX, radius, half);
+      squadX = clampLane(squadX, lat, half);
       assistHold = 0;
       pinch = 0;
       if (!arenaStarted && !bot && !axis && !pointing) {
         let dodge = 0;
         let dodgeX = squadX;
-        const body = Math.max(0.7, radius * 0.45);
+        const body = Math.max(0.7, lat);
         for (let i = 0; i < crates.length; i++) {
           const c = crates[i];
           if (c.state !== "idle" || c.kind !== "volunteer") continue;
@@ -4399,12 +4385,12 @@ export function createPlay(scene, camera, audio) {
           dodge = 1;
         }
         if (dodge) {
-          dodgeX = clampLane(dodgeX, radius, half);
+          dodgeX = clampLane(dodgeX, lat, half);
           const maxA = 3 * h;
           const dxA = dodgeX - squadX;
           squadX += dxA > maxA ? maxA : dxA < -maxA ? -maxA : dxA;
           targetX = squadX;
-          squadX = clampLane(squadX, radius, half);
+          squadX = clampLane(squadX, lat, half);
         }
       }
       if (pullT > 0 && bossKind === "grunk" && arenaStarted) {
@@ -4432,7 +4418,7 @@ export function createPlay(scene, camera, audio) {
           if (!g || g.passed) continue;
           if (!(prevZ > g.z && z <= g.z && prevZ - g.z < 20)) continue;
           g.passed = 1;
-          const slop = PANEL_W * 0.5 + Math.max(0.35, radius * 0.35);
+          const slop = PANEL_W * 0.5 + Math.max(0.35, lat * 0.35);
           if (Math.abs(squadX - g.x) < slop) {
             squadN = applyGate(squadN, g.op, g.k, g.tenths);
             audio.gate();
@@ -4462,7 +4448,7 @@ export function createPlay(scene, camera, audio) {
             c.dirty = 1;
           }
         } else if (c.state === "idle" && Math.abs(z - c.z) < 1.05) {
-          const reach = Math.max(0.85, radius * 0.85) + 1.05;
+          const reach = Math.max(0.85, lat) + 0.45;
           const d = Math.abs(squadX - c.x);
           if (d >= reach) continue;
           if (c.kind === "weapon" || c.kind === "tier" || c.kind === "mystery") {
@@ -4547,10 +4533,10 @@ export function createPlay(scene, camera, audio) {
           bossState.cool = 6;
           const land = -dist;
           const edge = Math.max(0.8, half - 0.85);
-          armHazard(-edge, land - 0.3, 0.65, 0.8, 2);
+          armHazard(-edge, land - 0.3, 0.52, 1.2, 2);
           const centerKill = 5 + bossRank() * 2 - (bossRank() === 3 ? 6 : 0);
-          armHazard(0, land + 0.2, 1.05, 0.8, centerKill);
-          armHazard(edge * 0.55, land - 0.2, 0.65, 0.8, 2);
+          armHazard(0, land + 0.2, 0.84, 1.2, centerKill);
+          armHazard(edge * 0.55, land - 0.2, 0.52, 1.2, 2);
         } else if (bossKind === "tub" && bossState.cool <= 0) {
           bossState.cool = 7;
           dump(0, 8 + bossRank() * 2, bossState.z + 2.2, 6);
@@ -4860,7 +4846,7 @@ export function createPlay(scene, camera, audio) {
       view.barText = level.bossName;
     } else {
       view.bar = level.len > 0 ? dist / level.len : 0;
-      view.barText = "";
+      view.barText = (counts[0] + counts[1] + counts[2] + counts[3] + counts[4]) > 0 ? "Clogs" : "";
     }
   }
 
@@ -5704,7 +5690,12 @@ export function createPlay(scene, camera, audio) {
         const yaw = Math.atan2(s.vx[i], s.vz[i]);
         writeTRS(m, w, s.x[i], s.y[i], s.z[i], yaw, 1, 1, 1);
       } else if (kind === "hazard" || kind === "puddle") {
-        const sc = kind === "hazard" ? (s.extra[i] || 1) * 2 : 1.1;
+        let sc = 1.1;
+        if (kind === "hazard") {
+          const warn = s.ox[i] > 0.05 ? s.ox[i] : 0.05;
+          const fill = clamp(1 - s.life[i] / warn, 0, 1);
+          sc = (s.extra[i] || 1) * 2 * (0.22 + 0.78 * fill);
+        }
         writeQuat(m, w, s.x[i], s.y[i], s.z[i], sc, QX, 0, 0, QW);
       } else if (kind === "party" || kind === "ember") {
         let sc = kind === "party" ? 0.22 : 0.18;
@@ -6173,7 +6164,7 @@ export function createPlay(scene, camera, audio) {
       if (!g || g.passed) continue;
       const ahead = -g.z - dist;
       if (ahead < -3 || ahead > 40) continue;
-      snap.nxt += g.label + "@" + g.x.toFixed(1) + " ";
+      snap.nxt += g.label + "@" + g.x.toFixed(1) + "d" + ahead.toFixed(1) + " ";
     }
     snap.z = -dist;
     snap.ended = ended;
@@ -6326,7 +6317,7 @@ export function createPlay(scene, camera, audio) {
     squadN = 10;
     targetX = 30;
     step(0.8);
-    const lim = half - formationRadius(10, half);
+    const lim = half - formationHalfX(10);
     if (squadX > lim + 0.05 || squadX < -lim - 0.05) fails.push("rail " + squadX);
 
     reset();
@@ -6399,6 +6390,44 @@ export function createPlay(scene, camera, audio) {
       if (spreadP.x[i] > spreadHi) spreadHi = spreadP.x[i];
     }
     if (spreadN < 20 || spreadHi - spreadLo <= 4) fails.push("spread " + spreadN + " " + (spreadHi - spreadLo).toFixed(2));
+
+    const formX = new Float32Array(64);
+    const formZ = new Float32Array(64);
+    const formN = formationOffsets(200, formationRadius(200, DECK_HALF), formX, formZ);
+    let formLo = 99;
+    let formHi = -99;
+    for (let i = 0; i < formN; i++) {
+      if (formX[i] < formLo) formLo = formX[i];
+      if (formX[i] > formHi) formHi = formX[i];
+    }
+    if (formHi - formLo > 2.6) fails.push("form wide " + (formHi - formLo).toFixed(2));
+
+    reset();
+    running = true;
+    bench = 1;
+    squadN = 12;
+    squadX = 0;
+    targetX = 0;
+    holdFire = 0;
+    for (let i = 0; i < RENDER_CAP; i++) cds[i] = 0;
+    dist = 20;
+    prevZ = -dist;
+    const gateSnap = () => gates.map((g) => g.op + ":" + g.k + ":" + g.tenths).join("|");
+    const midBefore = gateSnap();
+    for (let i = 0; i < 60; i++) step(0.05);
+    if (gateSnap() !== midBefore) fails.push("center gates changed");
+    squadX = -GATE_X;
+    targetX = -GATE_X;
+    const right = gates.filter((g) => g.x > 1.5);
+    const rightBefore = right.map((g) => g.k + ":" + g.tenths).join("|");
+    for (let i = 0; i < right.length; i++) {
+      const g = right[i];
+      hitGate(g.x, g.z - 1, g.z + 1, 0, 0, squadX, g.z + 4);
+    }
+    for (let i = 0; i < 40; i++) step(0.05);
+    const rightAfter = right.map((g) => g.k + ":" + g.tenths).join("|");
+    if (rightAfter !== rightBefore) fails.push("left hit right");
+    bench = 0;
     reset();
     return { fails, soldier: tris.soldier, bober: tris.bober, boss: tris.boss };
   }

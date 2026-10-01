@@ -6,7 +6,7 @@
   <meta name="theme-color" content="#3A2A6A" />
   <meta name="description" content="Bober Bridge Rush. Hold the pine bridge. Fan game. Unofficial." />
   <title>Bober Bridge Rush</title>
-  <link rel="stylesheet" href="css/game.css?v=br13" />
+  <link rel="stylesheet" href="css/game.css?v=br14" />
 </head>
 <body>
   <canvas id="c"></canvas>
@@ -81,6 +81,37 @@
     <h1>BOBER<br />BRIDGE RUSH</h1>
     <p id="logo-tag">Hold the bridge. Plug the Drain.</p>
     <div class="sheet">
+      <button id="btn-start" type="button" disabled>PLAY</button>
+      <button id="btn-open-levels" type="button" disabled>LEVELS</button>
+      <div id="load-wrap" aria-hidden="true"><div id="load-bar"></div></div>
+      <div class="meta">
+        <span id="bober-total">$BOBER 0</span>
+        <button id="btn-mute" type="button" aria-pressed="false">Sound</button>
+        <button id="btn-notes" type="button" aria-expanded="false" aria-controls="notes">NOTES</button>
+      </div>
+    </div>
+    <div id="notes" class="hidden">
+      <button id="notes-close" type="button">Close</button>
+      <p class="eyebrow">THE DAM RUNS DRY</p>
+      <p id="tagline">Hold the bridge. Plug the Drain.</p>
+      <div id="enemy-book">
+        <p class="eyebrow">WHO IS ON THE BRIDGE</p>
+        <p><b>Clogs</b> are the horde. A <b>Clogling</b> is the basic one. A <b>Sludge Hauler</b> carries the mud. A <b>Hairball</b> rolls. <b>Baron Clog</b> wants the Drain.</p>
+        <p><b>Lord Drip</b> is the Baron's nephew. He holds Pine Bridge. Beat him and he runs home to tell his uncle.</p>
+      </div>
+      <div id="armory"></div>
+      <p id="fan-line">Fan game. Unofficial.</p>
+      <button id="btn-credits" type="button">3D models: Quaternius, Kenney, CreativeTrio, Armory_3D via poly.pizza. Textures and HDRI: Poly Haven. All CC0.</button>
+      <div id="credits" class="hidden"></div>
+      <a id="btn-home" href="https://ccosma1.github.io/green-home-games/">Back to Green Home Games</a>
+      <span id="build-tag"></span>
+    </div>
+  </section>
+
+  <section id="level-screen" class="hidden">
+    <div class="sheet">
+      <button id="levels-back" type="button">Back</button>
+      <h2>Levels</h2>
       <div id="level-row">
         <button type="button" class="level-tile" data-level="1-1" id="lv-1-1"><b>1-1</b><span>PINE BRIDGE</span><i class="lv-stars"></i></button>
         <button type="button" class="level-tile" data-level="1-2" id="lv-1-2"><b>1-2</b><span>SPILLWAY</span><i class="lv-stars"></i></button>
@@ -93,24 +124,6 @@
         <button type="button" class="level-tile" data-level="1-9" id="lv-1-9"><b>1-9</b><span>CRACKED</span><i class="lv-stars"></i></button>
         <button type="button" class="level-tile" data-level="1-10" id="lv-1-10"><b>1-10</b><span>LAST GASKET</span><i class="lv-stars"></i></button>
       </div>
-      <button id="btn-start" type="button" disabled>HOLD THE BRIDGE</button>
-      <div id="load-wrap" aria-hidden="true"><div id="load-bar"></div></div>
-      <div class="meta">
-        <span id="bober-total">$BOBER 0</span>
-        <button id="btn-mute" type="button" aria-pressed="false">Sound</button>
-        <button id="btn-notes" type="button" aria-expanded="false" aria-controls="notes">NOTES</button>
-      </div>
-    </div>
-    <div id="notes" class="hidden">
-      <button id="notes-close" type="button">Close</button>
-      <p class="eyebrow">THE DAM RUNS DRY</p>
-      <p id="tagline">Hold the bridge. Plug the Drain.</p>
-      <div id="armory"></div>
-      <p id="fan-line">Fan game. Unofficial.</p>
-      <button id="btn-credits" type="button">3D models: Quaternius, Kenney, CreativeTrio, Armory_3D via poly.pizza. Textures and HDRI: Poly Haven. All CC0.</button>
-      <div id="credits" class="hidden"></div>
-      <a id="btn-home" href="https://ccosma1.github.io/green-home-games/">Back to Green Home Games</a>
-      <span id="build-tag"></span>
     </div>
   </section>
 
@@ -154,6 +167,6 @@
     }
   }
   </script>
-  <script type="module" src="js/main.js?v=br13"></script>
+  <script type="module" src="js/main.js?v=br14"></script>
 </body>
 </html>

@@ -1,0 +1,60 @@
+build-tag br14
+intro Rush the bridges. Blast the Clogs. Plug the Drain.
+selfTest ok
+still n17=29 loseT=113.1 ended=lose n=0 dist=700
+miss 1-1 reach n=111
+miss 1-2 reach n=94
+miss 1-3 reach n=65
+miss 1-4 reach n=85
+miss 1-5 reach n=107
+miss 1-6 reach n=109
+miss 1-7 reach n=76
+miss 1-8 reach n=83
+miss 1-9 reach n=72
+miss 1-10 reach n=48
+lane-center gates +5 / +5 after 3s center fire
+rhythm ok
+layout ok
+rules ok
+CURVE
+11 LEFT [245, 150, 119, 101, 80, 79, 58, 46, 40, 14] OK
+11 RIGHT [245, 172, 134, 113, 99, 88, 72, 61, 33, 22] OK
+11 CENTER [266, 173, 139, 133, 120, 99, 95, 71, 49, 31] OK
+22 LEFT [234, 131, 114, 90, 75, 69, 66, 61, 20, 16] OK
+22 RIGHT [245, 158, 133, 107, 91, 88, 85, 65, 38, 25] OK
+22 CENTER [267, 127, 100, 92, 78, 71, 66, 62, 42, 26] OK
+33 LEFT [231, 148, 118, 108, 85, 81, 60, 54, 39, 19] OK
+33 RIGHT [230, 157, 120, 95, 90, 82, 70, 40, 20, 11] OK
+33 CENTER [266, 157, 129, 113, 102, 82, 80, 64, 58, 29] OK
+ui 390x844 title ok
+levels 390x844 hx=0 docx=0 rowx=0 sheetx=0 sheety=0 short=[] cut=[]
+tile lv-1-1 h=73 lock=False 1-1 PINE BRIDGE ★★★
+tile lv-1-2 h=73 lock=False 1-2 SPILLWAY ★★☆
+tile lv-1-3 h=73 lock=False 1-3 DAM FACE ☆☆☆
+tile lv-1-4 h=73 lock=True 1-4 LOW WATER LOCK
+tile lv-1-5 h=73 lock=True 1-5 SLUICE LOCK
+tile lv-1-6 h=73 lock=True 1-6 RUST BOLTS LOCK
+tile lv-1-7 h=73 lock=True 1-7 DRY BED LOCK
+tile lv-1-8 h=73 lock=True 1-8 PIPE WORKS LOCK
+tile lv-1-9 h=73 lock=True 1-9 CRACKED LOCK
+tile lv-1-10 h=73 lock=True 1-10 LAST GASKET LOCK
+locked-click stays True
+back True
+play-starts true 1-3 DAM FACE
+ui 375x667 title ok
+levels 375x667 hx=0 docx=0 rowx=0 sheetx=0 sheety=0 short=[] cut=[]
+tile lv-1-1 h=73 lock=False 1-1 PINE BRIDGE ★★★
+tile lv-1-2 h=73 lock=False 1-2 SPILLWAY ★★☆
+tile lv-1-3 h=73 lock=False 1-3 DAM FACE ☆☆☆
+tile lv-1-4 h=73 lock=True 1-4 LOW WATER LOCK
+tile lv-1-5 h=73 lock=True 1-5 SLUICE LOCK
+tile lv-1-6 h=73 lock=True 1-6 RUST BOLTS LOCK
+tile lv-1-7 h=73 lock=True 1-7 DRY BED LOCK
+tile lv-1-8 h=73 lock=True 1-8 PIPE WORKS LOCK
+tile lv-1-9 h=73 lock=True 1-9 CRACKED LOCK
+tile lv-1-10 h=73 lock=True 1-10 LAST GASKET LOCK
+locked-click stays True
+back True
+play-starts true 1-3 DAM FACE
+shot tower-pass-desk.png 1239724
+tower dist=63 bytes=1239724
