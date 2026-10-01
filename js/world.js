@@ -1,6 +1,6 @@
 import * as THREE from "three";
-import { toon, pineTexture, skyTexture, goldenSkyTexture, writeTRS } from "./mats.js?v=br11";
-import { buildTile } from "./build.js?v=br11";
+import { toon, pineTexture, skyTexture, goldenSkyTexture, writeTRS } from "./mats.js?v=br12";
+import { buildTile } from "./build.js?v=br12";
 
 const TILE = 20;
 const TILES = 10;
@@ -306,11 +306,13 @@ export function createWorld(scene) {
     const onDeck = (pz) => pz <= deckBehind - 1 && pz >= deckAhead + 1;
     const tBase = Math.floor(dist / SPAN);
     const desktop = !!(cam && cam.aspect > 1.2 && cam.fov < 50);
+    const tooClose = (pz) => !!(cam && Math.abs(pz - cam.position.z) < 2.2);
+    const beamAbove = cam ? cam.position.y + 2.6 : 14.2;
     if (!desktop) {
       for (let i = 0; i < T_N; i++) {
         const tz = -(tBase - 1 + i) * SPAN;
         const tx = half + 0.05;
-        const towerOn = onDeck(tz);
+        const towerOn = onDeck(tz) && !tooClose(tz);
         if (towerOn) {
           writeTRS(postMA, i * 2, -tx, 8, tz, 0, 1, 1, 1);
           writeTRS(postMA, i * 2 + 1, tx, 8, tz, 0, 1, 1, 1);
@@ -319,9 +321,10 @@ export function createWorld(scene) {
           writeTRS(postMA, i * 2 + 1, 0, -40, 0, 0, 0, 0, 0);
         }
         const ahead = -tz - dist;
-        const showBeam = towerOn && (ahead < -8 || ahead > 18);
+        const beamY = Math.max(15.6, beamAbove);
+        const showBeam = towerOn && beamY >= beamAbove && (ahead < -8 || ahead > 18);
         const bw = showBeam ? half * 2 + 0.9 : 0;
-        if (showBeam) writeTRS(beamMA, i, 0, 15.6, tz, 0, bw, 1, 1);
+        if (showBeam) writeTRS(beamMA, i, 0, beamY, tz, 0, bw, 1, 1);
         else writeTRS(beamMA, i, 0, -40, 0, 0, 0, 0, 0);
         for (let side = 0; side < 2; side++) {
           const cx = side === 0 ? -tx : tx;
@@ -331,7 +334,7 @@ export function createWorld(scene) {
             const u1 = (s + 1) / SEG;
             const z0 = tz - u0 * SPAN;
             const z1 = tz - u1 * SPAN;
-            if (!onDeck(z0) || !onDeck(z1)) {
+            if (!onDeck(z0) || !onDeck(z1) || tooClose((z0 + z1) * 0.5)) {
               writeTRS(cableMA, idx, 0, -40, 0, 0, 0, 0, 0);
               writeTRS(hangMA, idx, 0, -40, 0, 0, 0, 0, 0);
               continue;
@@ -377,7 +380,7 @@ export function createWorld(scene) {
       for (let i = 0; i < T_N; i++) {
         const tz = -(tBase - 1 + i) * SPAN;
         const tx = half + 0.05;
-        const top = tops[i];
+        const top = tops[i] > 0 && !tooClose(tz) ? tops[i] : 0;
         if (top > 0) {
           const sy = top / 16;
           writeTRS(postMA, i * 2, -tx, top * 0.5, tz, 0, 1, sy, 1);
@@ -387,8 +390,9 @@ export function createWorld(scene) {
           writeTRS(postMA, i * 2 + 1, 0, -40, 0, 0, 0, 0, 0);
         }
         const ahead = -tz - dist;
-        const showBeam = top > 4.5 && (ahead < -8 || ahead > 18);
-        if (showBeam) writeTRS(beamMA, i, 0, top - 0.25, tz, 0, half * 2 + 0.9, 1, 1);
+        const beamY = Math.max(15.6, beamAbove);
+        const showBeam = top >= beamY - 0.4 && (ahead < -8 || ahead > 18);
+        if (showBeam) writeTRS(beamMA, i, 0, beamY, tz, 0, half * 2 + 0.9, 1, 1);
         else writeTRS(beamMA, i, 0, -40, 0, 0, 0, 0, 0);
         const farTop = i + 1 < T_N ? tops[i + 1] : 0;
         const spanOn = top > 0 && farTop > 0;
@@ -403,7 +407,7 @@ export function createWorld(scene) {
             const u1 = (s + 1) / SEG;
             const z0 = tz - u0 * SPAN;
             const z1 = tz - u1 * SPAN;
-            if (!spanOn || !onDeck(z0) || !onDeck(z1)) {
+            if (!spanOn || !onDeck(z0) || !onDeck(z1) || tooClose((z0 + z1) * 0.5)) {
               writeTRS(cableMA, idx, 0, -40, 0, 0, 0, 0, 0);
               writeTRS(hangMA, idx, 0, -40, 0, 0, 0, 0, 0);
               continue;

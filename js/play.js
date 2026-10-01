@@ -53,7 +53,7 @@ import {
   CHARGE_LEAD,
   PINCH_BLOB,
   volleyPlan,
-} from "./rules.js?v=br11";
+} from "./rules.js?v=br12";
 import {
   animToon,
   attachOutline,
@@ -73,7 +73,7 @@ import {
   writeLog,
   writeQuat,
   writeTRS,
-} from "./mats.js?v=br11";
+} from "./mats.js?v=br12";
 import {
   arrowGeo,
   buildBaron,
@@ -102,7 +102,7 @@ import {
   sawDiscGeo,
   streakGeo,
   streamGeo,
-} from "./build.js?v=br11";
+} from "./build.js?v=br12";
 
 const STRIDE = 320;
 const CAPS = [320, 320, 320, 120, 120, 120, 120];
@@ -1590,83 +1590,31 @@ export function createPlay(scene, camera, audio) {
     return 0;
   }
 
+  function bossRank() {
+    const order = ["1-1", "1-2", "1-3", "1-4", "1-5", "1-6", "1-7", "1-8", "1-9", "1-10"];
+    const i = order.indexOf(level.id);
+    return i < 0 ? 0 : i;
+  }
+
   function dump(type, count, z, per) {
     if (!count || count <= 0) return z;
-    const p = pools[type];
-    const room = Math.min(count, p.freeN, 320 - liveN);
-    const edge = Math.max(0.6, half - 0.6);
-    if (type === 5) {
-      const span = edge * 2;
-      const cols = Math.max(1, Math.min(room, Math.max(3, Math.floor(span / 0.72))));
-      const rowPitch = 0.7;
-      for (let i = 0; i < room; i++) {
-        const row = (i / cols) | 0;
-        const col = i % cols;
-        const nCols = Math.min(cols, room - row * cols);
-        const gap = nCols <= 1 ? 0 : Math.min(2.05, Math.max(0.72, span / Math.max(1, nCols - 1)));
-        let x0 = nCols <= 1 ? (rnd() * 2 - 1) * edge * 0.35 : -((nCols - 1) * gap) * 0.5 + col * gap;
-        x0 += (rnd() * 2 - 1) * 0.2;
-        if (x0 > edge) x0 = edge;
-        if (x0 < -edge) x0 = -edge;
-        spawnEnemy(type, x0, z - row * rowPitch + (rnd() * 2 - 1) * 0.28);
-      }
-      per;
-      return z - Math.ceil(room / cols) * rowPitch;
-    }
-    if (type === 0 && room >= 12 && room <= 44) {
-      const spots = [[-0.62, -0.35], [0.62, 0.28], [0.05, 1.05], [-0.55, 1.25]];
-      const front = [[-2.15, 6.3], [-1.72, 6.55], [-2.4, 6.9], [2.1, 6.2], [1.7, 6.6], [2.35, 6.95]];
-      const knot = [[-0.32, 2.15], [0.26, 2.35], [0.02, 2.6], [-0.46, 2.85], [0.38, 3.05], [-0.08, 3.3], [0.2, 1.95], [-0.16, 3.55], [0.44, 3.75], [-0.4, 4.0], [0.1, 4.15], [-0.04, 2.75], [0.34, 3.4], [-0.22, 2.5]];
-      let left = room;
-      let cursor = z;
-      let cluster = 0;
-      const leadZ = cursor + 12;
-      const placed = Math.min(left, front.length + knot.length);
-      for (let k = 0; k < placed; k++) {
-        const spot = k < front.length ? front[k] : knot[k - front.length];
-        let x0 = spot[0];
-        if (x0 > edge) x0 = edge;
-        if (x0 < -edge) x0 = -edge;
-        const i = spawnEnemy(type, x0, leadZ + spot[1]);
-        if (i >= 0) pools[type].phase[i] = 0.5;
-      }
-      left -= placed;
-      cursor -= 3.2;
-      while (left > 0) {
-        const size = Math.min(left, 2 + ((rnd() * 3) | 0));
-        const cx = (rnd() * 2 - 1) * (edge * 0.55);
-        for (let k = 0; k < size; k++) {
-          let x0 = cx + spots[k][0];
-          if (x0 > edge) x0 = edge;
-          if (x0 < -edge) x0 = -edge;
-          spawnEnemy(type, x0, cursor + spots[k][1]);
-        }
-        left -= size;
-        cursor -= cluster < 3 ? 1.6 + rnd() * 0.5 : 2.4 + rnd() * 1.2;
-        cluster++;
-      }
-      per;
-      return cursor;
-    }
-    const spots = [[-0.42, 0], [0.4, 0.2], [0.02, 0.46], [-0.26, 0.66]];
-    let left = room;
-    let cursor = z;
-    let cluster = 0;
-    while (left > 0) {
-      const size = Math.min(left, 4);
-      const cx = ((cluster % 3) - 1) * 1.15;
-      for (let k = 0; k < size; k++) {
-        let x0 = cx + spots[k][0];
-        if (x0 > edge) x0 = edge;
-        if (x0 < -edge) x0 = -edge;
-        spawnEnemy(type, x0, cursor + spots[k][1]);
-      }
-      left -= size;
-      cursor -= level.id === "1-2" ? 4.4 : 2.8;
-      cluster++;
+    const room = Math.min(count, pools[type].freeN, 320 - liveN);
+    const edge = Math.max(0.6, half - 0.5);
+    const cols = Math.max(1, Math.min(room, room < 6 ? room : 7));
+    const rowPitch = 1.25;
+    const span = edge * 2;
+    for (let i = 0; i < room; i++) {
+      const row = (i / cols) | 0;
+      const col = i % cols;
+      const nCols = Math.min(cols, room - row * cols);
+      let x0 = nCols <= 1 ? (rnd() * 2 - 1) * edge * 0.85 : -edge + (col + 0.5) * (span / nCols);
+      x0 += (rnd() * 2 - 1) * 0.32;
+      if (x0 > edge) x0 = edge;
+      if (x0 < -edge) x0 = -edge;
+      spawnEnemy(type, x0, z - row * rowPitch + (rnd() * 2 - 1) * 0.48);
     }
     per;
-    return cursor;
+    return z - Math.ceil(room / cols) * rowPitch;
   }
 
   function spawnWave(ev) {
@@ -2177,7 +2125,8 @@ export function createPlay(scene, camera, audio) {
     bossState.mode = 0;
     bossState.t = 1.2;
     bossState.lock = squadX;
-    bossState.cool = bossKind === "baron" ? 1.0 : bossKind === "tub" ? 8 : 5;
+    bossState.cool = bossKind === "baron" ? 1.0 : bossKind === "tub" ? 1.2 : 5;
+    bossState.taxed = 0;
     wrenchPhase = 0;
     wrench.visible = false;
     zone.visible = false;
@@ -2207,7 +2156,7 @@ export function createPlay(scene, camera, audio) {
     const max = bossMaxHp || level.bossHp;
     if (bossKind === "baron" && !bossState.summoned && bossState.hp <= max * 0.5) {
       bossState.summoned = 1;
-      dump(0, 40, bossState.z + 6, 8);
+      dump(0, 8 + bossRank() * 2, bossState.z + 6, 8);
       say("All water flows to me. Eventually.");
     }
     if (bossKind === "grunk") {
@@ -2221,8 +2170,8 @@ export function createPlay(scene, camera, audio) {
       }
       if (!bossState.summoned && bossState.hp <= max * 0.5) {
         bossState.summoned = 1;
-        dump(0, 30, bossState.z - 4, 8);
-        dump(3, 1, bossState.z - 8, 1);
+        dump(0, 8 + bossRank() * 2, bossState.z - 4, 8);
+        dump(3, bossRank() >= 5 ? 2 : 1, bossState.z - 8, 1);
       }
     }
     if (bossState.hp <= 0) beginWin();
@@ -4191,9 +4140,12 @@ export function createPlay(scene, camera, audio) {
         const step = k.speed * vary * slow * h;
         if (p.z[i] < line - 1.6) {
           p.z[i] += step;
-          p.x[i] += Math.sin(clock * 1.5 + (p.phase[i] || 0)) * 0.28 * h;
+          const gap = line - p.z[i];
+          if (gap < 12) p.x[i] += clamp(squadX - p.x[i], -1, 1) * k.lat * slow * h;
+          else p.x[i] += Math.sin(clock * 1.5 + (p.phase[i] || 0)) * 0.28 * h;
         } else if (p.z[i] < line) {
           p.z[i] = Math.min(line, p.z[i] + step);
+          p.x[i] += clamp(squadX - p.x[i], -1, 1) * k.lat * slow * h;
         }
         if (p.z[i] > line) p.z[i] = line;
         if (p.x[i] > edge) p.x[i] = edge;
@@ -4423,12 +4375,18 @@ export function createPlay(scene, camera, audio) {
           const land = -dist;
           const edge = Math.max(0.8, half - 0.85);
           armHazard(-edge, land - 0.3, 0.65, 0.8, 2);
-          armHazard(0, land + 0.2, 1.38, 0.8, 80);
+          const centerKill = 5 + bossRank() * 2 - (bossRank() === 3 ? 6 : 0);
+          armHazard(0, land + 0.2, 1.05, 0.8, centerKill);
           armHazard(edge * 0.55, land - 0.2, 0.65, 0.8, 2);
         } else if (bossKind === "tub" && bossState.cool <= 0) {
-          bossState.cool = 8;
-          dump(0, 12, bossState.z + 2.2, 6, 2);
+          bossState.cool = 7;
+          dump(0, 8 + bossRank() * 2, bossState.z + 2.2, 6);
+          armHazard(squadX, -dist, 2.1, 0.45, 2 + bossRank() * 6);
         } else if (bossKind === "grunk") {
+          if (!bossState.taxed && bossSec > 4.5 && bossRank() === 5) {
+            bossState.taxed = 1;
+            hurtSquad(10);
+          }
           if (wrenchPhase === 0 && bossState.cool <= 0) {
             bossState.cool = 5;
             zoneSide = (rnd() * 3) | 0;
@@ -4441,7 +4399,9 @@ export function createPlay(scene, camera, audio) {
               wrenchT = 0;
               formationOffsets(squadN, radius * (1 - pinch) + PINCH_BLOB * 0.5 * pinch, fx, fz);
               const zoned = soldiersInThird(zoneSide);
-              hurtSquad(zoned > 0 ? zoned : 4);
+              const rank = bossRank();
+              const wrenchKill = Math.min(6 + (rank / 2 | 0), Math.max(zoned, 4 + (rank / 2 | 0)));
+              hurtSquad(wrenchKill > 0 ? wrenchKill : 4);
               if (ended) return;
             }
           } else if (wrenchPhase === 2) {
@@ -5031,8 +4991,25 @@ export function createPlay(scene, camera, audio) {
       bossLive.position.set(bossState.x, DECK, bossDrawZ());
       bossLive.rotation.y = Math.PI;
       bossLive.scale.setScalar(tall / 5);
-      const fur = bossKind === "grunk" ? 0x7d9a55 : bossKind === "tub" ? 0xc5ddd8 : 0xe08a45;
-      if (bossTint !== fur) {
+      if (bossKind === "baron") {
+        if (!bossLive.userData.baronLit) {
+          bossLive.userData.baronLit = 1;
+          const mat = toon("#F6C48A");
+          bossLive.traverse((o) => {
+            if (!o.isSkinnedMesh || !o.material) return;
+            if (!o.userData.baronPrev) o.userData.baronPrev = o.material;
+            o.material = mat;
+          });
+        }
+      } else if (bossLive.userData.baronLit) {
+        bossLive.traverse((o) => {
+          if (o.userData && o.userData.baronPrev) o.material = o.userData.baronPrev;
+        });
+        bossLive.userData.baronLit = 0;
+        bossTint = -1;
+      }
+      const fur = bossKind === "grunk" ? 0x7d9a55 : bossKind === "tub" ? 0xc5ddd8 : 0xf6c48a;
+      if (bossKind !== "baron" && bossTint !== fur) {
         bossTint = fur;
         bossLive.traverse((o) => {
           if (!o.isSkinnedMesh || !o.material) return;
@@ -6226,6 +6203,22 @@ export function createPlay(scene, camera, audio) {
     armHazard(0, 0, 2, 0.05, 3);
     step(0.2);
     if (squadN !== 0) fails.push("hazard " + squadN);
+
+    reset();
+    running = true;
+    half = DECK_HALF;
+    dump(0, 24, -40, 12);
+    let spreadN = 0;
+    let spreadLo = 99;
+    let spreadHi = -99;
+    const spreadP = pools[0];
+    for (let i = 0; i < spreadP.cap; i++) {
+      if (!spreadP.alive[i]) continue;
+      spreadN++;
+      if (spreadP.x[i] < spreadLo) spreadLo = spreadP.x[i];
+      if (spreadP.x[i] > spreadHi) spreadHi = spreadP.x[i];
+    }
+    if (spreadN < 20 || spreadHi - spreadLo <= 4) fails.push("spread " + spreadN + " " + (spreadHi - spreadLo).toFixed(2));
     reset();
     return { fails, soldier: tris.soldier, bober: tris.bober, boss: tris.boss };
   }
@@ -6549,10 +6542,10 @@ export function createPlay(scene, camera, audio) {
           m.rotation.set(rx || 0, ry || 0, rz || 0);
           return m;
         };
-        baronDress.add(drift(0.22, 0.18, 3.3, 0, 0.48, 0.15, 0, 0, Math.PI / 2, 0xc4b29a));
-        baronDress.add(drift(0.18, 0.14, 3.05, 0, 0.86, 0.02, 0.12, 0.2, Math.PI / 2, 0x9a7a52));
-        baronDress.add(drift(0.16, 0.12, 2.15, 0, 1.2, -0.85, Math.PI / 2, 0, 0, 0xb9a488));
-        baronDress.add(drift(0.12, 0.1, 2.4, 0, 1.55, -1.05, 0, 0.4, Math.PI / 2, 0x6e5438));
+        baronDress.add(drift(0.22, 0.18, 3.3, 0, 0.48, 0.15, 0, 0, Math.PI / 2, 0xf2c48a));
+        baronDress.add(drift(0.18, 0.14, 3.05, 0, 0.86, 0.02, 0.12, 0.2, Math.PI / 2, 0xe09858));
+        baronDress.add(drift(0.16, 0.12, 2.15, 0, 1.2, -0.85, Math.PI / 2, 0, 0, 0xf6d7b0));
+        baronDress.add(drift(0.12, 0.1, 2.4, 0, 1.55, -1.05, 0, 0.4, Math.PI / 2, 0xc4783a));
         for (let i = 0; i < 7; i++) {
           const bit = new THREE.Mesh(new THREE.ConeGeometry(0.11, 0.78, 5), cloth(i % 3 === 0 ? 0xc23b4a : i % 3 === 1 ? 0xf2c230 : 0xdedad2, 0.48));
           const a = -1.05 + (i / 6) * 2.1;
@@ -6566,12 +6559,21 @@ export function createPlay(scene, camera, audio) {
           m.position.set(x, y, z);
           return m;
         };
-        baronDress.add(faceBit(-0.32, 4.15, -1.32, 0.22, 0xfff6ea));
-        baronDress.add(faceBit(0.34, 4.15, -1.32, 0.22, 0xfff6ea));
-        baronDress.add(faceBit(-0.32, 4.15, -1.5, 0.09, 0x1c140c));
-        baronDress.add(faceBit(0.34, 4.15, -1.5, 0.09, 0x1c140c));
+        baronDress.add(faceBit(-0.32, 4.15, -1.32, 0.26, 0xfff8ee));
+        baronDress.add(faceBit(0.34, 4.15, -1.32, 0.26, 0xfff8ee));
+        baronDress.add(faceBit(-0.32, 4.15, -1.52, 0.11, 0x1a120c));
+        baronDress.add(faceBit(0.34, 4.15, -1.52, 0.11, 0x1a120c));
+        const mouth = new THREE.Mesh(new THREE.BoxGeometry(0.46, 0.14, 0.08), toon("#3A2218"));
+        mouth.position.set(0.02, 3.68, -1.5);
+        baronDress.add(mouth);
+        baronDress.add(faceBit(-0.1, 3.74, -1.56, 0.07, 0xfff8ee));
+        baronDress.add(faceBit(0.12, 3.74, -1.56, 0.07, 0xfff8ee));
         baronDress.add(faceBit(-0.12, 3.55, -1.42, 0.08, 0xfff8ee));
         baronDress.add(faceBit(0.12, 3.55, -1.42, 0.08, 0xfff8ee));
+        baronDress.traverse((o) => {
+          if (!o.isMesh || !o.material || !o.material.color) return;
+          o.material = toon("#" + o.material.color.getHexString());
+        });
         const shield = new THREE.Mesh(new THREE.SphereGeometry(1, 10, 8), cloth(0xf4f7f8, 0.22));
         shield.scale.set(1.45, 1.02, 0.22);
         shield.position.set(0, 2.45, -1.25);

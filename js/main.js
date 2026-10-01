@@ -1,11 +1,11 @@
 import * as THREE from "three";
-import { BUILD, GUN_COST, GUN_ORDER, WEAPONS, highestPlayable, isUnlockedLevel, rhythmText } from "./rules.js?v=br11";
-import { createWorld } from "./world.js?v=br11";
-import { createPlay } from "./play.js?v=br11";
-import { createAudio } from "./audio.js?v=br11";
-import { loadSave, rememberWin, rememberGun, writeSave, buyGun } from "./save.js?v=br11";
-import { drawWeaponIcon, setTime } from "./mats.js?v=br11";
-import { loadGame, CREDIT_LINES } from "./assets.js?v=br11";
+import { BUILD, GUN_COST, GUN_ORDER, WEAPONS, highestPlayable, isUnlockedLevel, rhythmText } from "./rules.js?v=br12";
+import { createWorld } from "./world.js?v=br12";
+import { createPlay } from "./play.js?v=br12";
+import { createAudio } from "./audio.js?v=br12";
+import { loadSave, rememberWin, rememberGun, writeSave, buyGun } from "./save.js?v=br12";
+import { drawWeaponIcon, setTime } from "./mats.js?v=br12";
+import { loadGame, CREDIT_LINES } from "./assets.js?v=br12";
 
 const save = loadSave();
 const canvas = document.getElementById("c");
@@ -318,8 +318,9 @@ function paintHud() {
   } else {
     barkEl.classList.add("hidden");
   }
+  if (save.settings.tipSeen || v.arena) tip.classList.add("hidden");
   if (mode === "run" && !tip.classList.contains("hidden")) {
-    if (v.steered || (tipUntil && performance.now() > tipUntil)) {
+    if (v.steered || v.arena || (tipUntil && performance.now() > tipUntil)) {
       tip.classList.add("hidden");
       save.settings.tipSeen = true;
       writeSave(save);

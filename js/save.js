@@ -1,6 +1,6 @@
 // Versioned save. Key stays bober_bridge_v1. v1 migrates; anything else starts clean.
 
-import { GUN_COST, STARTERS, UNLOCKS, migrateGun } from "./rules.js?v=br11";
+import { GUN_COST, STARTERS, UNLOCKS, migrateGun } from "./rules.js?v=br12";
 
 const KEY = "bober_bridge_v1";
 

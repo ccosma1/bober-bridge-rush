@@ -2,7 +2,7 @@
 // br3 gun table. Lab may multiply a tier's DMG; the comment block at the
 // bottom of weaponMods records the numbers that passed the gun lab.
 
-export const BUILD = "br11";
+export const BUILD = "br12";
 export const SIM_CAP = 300;
 export const RENDER_CAP = 60;
 export const LIVE_CAP = 320;
@@ -284,7 +284,7 @@ export const LEVELS = {
     starN: 35,
     starSec: 25,
     boss: "tub",
-    bossHp: 2500,
+    bossHp: 2800,
     bossName: "BIG TUB",
     win: "BRIDGE HELD!",
     events: [
@@ -298,17 +298,18 @@ export const LEVELS = {
         { type: "weapon", gun: "flame", hp: 14, x: 1.8 },
       ] },
       { at: 84, kind: "gate", side: 0, op: "mul", k: 2 },
-      { at: 122, kind: "wave", clog: 48 },
+      { at: 122, kind: "wave", clog: 32 },
       { at: 200, kind: "gate", side: 1, op: "add", k: 5 },
       { at: 224, kind: "crate", layout: "single", items: [{ type: "weapon", gun: "glacier", hp: 18, x: -2.2 }] },
-      { at: 270, kind: "wave", clog: 58, suds: 8, hair: 1 },
+      { at: 248, kind: "gate", side: 0, op: "add", k: 6 },
+      { at: 270, kind: "wave", clog: 40, suds: 6 },
       { at: 360, kind: "gate", side: 0, op: "add", k: 10 },
       { at: 400, kind: "crate", layout: "pair", items: [
         { type: "weapon", gun: "barrage", hp: 20, x: -2.4 },
         { type: "weapon", gun: "aurora", hp: 20, x: 2.2 },
       ] },
       { at: 430, kind: "gate", side: 1, op: "sub", k: 4 },
-      { at: 470, kind: "wave", clog: 52, suds: 8, hauler: 1, duck: 1 },
+      { at: 470, kind: "wave", clog: 44, suds: 6, hauler: 1, duck: 1 },
       { at: 560, kind: "gate", side: 0, op: "add", k: 8 },
       { at: 588, kind: "crate", layout: "single", items: [{ type: "tier", hp: 24, x: 1.4 }] },
       { at: 620, kind: "gate", side: 1, op: "add", k: 8 },
@@ -333,7 +334,7 @@ export const LEVELS = {
     starN: 50,
     starSec: 35,
     boss: "grunk",
-    bossHp: 2000,
+    bossHp: 3200,
     bossName: "GRUNK THE PLUMBER",
     win: "DAM HELD!",
     events: [
@@ -391,7 +392,7 @@ export const LEVELS = {
     starN: 55,
     starSec: 38,
     boss: "baron",
-    bossHp: 4200,
+    bossHp: 2300,
     bossName: "BARON CLOG",
     win: "BRIDGE HELD!",
     events: [
@@ -448,7 +449,7 @@ export const LEVELS = {
     starN: 60,
     starSec: 40,
     boss: "tub",
-    bossHp: 3200,
+    bossHp: 5000,
     bossName: "BIG TUB",
     win: "BRIDGE HELD!",
     events: [
@@ -501,7 +502,7 @@ export const LEVELS = {
     starN: 65,
     starSec: 42,
     boss: "grunk",
-    bossHp: 3000,
+    bossHp: 6500,
     bossName: "GRUNK THE PLUMBER",
     win: "DAM HELD!",
     events: [
@@ -558,7 +559,7 @@ export const LEVELS = {
     starN: 70,
     starSec: 45,
     boss: "baron",
-    bossHp: 5000,
+    bossHp: 6400,
     bossName: "BARON CLOG",
     win: "BRIDGE HELD!",
     events: [
@@ -610,7 +611,7 @@ export const LEVELS = {
     starN: 75,
     starSec: 48,
     boss: "tub",
-    bossHp: 4000,
+    bossHp: 5800,
     bossName: "BIG TUB",
     win: "BRIDGE HELD!",
     events: [
@@ -628,14 +629,14 @@ export const LEVELS = {
         { type: "volunteer", hp: 18, x: 2.6 },
       ] },
       { at: 330, kind: "gate", side: 1, op: "add", k: 6 },
-      { at: 400, kind: "wave", clog: 80, suds: 22, spit: 2 },
+      { at: 400, kind: "wave", clog: 64, suds: 14, spit: 1 },
       { at: 490, kind: "gate", side: 0, op: "add", k: 10 },
       { at: 518, kind: "crate", layout: "single", items: [{ type: "weapon", gun: "mini", hp: 24, x: 1.8 }] },
       { at: 545, kind: "gate", side: 1, op: "sub", k: 4 },
       { at: 572, kind: "crate", layout: "single", items: [{ type: "weapon", gun: "barrage", hp: 26, x: -2.2 }] },
       { at: 600, kind: "gate", side: 0, op: "add", k: 8 },
       { at: 635, kind: "crate", layout: "single", items: [{ type: "weapon", gun: "cone", hp: 26, x: 2.0 }] },
-      { at: 680, kind: "wave", clog: 88, suds: 24, hauler: 2, spit: 2 },
+      { at: 680, kind: "wave", clog: 68, suds: 16, hauler: 1, spit: 1 },
       { at: 770, kind: "gate", side: 1, op: "add", k: 8 },
       { at: 800, kind: "crate", layout: "single", items: [{ type: "tier", hp: 32, x: -1.4 }] },
       { at: 830, kind: "gate", side: 0, op: "add", k: 6 },
@@ -643,7 +644,7 @@ export const LEVELS = {
         { type: "volunteer", hp: 24, x: -2.6 },
         { type: "volunteer", hp: 22, x: 2.4 },
       ] },
-      { at: 920, kind: "wave", clog: 60, suds: 14, spit: 1 },
+      { at: 920, kind: "wave", clog: 48, suds: 10, spit: 1 },
       { at: 1008, kind: "gate", side: 1, op: "add", k: 8 },
       { at: 1034, kind: "crate", layout: "row", items: [
         { type: "volunteer", hp: 20, x: -2.2 },
@@ -667,7 +668,7 @@ export const LEVELS = {
     starN: 80,
     starSec: 50,
     boss: "baron",
-    bossHp: 5500,
+    bossHp: 7200,
     bossName: "BARON CLOG",
     win: "BRIDGE HELD!",
     events: [
@@ -728,7 +729,7 @@ export const LEVELS = {
     starN: 90,
     starSec: 55,
     boss: "grunk",
-    bossHp: 4800,
+    bossHp: 3600,
     bossName: "GRUNK THE PLUMBER",
     win: "DAM HELD!",
     events: [
