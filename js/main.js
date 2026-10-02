@@ -1,11 +1,11 @@
 import * as THREE from "three";
-import { BUILD, GUN_COST, GUN_ORDER, WEAPONS, highestPlayable, isUnlockedLevel, rhythmText } from "./rules.js?v=br14";
-import { createWorld } from "./world.js?v=br14";
-import { createPlay } from "./play.js?v=br14";
-import { createAudio } from "./audio.js?v=br14";
-import { loadSave, rememberWin, rememberGun, writeSave, buyGun } from "./save.js?v=br14";
-import { drawWeaponIcon, setTime } from "./mats.js?v=br14";
-import { loadGame, CREDIT_LINES } from "./assets.js?v=br14";
+import { BUILD, GUN_COST, GUN_ORDER, WEAPONS, highestPlayable, isUnlockedLevel, rhythmText } from "./rules.js?v=br15";
+import { createWorld } from "./world.js?v=br15";
+import { createPlay } from "./play.js?v=br15";
+import { createAudio } from "./audio.js?v=br15";
+import { loadSave, rememberWin, rememberGun, writeSave, buyGun } from "./save.js?v=br15";
+import { drawWeaponIcon, setTime } from "./mats.js?v=br15";
+import { loadGame, CREDIT_LINES } from "./assets.js?v=br15";
 
 const save = loadSave();
 const canvas = document.getElementById("c");
@@ -58,6 +58,9 @@ if (crossEl) {
 }
 const barFill = document.getElementById("bar-fill");
 const barLabel = document.getElementById("bar-label");
+const riverMeter = document.getElementById("river-meter");
+const riverFillEl = document.getElementById("river-fill");
+const overflowBanner = document.getElementById("overflow-banner");
 const boberRun = document.getElementById("bober-run");
 const boberTotal = document.getElementById("bober-total");
 const chipName = document.getElementById("chip-name");
@@ -301,6 +304,20 @@ function paintHud() {
   barFill.style.width = Math.max(0, Math.min(1, v.bar)) * 100 + "%";
   barLabel.textContent = v.barText;
   hud.classList.toggle("boss", v.arena === 1 && mode === "run");
+  const showRiver = mode === "run";
+  riverMeter.classList.toggle("hidden", !showRiver);
+  if (showRiver) {
+    const river = Math.max(0, Math.min(1, v.riverFill || 0));
+    riverFillEl.style.width = river * 100 + "%";
+    const rr = (79 + (255 - 79) * river) | 0;
+    const gg = (195 + (79 - 195) * river) | 0;
+    const bb = (255 + (94 - 255) * river) | 0;
+    riverFillEl.style.background = "rgb(" + rr + "," + gg + "," + bb + ")";
+    riverMeter.classList.toggle("warn", v.overflow === 1);
+  } else {
+    riverMeter.classList.remove("warn");
+  }
+  overflowBanner.classList.toggle("hidden", !(showRiver && v.overflow === 1));
   banner.textContent = String(v.n);
   banner.classList.toggle("big", v.n > 60);
   paintChip();

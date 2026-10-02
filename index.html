@@ -6,7 +6,7 @@
   <meta name="theme-color" content="#3A2A6A" />
   <meta name="description" content="Bober Bridge Rush. Hold the pine bridge. Fan game. Unofficial." />
   <title>Bober Bridge Rush</title>
-  <link rel="stylesheet" href="css/game.css?v=br14" />
+  <link rel="stylesheet" href="css/game.css?v=br15" />
 </head>
 <body>
   <canvas id="c"></canvas>
@@ -22,7 +22,9 @@
       <div id="bar-label"></div>
       <div class="bar" id="bar"><div id="bar-fill"></div></div>
     </div>
+    <div id="river-meter" class="hidden"><b>RIVER</b><div class="river-track"><div id="river-fill"></div></div></div>
   </header>
+  <div id="overflow-banner" class="hidden">OVERFLOW!</div>
 
   <div id="dbg-hot" aria-hidden="true"></div>
   <pre id="dbg" class="hidden"></pre>
@@ -167,6 +169,6 @@
     }
   }
   </script>
-  <script type="module" src="js/main.js?v=br14"></script>
+  <script type="module" src="js/main.js?v=br15"></script>
 </body>
 </html>

@@ -136,6 +136,59 @@ button {
   background: linear-gradient(90deg, var(--red), #ffb0b6);
 }
 
+#river-meter {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  margin-top: 5px;
+  width: min(46vw, 210px);
+}
+
+#river-meter b {
+  font: 900 11px/1 "Arial Black", Arial, sans-serif;
+  letter-spacing: 0.08em;
+  color: var(--cream);
+  text-shadow: 0 2px 0 var(--ink);
+}
+
+#river-meter .river-track {
+  flex: 1;
+  height: 8px;
+  border-radius: 999px;
+  border: 2px solid var(--ink);
+  background: rgba(30, 20, 16, 0.55);
+  overflow: hidden;
+}
+
+#river-fill {
+  height: 100%;
+  width: 0%;
+  border-radius: inherit;
+  background: var(--blue);
+}
+
+#river-meter.warn {
+  animation: river-flash 0.16s steps(2, end) infinite;
+}
+
+@keyframes river-flash {
+  50% { filter: brightness(1.85); }
+}
+
+#overflow-banner {
+  position: fixed;
+  top: 22%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  z-index: 7;
+  font: 900 32px/1 "Arial Black", Arial, sans-serif;
+  color: #fff;
+  -webkit-text-stroke: 5px #1e4f86;
+  paint-order: stroke fill;
+  letter-spacing: 0.04em;
+  pointer-events: none;
+}
+
 #dbg-hot {
   position: fixed;
   top: 0;
