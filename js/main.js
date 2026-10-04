@@ -1,11 +1,11 @@
 import * as THREE from "three";
-import { BUILD, GUN_COST, GUN_ORDER, WEAPONS, highestPlayable, isUnlockedLevel, rhythmText } from "./rules.js?v=br16";
-import { createWorld } from "./world.js?v=br16";
-import { createPlay } from "./play.js?v=br16";
-import { createAudio } from "./audio.js?v=br16";
-import { loadSave, rememberWin, rememberGun, writeSave, buyGun } from "./save.js?v=br16";
-import { drawWeaponIcon, setTime } from "./mats.js?v=br16";
-import { loadGame, CREDIT_LINES } from "./assets.js?v=br16";
+import { BUILD, GUN_COST, GUN_ORDER, WEAPONS, highestPlayable, isUnlockedLevel, rhythmText } from "./rules.js?v=br17";
+import { createWorld } from "./world.js?v=br17";
+import { createPlay } from "./play.js?v=br17";
+import { createAudio } from "./audio.js?v=br17";
+import { loadSave, rememberWin, rememberGun, writeSave, buyGun } from "./save.js?v=br17";
+import { drawWeaponIcon, setTime } from "./mats.js?v=br17";
+import { loadGame, CREDIT_LINES } from "./assets.js?v=br17";
 
 const save = loadSave();
 const canvas = document.getElementById("c");
@@ -305,7 +305,7 @@ function paintHud() {
   barFill.style.width = Math.max(0, Math.min(1, v.bar)) * 100 + "%";
   barLabel.textContent = v.barText;
   hud.classList.toggle("boss", v.arena === 1 && mode === "run");
-  const showRiver = mode === "run";
+  const showRiver = false;
   riverMeter.classList.toggle("hidden", !showRiver);
   if (showRiver) {
     const river = Math.max(0, Math.min(1, v.riverFill || 0));
@@ -509,14 +509,14 @@ function frame(now) {
     }
   } else {
     world.setTitleMood(false);
-    renderer.toneMappingExposure = 1.08;
+    renderer.toneMappingExposure = 1.22;
     rimLight.intensity = 0;
     if (titleFog && scene.fog === titleFog) scene.fog = runFog;
-    const fov = phone ? 54 : 42;
-    const back = phone ? 7.6 : 10.8;
-    const lift = phone ? 11.4 : 11.2;
-    const ahead = phone ? 6.6 : 10;
-    const lookY = 0.42;
+    const fov = phone ? 62 : 46;
+    const back = phone ? 8.4 : 10.5;
+    const lift = phone ? 8.8 : 10.4;
+    const ahead = phone ? 7.8 : 9.4;
+    const lookY = 0.7;
     if (camera.fov !== fov) {
       camera.fov = fov;
       camera.updateProjectionMatrix();

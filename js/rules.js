@@ -2,7 +2,7 @@
 // br3 gun table. Lab may multiply a tier's DMG; the comment block at the
 // bottom of weaponMods records the numbers that passed the gun lab.
 
-export const BUILD = "br16";
+export const BUILD = "br17";
 export const SIM_CAP = 300;
 export const RENDER_CAP = 60;
 export const LIVE_CAP = 320;
@@ -28,7 +28,8 @@ export const LANE_X = 2.2;
 export const GATE_X = 3;
 export const PANEL_W = 2.6;
 export const DIVIDER_W = 0;
-export const AIM_CONE = 12 * Math.PI / 180;
+export const AIM_CONE = 42 * Math.PI / 180;
+export const CROWD_X = 3.05;
 export const CHARGE_LEAD = 34;
 export const PINCH_BLOB = 1.2;
 
@@ -1288,6 +1289,74 @@ export function isUnlockedLevel(id, cleared) {
   return !!(cleared && cleared[LEVEL_IDS[i - 1]]);
 }
 
+function gateAt(at, x, op, k) {
+  return { at, kind: "gate", x, op, k, side: x < 0 ? 0 : 1 };
+}
+
+function gunAt(at, gun) {
+  return { at, kind: "crate", layout: "single", items: [{ type: "weapon", gun, hp: 8, x: 0 }] };
+}
+
+function waveAt(at, clog, suds, spd) {
+  const ev = { at, kind: "wave", clog, spd: spd || 1 };
+  if (suds) ev.suds = suds;
+  return ev;
+}
+
+function rushRoad(rank, guns) {
+  const addA = 4 + Math.min(4, rank);
+  const addB = Math.max(1, addA - 3);
+  const crowd = 36 + rank * 8;
+  const suds = rank >= 1 ? 2 + rank : 0;
+  const bad = 3 + rank;
+  const pace = 1 + rank * 0.02;
+  const ev = [
+    gateAt(36, -2.45, "add", addA),
+    gateAt(36, 2.45, "add", addB),
+    waveAt(100, crowd, 0, pace),
+    gateAt(176, -2.45, rank >= 3 ? "sub" : "add", rank >= 3 ? bad : addA + 2),
+    gateAt(176, 2.45, "mul", 2),
+    gunAt(220, guns[0]),
+    waveAt(268, crowd + 6, suds, pace),
+    gateAt(360, -2.45, "sub", bad),
+    gateAt(360, 2.45, "mul", 2),
+    gunAt(404, guns[1]),
+  ];
+  if (guns[2]) {
+    ev.push(waveAt(456, crowd + 4, suds, 1.05));
+    ev.push(gateAt(548, -2.45, "add", addA + 4));
+    ev.push(gateAt(548, 2.45, "add", 2));
+    ev.push(gunAt(592, guns[2]));
+    ev.push({ at: 660, kind: "boss" });
+  } else {
+    ev.push(waveAt(456, crowd + 8, suds, 1.05));
+    ev.push(gateAt(548, -2.45, "add", addA + 2));
+    ev.push(gateAt(548, 2.45, "sub", Math.max(2, bad - 1)));
+    ev.push({ at: 620, kind: "boss" });
+  }
+  return ev;
+}
+
+const RUSH_GUNS = {
+  "1-1": ["dambust", "mini", "beam"],
+  "1-2": ["saw", "rail"],
+  "1-3": ["storm", "flame"],
+  "1-4": ["glacier", "barrage"],
+  "1-5": ["cone", "aurora"],
+  "1-6": ["flame", "burst"],
+  "1-7": ["rail", "barrage"],
+  "1-8": ["glacier", "beam"],
+  "1-9": ["cone", "mini"],
+  "1-10": ["aurora", "dambust"],
+};
+
+for (let ri = 0; ri < LEVEL_IDS.length; ri++) {
+  const roadId = LEVEL_IDS[ri];
+  const road = rushRoad(ri, RUSH_GUNS[roadId]);
+  LEVELS[roadId].events = road;
+  LEVELS[roadId].len = road[road.length - 1].at;
+}
+
 export function crateHp(base, type, explicit) {
   if (explicit) return explicit;
   return Math.max(1, Math.round(base * (CRATE_MUL[type] || 1)));
@@ -1647,7 +1716,7 @@ export function layoutIssues() {
     let gunEvents = 0;
     for (let i = 0; i < evs.length; i++) {
       const ev = evs[i];
-      if (ev.kind === "wave") waves.push(waveExtent(ev, DECK_HALF));
+      if (ev.kind === "wave") waves.push(waveExtent(ev));
       if (ev.kind !== "crate") continue;
       const items = ev.items || [];
       let weapon = 0;
@@ -1658,8 +1727,7 @@ export function layoutIssues() {
           weapon = 1;
         }
         const x = item.x || 0;
-        if (Math.abs(x) > DECK_HALF - 0.4) fails.push(id + " crate x " + x);
-        if (Math.abs(x) < 2.2) fails.push(id + " barrel in river " + ev.at);
+        if (Math.abs(x) > 3.6) fails.push(id + " crate x " + x);
       }
       if (weapon) gunEvents++;
     }
@@ -1667,22 +1735,9 @@ export function layoutIssues() {
     for (let i = 0; i < evs.length; i++) {
       const ev = evs[i];
       if (ev.kind !== "gate") continue;
-      let prevEnd = -1e9;
-      let nextAt = 1e9;
       for (let w = 0; w < waves.length; w++) {
-        if (waves[w].end <= ev.at && waves[w].end > prevEnd) prevEnd = waves[w].end;
-        if (waves[w].front >= ev.at - 0.01 && waves[w].front < nextAt) nextAt = waves[w].front;
-        if (waves[w].front < ev.at && waves[w].end > ev.at - 6) fails.push(id + " wave in strip " + ev.at);
+        if (waves[w].front < ev.at && waves[w].end > ev.at) fails.push(id + " gate in wave " + ev.at);
       }
-      for (let j = 0; j < evs.length; j++) {
-        if (j === i) continue;
-        const o = evs[j];
-        if (o.kind !== "crate" && o.kind !== "gate") continue;
-        if (o.at > ev.at && o.at < nextAt) nextAt = o.at;
-        if (o.at > ev.at - 6 && o.at < ev.at) fails.push(id + " strip " + ev.at);
-      }
-      if (prevEnd > -1e8 && ev.at < prevEnd + 20) fails.push(id + " gate " + ev.at + " after " + prevEnd.toFixed(1));
-      if (nextAt < 1e8 && nextAt < ev.at + 12) fails.push(id + " gate " + ev.at + " before " + nextAt);
     }
     const anchors = [];
     for (let i = 0; i < evs.length; i++) {
@@ -1693,9 +1748,9 @@ export function layoutIssues() {
     for (let i = 0; i < anchors.length; i++) {
       let crossed = 0;
       for (let w = 0; w < waves.length; w++) {
-        if (waves[w].front < anchors[i] && waves[w].end > prev) crossed = 1;
+        if (waves[w].front > prev && waves[w].front < anchors[i]) crossed = 1;
       }
-      const limit = crossed ? 160 : 48.05;
+      const limit = crossed ? 170 : 70;
       if (anchors[i] - prev > limit) fails.push(id + " gap " + prev + ".." + anchors[i]);
       prev = anchors[i];
     }
@@ -1717,12 +1772,28 @@ export function layoutIssues() {
 export function expectedSquad(level, at) {
   let n = 3;
   const evs = (level && level.events) || [];
+  const rows = {};
+  const order = [];
   for (let i = 0; i < evs.length; i++) {
     const ev = evs[i];
     if (ev.kind !== "gate" || ev.at >= at || !ev.op) continue;
-    const tenths = ev.op === "mul" ? Math.round(ev.k * 10) : 0;
-    const out = applyGate(n, ev.op, ev.k, tenths);
-    if (out > n) n = out;
+    const key = String(ev.at);
+    if (!rows[key]) {
+      rows[key] = [];
+      order.push(key);
+    }
+    rows[key].push(ev);
+  }
+  for (let r = 0; r < order.length; r++) {
+    const list = rows[order[r]];
+    let best = n;
+    for (let i = 0; i < list.length; i++) {
+      const ev = list[i];
+      const tenths = ev.op === "mul" ? Math.round(ev.k * 10) : 0;
+      const out = applyGate(n, ev.op, ev.k, tenths);
+      if (out > best) best = out;
+    }
+    n = best;
   }
   return n;
 }
@@ -1758,47 +1829,42 @@ export function rhythmIssues() {
   const fails = [];
   for (let li = 0; li < LEVEL_IDS.length; li++) {
     const id = LEVEL_IDS[li];
-    const level = LEVELS[id];
-    const evs = level.events;
-    const items = [{ at: 0, end: 0, kind: "start" }];
+    const evs = LEVELS[id].events;
     const waves = [];
-    const gates = [];
+    const groups = {};
+    const ats = [];
     for (let i = 0; i < evs.length; i++) {
       const ev = evs[i];
-      if (ev.kind === "wave") {
-        const ext = waveExtent(ev);
-        items.push({ at: ev.at, end: ext.end, kind: "wave" });
-        waves.push(ext);
-      } else if (ev.kind === "gate" || ev.kind === "crate") {
-        items.push({ at: ev.at, end: ev.at, kind: ev.kind });
-        if (ev.kind === "gate") gates.push(ev);
+      if (ev.kind === "wave") waves.push(waveExtent(ev));
+      if (ev.kind !== "gate") continue;
+      const key = String(ev.at);
+      if (!groups[key]) {
+        groups[key] = [];
+        ats.push(ev.at);
       }
+      groups[key].push(ev);
     }
-    items.push({ at: level.len, end: level.len, kind: "boss" });
-    items.sort(function (a, b) { return a.at - b.at; });
-    for (let i = 0; i < gates.length; i++) {
-      const g = gates[i];
-      if (g.side !== 0 && g.side !== 1) fails.push(id + " gate side " + g.at);
-      for (let w = 0; w < waves.length; w++) {
-        const road = waves[w];
-        if (g.at > road.front - 20 && g.at < road.end + 20) {
-          fails.push(id + " gate " + g.at + " on road " + road.front + ".." + road.end.toFixed(1));
+    ats.sort(function (a, b) { return a - b; });
+    for (let i = 0; i < ats.length; i++) {
+      const list = groups[String(ats[i])];
+      if (list.length < 2 || list.length > 3) fails.push(id + " choice " + ats[i] + " n " + list.length);
+      for (let a = 0; a < list.length; a++) {
+        const x = list[a].x;
+        if (x == null || Math.abs(x) < 1.4 || Math.abs(x) > 3.6) fails.push(id + " gate x " + ats[i]);
+        for (let b = a + 1; b < list.length; b++) {
+          if (Math.abs(list[a].x - list[b].x) < 1.8) fails.push(id + " gate pair " + ats[i]);
         }
       }
-      if (i === 0) continue;
-      const prev = gates[i - 1];
-      const gap = g.at - prev.at;
-      if (gap < 28) fails.push(id + " gate gap " + prev.at + ".." + g.at);
+      for (let w = 0; w < waves.length; w++) {
+        if (waves[w].front < ats[i] && waves[w].end > ats[i]) fails.push(id + " choice in wave " + ats[i]);
+      }
+      if (i > 0 && ats[i] - ats[i - 1] < 40) fails.push(id + " row gap " + ats[i - 1] + ".." + ats[i]);
     }
     for (let i = 0; i < evs.length; i++) {
       if (evs[i].kind !== "crate") continue;
-      for (let g = 0; g < gates.length; g++) {
-        const at = gates[g].at;
-        if (Math.abs(evs[i].at - at) < 20) fails.push(id + " crate " + evs[i].at + " near gate " + at);
-      }
       const items = evs[i].items || [];
       for (let k = 0; k < items.length; k++) {
-        if (Math.abs(items[k].x || 0) < 2.2) fails.push(id + " barrel in river " + evs[i].at);
+        if (Math.abs(items[k].x || 0) > 3.6) fails.push(id + " crate x " + evs[i].at);
       }
     }
   }
@@ -2037,6 +2103,7 @@ export function selfTestRules() {
   const plan = volleyPlan(300);
   eq(plan.m, 5, "volley m");
   eq(plan.vis, 12, "volley vis");
+  eq(expectedSquad(LEVELS["1-1"], 700), 36, "choice squad");
   eq(LEVEL_IDS.length, 10, "ten levels");
   eq(nextLevel("1-3"), "1-4", "path 1-4");
   eq(nextLevel("1-10"), "", "no chapter 2");

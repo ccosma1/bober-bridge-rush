@@ -638,11 +638,13 @@ function sealIcon(ctx, cx, cy, s) {
   ctx.stroke();
 }
 
-export function paintGateSign(ctx, canvas, text, blue) {
+export function paintGateSign(ctx, canvas, text, tone) {
   const w = canvas.width;
   const h = canvas.height;
   ctx.clearRect(0, 0, w, h);
-  ctx.fillStyle = blue ? "rgba(47,123,255,0.92)" : "rgba(229,57,53,0.92)";
+  const mul = tone === "mul";
+  const bad = tone === "sub" || tone === "div" || tone === false;
+  ctx.fillStyle = mul ? "rgba(46,155,74,0.95)" : bad ? "rgba(226,59,50,0.95)" : "rgba(47,123,255,0.95)";
   ctx.fillRect(0, 0, w, h);
   let size = 210;
   ctx.textAlign = "center";

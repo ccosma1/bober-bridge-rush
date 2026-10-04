@@ -2,9 +2,9 @@ import * as THREE from "three";
 import { GLTFLoader } from "three/addons/loaders/GLTFLoader.js";
 import { MeshoptDecoder } from "three/addons/libs/meshopt_decoder.module.js";
 import { RGBELoader } from "three/addons/loaders/RGBELoader.js";
-import { bakeCrowd, staticMerge, mountRig, boxGeo } from "./vat.js?v=br16";
+import { bakeCrowd, staticMerge, mountRig, boxGeo } from "./vat.js?v=br17";
 
-const V = "br16";
+const V = "br17";
 const warned = {};
 
 function url(path) {
@@ -306,6 +306,20 @@ const GRIP_C = new THREE.Color("#6b4a32");
 const BRASS = new THREE.Color("#c9a15a");
 const LENS = new THREE.Color("#ff2430");
 const ORB = new THREE.Color("#d5e6ff");
+const GUN_BODY = {
+  mini: new THREE.Color("#F5C400"),
+  dambust: new THREE.Color("#E23B32"),
+  burst: new THREE.Color("#F4E6C3"),
+  saw: new THREE.Color("#F2E8CF"),
+  rail: new THREE.Color("#C9864A"),
+  beam: new THREE.Color("#E23B32"),
+  storm: new THREE.Color("#4FC3FF"),
+  flame: new THREE.Color("#F5A623"),
+  glacier: new THREE.Color("#4FC3B3"),
+  barrage: new THREE.Color("#E23B32"),
+  cone: new THREE.Color("#C9864A"),
+  aurora: new THREE.Color("#7DEBFF"),
+};
 
 function triCount(geo) {
   if (!geo) return 0;
@@ -346,125 +360,126 @@ function plainParts() {
 }
 
 function gunParts(shape) {
+  const body = GUN_BODY[shape] || STEEL;
   const parts = [];
   if (shape === "mini") {
     for (let i = 0; i < 6; i++) {
       const a = (i / 6) * Math.PI * 2;
-      addP(parts, tubeGeo(0.018, 0.38, 5, Math.cos(a) * 0.048, 0.07 + Math.sin(a) * 0.048, -0.4, true), STEEL);
+      addP(parts, tubeGeo(0.03, 0.32, 5, Math.cos(a) * 0.055, 0.07 + Math.sin(a) * 0.055, -0.36, true), body);
     }
-    addP(parts, tubeGeo(0.09, 0.14, 8, 0, 0.07, -0.14, false), STEEL);
-    addBoxP(parts, 0.1, 0.08, 0.12, 0, 0.04, -0.02, STEEL);
+    addP(parts, tubeGeo(0.09, 0.14, 8, 0, 0.07, -0.14, false), body);
+    addBoxP(parts, 0.1, 0.08, 0.12, 0, 0.04, -0.02, body);
     addGrip(parts, 0, -0.08, 0.02);
     addBand(parts, 0.078, 0, 0.07, -0.22);
   } else if (shape === "dambust") {
-    addP(parts, tubeGeo(0.058, 0.48, 8, 0, 0.07, -0.32, false), STEEL);
-    addP(parts, tubeGeo(0.02, 0.36, 6, 0, 0.01, -0.28, true), STEEL);
-    addBoxP(parts, 0.1, 0.055, 0.14, 0, 0.02, -0.2, STEEL);
-    addBoxP(parts, 0.1, 0.1, 0.16, 0, 0.05, -0.02, STEEL);
-    addBoxP(parts, 0.06, 0.08, 0.22, 0, 0.08, 0.16, STEEL);
+    const muzzle = new THREE.ConeGeometry(0.12, 0.34, 8);
+    muzzle.rotateX(Math.PI / 2);
+    muzzle.translate(0, 0.07, -0.46);
+    addP(parts, muzzle, body);
+    addP(parts, tubeGeo(0.02, 0.28, 6, 0, 0.07, -0.28, true), body);
+    addBoxP(parts, 0.1, 0.055, 0.14, 0, 0.02, -0.2, body);
+    addBoxP(parts, 0.1, 0.1, 0.16, 0, 0.05, -0.02, body);
+    addBoxP(parts, 0.06, 0.08, 0.22, 0, 0.08, 0.16, GRIP_C);
     addGrip(parts, 0, -0.08, 0.0);
     addBand(parts, 0.072, 0, 0.07, -0.12);
   } else if (shape === "burst") {
-    addP(parts, tubeGeo(0.016, 0.5, 6, 0, 0.08, -0.42, true), STEEL);
-    addBoxP(parts, 0.055, 0.07, 0.28, 0, 0.06, -0.08, STEEL);
-    addP(parts, tubeGeo(0.02, 0.12, 6, 0, 0.13, -0.16, false), STEEL);
-    addBoxP(parts, 0.02, 0.04, 0.04, 0, 0.1, -0.16, STEEL);
+    addP(parts, tubeGeo(0.046, 0.46, 7, 0, 0.08, -0.38, true), body);
+    addBoxP(parts, 0.07, 0.08, 0.22, 0, 0.06, -0.06, body);
+    addP(parts, tubeGeo(0.02, 0.12, 6, 0, 0.14, -0.14, false), BRASS);
+    addBoxP(parts, 0.02, 0.04, 0.04, 0, 0.11, -0.14, BRASS);
     const mag = new THREE.TorusGeometry(0.078, 0.018, 3, 6, Math.PI * 0.85);
     mag.rotateY(Math.PI / 2);
     mag.rotateZ(-0.9);
     mag.translate(0, -0.02, 0.02);
-    addP(parts, mag, STEEL);
-    addBoxP(parts, 0.04, 0.06, 0.18, 0, 0.07, 0.16, STEEL);
+    addP(parts, mag, body);
+    addBoxP(parts, 0.04, 0.06, 0.18, 0, 0.07, 0.16, GRIP_C);
     addGrip(parts, 0, -0.06, 0.02);
     addBand(parts, 0.045, 0, 0.08, -0.24);
   } else if (shape === "saw") {
-    addBoxP(parts, 0.16, 0.1, 0.34, 0, 0.05, -0.12, STEEL);
-    addBoxP(parts, 0.18, 0.08, 0.1, 0, 0.06, -0.32, STEEL);
+    addBoxP(parts, 0.16, 0.1, 0.34, 0, 0.05, -0.12, body);
+    addBoxP(parts, 0.18, 0.08, 0.1, 0, 0.06, -0.32, body);
     const disc = new THREE.CylinderGeometry(0.15, 0.15, 0.028, 10, 1, false);
     disc.translate(0, 0.16, -0.14);
-    addP(parts, disc, STEEL);
-    addBoxP(parts, 0.08, 0.06, 0.08, 0, 0.02, 0.08, STEEL);
+    addP(parts, disc, LENS);
+    addBoxP(parts, 0.08, 0.06, 0.08, 0, 0.02, 0.08, body);
     addGrip(parts, 0, -0.08, 0.02);
     addBand(parts, 0.09, 0, 0.06, -0.22);
   } else if (shape === "rail") {
-    addBoxP(parts, 0.02, 0.02, 0.72, -0.04, 0.1, -0.36, STEEL);
-    addBoxP(parts, 0.02, 0.02, 0.72, 0.04, 0.1, -0.36, STEEL);
-    addP(parts, tubeGeo(0.045, 0.08, 8, 0, 0.1, -0.22, false), STEEL);
-    addP(parts, tubeGeo(0.045, 0.08, 8, 0, 0.1, -0.48, false), STEEL);
-    addBoxP(parts, 0.1, 0.08, 0.2, 0, 0.04, -0.02, STEEL);
-    addBoxP(parts, 0.06, 0.05, 0.14, 0, 0.06, 0.14, STEEL);
+    addBoxP(parts, 0.035, 0.035, 0.72, -0.05, 0.1, -0.36, body);
+    addBoxP(parts, 0.035, 0.035, 0.72, 0.05, 0.1, -0.36, body);
+    addP(parts, tubeGeo(0.055, 0.1, 8, 0, 0.1, -0.34, false), BRASS);
+    addBoxP(parts, 0.1, 0.08, 0.2, 0, 0.04, -0.02, body);
+    addBoxP(parts, 0.06, 0.05, 0.14, 0, 0.06, 0.14, body);
     addGrip(parts, 0, -0.08, 0.02);
     addBand(parts, 0.06, 0, 0.08, -0.12);
   } else if (shape === "beam") {
-    addBoxP(parts, 0.1, 0.08, 0.2, 0, 0.05, -0.06, STEEL);
-    addBoxP(parts, 0.06, 0.06, 0.12, 0, 0.05, -0.2, STEEL);
-    addP(parts, tubeGeo(0.04, 0.03, 8, 0, 0.05, -0.3, false), LENS);
-    addBoxP(parts, 0.012, 0.1, 0.14, 0.07, 0.08, -0.08, STEEL);
-    addBoxP(parts, 0.012, 0.1, 0.14, -0.07, 0.08, -0.08, STEEL);
+    addBoxP(parts, 0.1, 0.08, 0.2, 0, 0.05, -0.06, body);
+    addBoxP(parts, 0.08, 0.08, 0.1, 0, 0.05, -0.18, body);
+    addP(parts, tubeGeo(0.085, 0.06, 8, 0, 0.05, -0.28, false), LENS);
+    addBoxP(parts, 0.016, 0.12, 0.16, 0.08, 0.09, -0.08, body);
+    addBoxP(parts, 0.016, 0.12, 0.16, -0.08, 0.09, -0.08, body);
     addGrip(parts, 0, -0.08, 0.0);
     addBand(parts, 0.055, 0, 0.05, -0.14);
   } else if (shape === "storm") {
-    addP(parts, tubeGeo(0.02, 0.78, 6, 0, 0.09, -0.32, false), STEEL);
-    const coil = new THREE.TorusGeometry(0.05, 0.013, 3, 8);
-    coil.translate(0, 0.09, -0.3);
-    addP(parts, coil, STEEL);
-    const orb = new THREE.IcosahedronGeometry(0.065, 0);
-    orb.translate(0, 0.09, -0.74);
+    addP(parts, tubeGeo(0.028, 0.62, 6, 0, 0.09, -0.22, false), body);
+    const coil = new THREE.TorusGeometry(0.07, 0.016, 4, 8);
+    coil.translate(0, 0.09, -0.28);
+    addP(parts, coil, BRASS);
+    const orb = new THREE.IcosahedronGeometry(0.09, 0);
+    orb.translate(0, 0.09, -0.62);
     addP(parts, orb, ORB);
-    addBoxP(parts, 0.04, 0.04, 0.05, 0, 0.09, 0.1, STEEL);
+    addBoxP(parts, 0.04, 0.04, 0.05, 0, 0.09, 0.1, body);
     addGrip(parts, 0, -0.02, 0.04);
     addBand(parts, 0.04, 0, 0.09, -0.16);
   } else if (shape === "flame") {
-    const nozzle = new THREE.ConeGeometry(0.07, 0.22, 8, 1, false);
-    nozzle.rotateX(-Math.PI / 2);
-    nozzle.translate(0, 0.06, -0.36);
-    addP(parts, nozzle, STEEL);
-    addBoxP(parts, 0.1, 0.09, 0.18, 0, 0.05, -0.1, STEEL);
-    addBoxP(parts, 0.03, 0.03, 0.16, -0.08, 0.08, 0.04, STEEL);
+    const nozzle = new THREE.ConeGeometry(0.09, 0.24, 8, 1, false);
+    nozzle.rotateX(Math.PI / 2);
+    nozzle.translate(0, 0.06, -0.4);
+    addP(parts, nozzle, LENS);
+    addBoxP(parts, 0.1, 0.09, 0.18, 0, 0.05, -0.1, body);
+    addBoxP(parts, 0.03, 0.03, 0.16, -0.08, 0.08, 0.04, body);
     const tank = new THREE.CylinderGeometry(0.09, 0.09, 0.22, 8, 1, false);
     tank.translate(-0.02, 0.1, 0.16);
-    addP(parts, tank, STEEL);
-    addBoxP(parts, 0.02, 0.02, 0.2, -0.08, 0.16, 0.08, STEEL);
-    addBoxP(parts, 0.02, 0.02, 0.2, 0.06, 0.16, 0.08, STEEL);
+    addP(parts, tank, LENS);
+    addBoxP(parts, 0.02, 0.02, 0.2, -0.08, 0.16, 0.08, body);
+    addBoxP(parts, 0.02, 0.02, 0.2, 0.06, 0.16, 0.08, body);
     addGrip(parts, 0, -0.08, -0.04);
     addBand(parts, 0.055, 0, 0.06, -0.26);
   } else if (shape === "glacier") {
-    addP(parts, tubeGeo(0.07, 0.46, 8, 0, 0.07, -0.32, false), STEEL);
-    addBoxP(parts, 0.14, 0.12, 0.18, 0, 0.06, -0.02, STEEL);
-    addP(parts, tubeGeo(0.045, 0.28, 7, 0.12, 0.08, -0.18, false), STEEL);
-    addBoxP(parts, 0.05, 0.04, 0.08, 0, 0.14, -0.08, STEEL);
-    addBoxP(parts, 0.07, 0.08, 0.16, 0, 0.07, 0.14, STEEL);
+    addP(parts, tubeGeo(0.09, 0.5, 7, 0, 0.08, -0.34, false), body);
+    addBoxP(parts, 0.12, 0.1, 0.16, 0, 0.06, -0.02, GRIP_C);
+    addBoxP(parts, 0.05, 0.04, 0.08, 0, 0.14, -0.08, body);
+    addBoxP(parts, 0.07, 0.08, 0.16, 0, 0.07, 0.14, GRIP_C);
     addGrip(parts, 0, -0.08, 0.02);
     addBand(parts, 0.085, 0, 0.07, -0.14);
   } else if (shape === "barrage") {
     for (let row = 0; row < 2; row++) {
       for (let col = 0; col < 3; col++) {
-        addP(parts, tubeGeo(0.028, 0.4, 5, (col - 1) * 0.07, 0.05 + row * 0.06, -0.28, true), STEEL);
+        addP(parts, tubeGeo(0.028, 0.4, 5, (col - 1) * 0.07, 0.05 + row * 0.06, -0.28, true), LENS);
       }
     }
-    addBoxP(parts, 0.24, 0.16, 0.1, 0, 0.08, -0.06, STEEL);
-    addBoxP(parts, 0.22, 0.03, 0.08, 0, 0.0, -0.2, STEEL);
+    addBoxP(parts, 0.24, 0.16, 0.1, 0, 0.08, -0.06, GRIP_C);
+    addBoxP(parts, 0.22, 0.03, 0.08, 0, 0.0, -0.2, body);
     addGrip(parts, 0, -0.08, 0.0);
     addBand(parts, 0.13, 0, 0.08, -0.14);
   } else if (shape === "cone") {
-    addP(parts, tubeGeo(0.09, 0.16, 10, 0, 0.06, -0.16, false), STEEL);
-    addP(parts, tubeGeo(0.03, 0.22, 6, 0, 0.06, -0.34, false), STEEL);
-    addBoxP(parts, 0.08, 0.08, 0.12, 0, 0.04, -0.02, STEEL);
-    addBoxP(parts, 0.03, 0.06, 0.04, 0, 0.12, -0.02, STEEL);
+    addP(parts, tubeGeo(0.09, 0.16, 10, 0, 0.06, -0.16, false), GRIP_C);
+    addP(parts, tubeGeo(0.045, 0.2, 6, 0, 0.06, -0.32, false), body);
+    addBoxP(parts, 0.08, 0.08, 0.12, 0, 0.04, -0.02, GRIP_C);
+    addBoxP(parts, 0.03, 0.06, 0.04, 0, 0.12, -0.02, BRASS);
     for (let i = 0; i < 6; i++) {
       const a = (i / 6) * Math.PI * 2;
-      addBoxP(parts, 0.028, 0.028, 0.03, Math.cos(a) * 0.055, 0.06 + Math.sin(a) * 0.055, -0.25, STEEL);
+      addBoxP(parts, 0.028, 0.028, 0.03, Math.cos(a) * 0.055, 0.06 + Math.sin(a) * 0.055, -0.22, BRASS);
     }
     addGrip(parts, 0, -0.08, 0.02);
     addBand(parts, 0.07, 0, 0.06, -0.08);
   } else if (shape === "aurora") {
-    addP(parts, tubeGeo(0.06, 0.4, 8, 0, 0.07, -0.4, false), STEEL);
-    addP(parts, tubeGeo(0.09, 0.16, 8, 0, 0.07, -0.12, false), STEEL);
+    addP(parts, tubeGeo(0.07, 0.34, 8, 0, 0.07, -0.36, false), body);
+    addP(parts, tubeGeo(0.11, 0.08, 8, 0, 0.07, -0.16, false), ORB);
     const corners = [[-0.1, 0.14], [0.1, 0.14], [-0.1, 0.0], [0.1, 0.0]];
-    for (let i = 0; i < 4; i++) addBoxP(parts, 0.016, 0.016, 0.22, corners[i][0], corners[i][1], -0.12, STEEL);
-    addP(parts, tubeGeo(0.11, 0.02, 8, 0, 0.07, -0.04, true), STEEL);
-    addP(parts, tubeGeo(0.11, 0.02, 8, 0, 0.07, -0.2, true), STEEL);
-    addBoxP(parts, 0.12, 0.1, 0.1, 0, 0.05, 0.02, STEEL);
+    for (let i = 0; i < 4; i++) addBoxP(parts, 0.016, 0.016, 0.22, corners[i][0], corners[i][1], -0.12, body);
+    addP(parts, tubeGeo(0.13, 0.03, 8, 0, 0.07, -0.5, true), ORB);
+    addBoxP(parts, 0.12, 0.1, 0.1, 0, 0.05, 0.02, body);
     addGrip(parts, 0, -0.08, 0.02);
     addBand(parts, 0.08, 0, 0.07, -0.26);
   } else {

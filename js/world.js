@@ -1,6 +1,6 @@
 import * as THREE from "three";
-import { toon, pineTexture, skyTexture, goldenSkyTexture, writeTRS } from "./mats.js?v=br16";
-import { buildTile } from "./build.js?v=br16";
+import { toon, pineTexture, skyTexture, goldenSkyTexture, writeTRS } from "./mats.js?v=br17";
+import { buildTile } from "./build.js?v=br17";
 
 const TILE = 20;
 const TILES = 10;
@@ -108,6 +108,7 @@ export function createWorld(scene) {
   deckFlow.position.set(0, 0.345, 0);
   deckFlow.frustumCulled = false;
   deckFlow.renderOrder = 1;
+  deckFlow.visible = false;
   group.add(deckFlow);
 
   const dam = new THREE.Group();

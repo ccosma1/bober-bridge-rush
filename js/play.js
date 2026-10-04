@@ -66,11 +66,12 @@ import {
   GATE_X,
   PANEL_W,
   AIM_CONE,
+  CROWD_X,
   DIVIDER_W,
   CHARGE_LEAD,
   PINCH_BLOB,
   volleyPlan,
-} from "./rules.js?v=br16";
+} from "./rules.js?v=br17";
 import {
   animToon,
   attachOutline,
@@ -90,7 +91,7 @@ import {
   writeLog,
   writeQuat,
   writeTRS,
-} from "./mats.js?v=br16";
+} from "./mats.js?v=br17";
 import {
   arrowGeo,
   buildBaron,
@@ -119,7 +120,7 @@ import {
   sawDiscGeo,
   streakGeo,
   streamGeo,
-} from "./build.js?v=br16";
+} from "./build.js?v=br17";
 
 const STRIDE = 320;
 const CAPS = [320, 320, 320, 120, 120, 120, 120];
@@ -731,9 +732,9 @@ export function createPlay(scene, camera, audio) {
   const gateTime = { value: 0 };
   const gateMat = new THREE.MeshStandardMaterial({
     color: 0xffffff,
-    roughness: 0.18,
-    metalness: 0.42,
-    emissive: 0x221111,
+    roughness: 0.48,
+    metalness: 0.04,
+    emissive: 0x000000,
   });
   const gatePanel = new THREE.InstancedMesh(new THREE.BoxGeometry(2.4, 2.2, 0.08), gateMat, GATE_N);
   const gateRim = new THREE.InstancedMesh(
@@ -822,7 +823,8 @@ export function createPlay(scene, camera, audio) {
   }
   gatePanel.setColorAt(0, white);
   const blueC = new THREE.Color("#2F7BFF");
-  const redC = new THREE.Color("#E53935");
+  const greenC = new THREE.Color("#2E9B4A");
+  const redC = new THREE.Color("#E23B32");
   const lineC = new THREE.Color("#1A1814");
   const signs = [];
   for (let i = 0; i < GATE_N; i++) {
@@ -1567,7 +1569,8 @@ export function createPlay(scene, camera, audio) {
     p.frostN[i] = 0;
     p.spill[i] = 0;
     p.flow[i] = waveFlow > 0 ? waveFlow : 1;
-    if (Math.abs(p.x[i]) > RIVER_X) p.x[i] = p.x[i] < 0 ? -RIVER_X : RIVER_X;
+    const deckEdge = DECK_HALF - 0.7;
+    if (Math.abs(p.x[i]) > deckEdge) p.x[i] = p.x[i] < 0 ? -deckEdge : deckEdge;
     liveN++;
     counts[type]++;
     return i;
@@ -1679,7 +1682,6 @@ export function createPlay(scene, camera, audio) {
       x0 += (rnd() * 2 - 1) * 0.32;
       if (x0 > edge) x0 = edge;
       if (x0 < -edge) x0 = -edge;
-      x0 = clamp((x0 / Math.max(edge, 0.6)) * 1.05, -RIVER_X, RIVER_X);
       spawnEnemy(type, x0, z - row * rowPitch + (rnd() * 2 - 1) * 0.48);
     }
     per;
@@ -1728,13 +1730,17 @@ export function createPlay(scene, camera, audio) {
     const anchors = [{ cx: 0, cz: zFront, lane: 1 }];
     if (room <= 0) return { spots, anchors };
     const rng = waveRand((salt * 997 + room * 13 + 17) >>> 0);
-    const span = Math.min(78, Math.max(16, room * 0.7)) * (stretch || 1);
+    const cols = room < 8 ? Math.max(1, room) : 7;
+    const xGap = (CROWD_X * 2) / 6;
+    const zGap = 1.12 * (stretch || 1);
     for (let i = 0; i < room; i++) {
-      const t = room <= 1 ? 0.5 : i / (room - 1);
-      const belly = Math.abs(t - 0.5);
-      const u = 0.5 + (t - 0.5) * (0.42 + belly * 1.15);
-      const x = clamp((rng() - 0.5) * 1.7 + Math.sin(i * 0.85 + salt) * 0.35, -RIVER_X, RIVER_X);
-      spots[i] = { x, z: zFront - u * span };
+      const row = (i / cols) | 0;
+      const nCols = Math.min(cols, room - row * cols);
+      const col = i % cols;
+      const x0 = nCols <= 1 ? 0 : (col - (nCols - 1) / 2) * xGap;
+      const x = clamp(x0 + (rng() - 0.5) * 0.28, -CROWD_X, CROWD_X);
+      const z = zFront - row * zGap + (rng() - 0.5) * 0.32;
+      spots[i] = { x, z };
     }
     return { spots, anchors };
   }
@@ -1744,7 +1750,7 @@ export function createPlay(scene, camera, audio) {
     const spots = [];
     const span = Math.min(70, Math.max(12, n * 2.4));
     for (let i = 0; i < n; i++) {
-      const x = clamp((rng() - 0.5) * 1.5, -RIVER_X, RIVER_X);
+      const x = clamp((rng() - 0.5) * 6, -CROWD_X, CROWD_X);
       const z = zFront - (n <= 1 ? 2 : (i / (n - 1)) * span);
       spots.push({ x, z });
     }
@@ -1758,7 +1764,7 @@ export function createPlay(scene, camera, audio) {
     for (let i = 0; i < n; i++) {
       const col = i % 3;
       const row = (i / 3) | 0;
-      const x = clamp((col - 1) * 0.42 + (rng() - 0.5) * 0.2, -RIVER_X, RIVER_X);
+      const x = clamp((col - 1) * 1.55 + (rng() - 0.5) * 0.45, -CROWD_X, CROWD_X);
       const z = a.cz - 1.2 - row * 1.35;
       spots.push({ x, z });
     }
@@ -1812,6 +1818,12 @@ export function createPlay(scene, camera, audio) {
     hazards.extra2[i] = maxKill;
   }
 
+  function gateTint(op) {
+    if (op === "mul") return greenC;
+    if (op === "sub" || op === "div") return redC;
+    return blueC;
+  }
+
   function buildGates() {
     gates.length = 0;
     let n = 0;
@@ -1819,11 +1831,11 @@ export function createPlay(scene, camera, audio) {
     for (let s = 0; s < evs.length; s++) {
       const ev = evs[s];
       if (ev.kind !== "gate" || !ev.op) continue;
-      const side = ev.side === 0 ? 0 : 1;
+      const x = ev.x != null ? ev.x : (ev.side === 0 ? -GATE_X : GATE_X);
       const g = freshGate(ev.op, ev.k);
-      g.x = side === 0 ? -GATE_X : GATE_X;
+      g.x = x;
       g.z = -ev.at;
-      g.side = side;
+      g.side = x < 0 ? 0 : 1;
       g.passed = 0;
       g.bump = 0;
       g.flip = 0;
@@ -1831,9 +1843,9 @@ export function createPlay(scene, camera, audio) {
       g.label = gateLabel(g);
       g.index = n;
       gates.push(g);
-      paintGateSign(signs[n].ctx, signs[n].canvas, g.label, gateBlue(g.op));
+      paintGateSign(signs[n].ctx, signs[n].canvas, g.label, g.op);
       signs[n].tex.needsUpdate = true;
-      const tint = gateBlue(g.op) ? blueC : redC;
+      const tint = gateTint(g.op);
       gatePanel.setColorAt(n, tint);
       gateRim.setColorAt(n, tint);
       gateStrip.setColorAt(n, tint);
@@ -1848,9 +1860,9 @@ export function createPlay(scene, camera, audio) {
     const g = gates[i];
     g.label = gateLabel(g);
     g.bump = 0.36;
-    paintGateSign(signs[i].ctx, signs[i].canvas, g.label, gateBlue(g.op));
+    paintGateSign(signs[i].ctx, signs[i].canvas, g.label, g.op);
     signs[i].tex.needsUpdate = true;
-    const tint = gateBlue(g.op) ? blueC : redC;
+    const tint = gateTint(g.op);
     gatePanel.setColorAt(i, tint);
     gateRim.setColorAt(i, tint);
     gateStrip.setColorAt(i, tint);
@@ -1941,7 +1953,6 @@ export function createPlay(scene, camera, audio) {
           if (ev.layout === "pair") x = k === 0 ? -LANE_X : LANE_X;
           else if (ev.layout === "row") x = (k - 1) * LANE_X;
           if (item.x != null) x = item.x;
-          if (Math.abs(x) < 2.2) x = (k % 2 ? 1 : -1) * 3.6;
           let z = -ev.at;
           for (let prev = ci - 1; prev >= 0; prev--) {
             const other = crates[prev];
@@ -2315,19 +2326,10 @@ export function createPlay(scene, camera, audio) {
     boss.visible = true;
     audio.bossIn();
     if (bossKind === "baron") say("BY ORDER OF THE DRAIN.");
-    // A one-rail crew still reaches these bosses oversized. The opening loss is what shrinks the finish.
-    if (bossRank() >= 4 && bossRank() <= 9) {
-      const crowd = [0, 0, 0, 0, 42, 46, 50, 20, 48, 50][bossRank()] || 0;
-      if (crowd) {
-        hurtSquad(crowd);
-        word("CROWD!", squadX, 2.6, -dist, 1, 1);
-      }
-    }
   }
 
   function hurtBoss(dmg, crit, splash, pierce, x0, y0, z0) {
     if (!bossState.alive || ended) return;
-    if (!labMode && laneOf(squadX) !== "CENTER") return;
     // 0.5 keeps a locked T2 squad on the boss inside a normal fight. The 6 s floor still stops a T4 wipe.
   let dealt = dmg * 0.5;
     const bossRate = Math.max(0.2, mods.rate || 1);
@@ -2424,7 +2426,6 @@ export function createPlay(scene, camera, audio) {
   function damageEnemy(type, i, dmg, x0, y0, z0, splash, pierce, flame, tag) {
     const p = pools[type];
     if (!p.alive[i]) return 0;
-    if (!labMode && laneOf(p.x[i]) !== laneOf(squadX)) return 0;
     let crit = 0;
     let dealtIn = dmg;
     if (rnd() < (mods.crit || 0.08)) {
@@ -2567,7 +2568,6 @@ export function createPlay(scene, camera, audio) {
       if (g.passed) continue;
       if (tag && g.stamp === tag) continue;
       if (g.z < lo - 0.6 || g.z > hi + 0.6) continue;
-      if (laneOf(g.x) !== laneOf(squadX)) continue;
       if (Math.abs(x0 - g.x) > PANEL_W * 0.5 + 0.2) continue;
       if (!inAimCone(originX, originZ, g.x, g.z)) continue;
       if (tag) g.stamp = tag;
@@ -2589,7 +2589,6 @@ export function createPlay(scene, camera, audio) {
       const c = crates[i];
       if (c.state !== "idle") continue;
       if (tag && c.stamp === tag) continue;
-      if (laneOf(c.x) !== laneOf(squadX)) continue;
       if (Math.abs(x0 - c.x) > 1.15) continue;
       if (Math.abs(z0 - c.z) > 0.85) continue;
       if (ox != null && Math.abs(c.x - ox) > 0.95) continue;
@@ -2622,7 +2621,6 @@ export function createPlay(scene, camera, audio) {
           const slot = id - type * STRIDE;
           const p = pools[type];
           if (!p || !p.alive[slot]) continue;
-          if (!labMode && laneOf(p.x[slot]) !== laneOf(squadX)) continue;
           const rad = ENEMY[type].rad * (p.radS[slot] || 1);
           if (!segHit(x0, y0, z0, x1, y1, z1, p.x[slot], ENEMY[type].y * (p.radS[slot] || 1), p.z[slot], rad)) continue;
           if (visitor(type, slot)) return 1;
@@ -2634,7 +2632,6 @@ export function createPlay(scene, camera, audio) {
 
   function bossCrit(x0, y0, z0, x1, y1, z1) {
     if (!bossState.alive || !arenaStarted) return 0;
-    if (laneOf(squadX) !== "CENTER") return -1;
     if (bossKind === "grunk" && wrenchPhase === 2) {
       if (segHit(x0, y0, z0, x1, y1, z1, wrenchX, wrenchY, wrenchZ, 0.7)) return 2;
     }
@@ -3103,11 +3100,10 @@ export function createPlay(scene, camera, audio) {
       const reach = labMode ? 52 : t === 4 ? 34 : 28;
       for (let i = 0; i < p.cap; i++) {
         if (!p.alive[i]) continue;
-        if (!labMode && laneOf(p.x[i]) !== laneOf(squadX)) continue;
         consider(t, i, p.x[i], p.z[i], reach);
       }
     }
-    if (!labMode && bossState.alive && bossState.shown && laneOf(squadX) === "CENTER") consider(7, 0, bossState.x, bossState.z, 28);
+    if (!labMode && bossState.alive && bossState.shown) consider(7, 0, bossState.x, bossState.z, 28);
     if (!labMode) {
       for (let i = 0; i < crates.length; i++) {
         if (crates[i].state !== "idle" || cratePay(crates[i]) <= 0) continue;
@@ -3119,7 +3115,7 @@ export function createPlay(scene, camera, audio) {
         if (gates[i].passed) continue;
         // Driving collects the printed value. Aiming from range turns fire rate into extra volunteers.
         if (autoPick || bot) continue;
-        if (laneOf(gates[i].x) !== laneOf(squadX)) continue;
+        if (Math.abs(gates[i].x - squadX) > PANEL_W * 0.55 + 0.45) continue;
         consider(9, i, gates[i].x, gates[i].z, 28);
       }
     }
@@ -4135,34 +4131,30 @@ export function createPlay(scene, camera, audio) {
     return bestN >= 0 ? bestX : 0;
   }
 
-  // Inner edge clears barrels on x=±3. Outer edge clears barrels on x=±2.2.
-  // Both stay in the side lane and inside the 2.6 m gate.
-  function sideStand(sign) {
-    const aim = ((runSeed | 0) & 1) ? 0.08 : -0.08;
-    const gateX = sign * GATE_X;
-    const slop = PANEL_W * 0.5 + 0.5;
-    const reach = 1.42;
-    const candidates = [sign * 1.66 + aim, sign * 3.15, sign * 3.85];
-    let best = candidates[0];
-    let bestScore = -1e9;
-    for (let i = 0; i < candidates.length; i++) {
-      const x = candidates[i];
-      if (laneOf(x) === "CENTER") continue;
-      let score = Math.abs(x - gateX) < slop ? 6 : 0;
-      for (let c = 0; c < crates.length; c++) {
-        const box = crates[c];
-        if (box.state !== "idle") continue;
-        if (box.kind === "weapon" || box.kind === "tier" || box.kind === "mystery") continue;
-        const ahead = -box.z - dist;
-        if (ahead < -1.2 || ahead > 9) continue;
-        if (Math.abs(x - box.x) < reach) score -= 5;
-      }
-      if (score > bestScore) {
-        bestScore = score;
-        best = x;
-      }
+  function standOn(x) {
+    const lat = formationHalfX(Math.max(squadN, 1));
+    const lim = Math.max(0.4, half - lat - 0.15);
+    return clamp(x, -lim, lim);
+  }
+
+  function nearestRow(maxAhead) {
+    let rowAt = 1e9;
+    for (let i = 0; i < gates.length; i++) {
+      const g = gates[i];
+      if (!g || g.passed) continue;
+      const ahead = -g.z - dist;
+      if (ahead < -0.3 || ahead > maxAhead) continue;
+      if (ahead < rowAt) rowAt = ahead;
     }
-    return best;
+    const row = [];
+    if (rowAt > 1e8) return row;
+    for (let i = 0; i < gates.length; i++) {
+      const g = gates[i];
+      if (!g || g.passed) continue;
+      const ahead = -g.z - dist;
+      if (Math.abs(ahead - rowAt) <= 0.4) row.push(g);
+    }
+    return row;
   }
 
   function centreAim() {
@@ -4194,7 +4186,7 @@ export function createPlay(scene, camera, audio) {
       best = c;
       bestAhead = ahead;
     }
-    return best ? best.x : 0;
+    return best ? best.x : null;
   }
 
   function humanX() {
@@ -4219,67 +4211,42 @@ export function createPlay(scene, camera, audio) {
       }
       return centreAim();
     }
+    const row = nearestRow(14);
     let best = null;
-    let bestAhead = 1e9;
-    for (let i = 0; i < gates.length; i++) {
-      const g = gates[i];
-      if (!g || g.passed) continue;
-      const ahead = -g.z - dist;
-      if (ahead < -0.3 || ahead > 14) continue;
-      let take = 0;
-      if (g.op === "sub" || g.op === "div") take = 0;
-      else if (g.op === "add" && squadN < 8) take = 1;
-      else if (g.op === "mul" && g.tenths >= 15) take = 1;
-      else if (applyGate(squadN, g.op, g.k, g.tenths) > squadN && gateRoll(g.z) < 62) take = 1;
-      if (!take) continue;
-      if (ahead < bestAhead) {
+    let bestN = -1;
+    for (let i = 0; i < row.length; i++) {
+      const g = row[i];
+      const n = applyGate(squadN, g.op, g.k, g.tenths);
+      if (n > bestN) {
+        bestN = n;
         best = g;
-        bestAhead = ahead;
       }
     }
-    if (best) return sideStand(best.x < 0 ? -1 : 1);
+    if (best && bestN > squadN) return standOn(best.x);
     const loot = humanLootX();
-    if (loot) return loot;
-    return centreAim();
+    if (loot != null) return standOn(loot);
+    return 0;
   }
 
   function greedyX() {
     if (arenaStarted) return centreAim();
-    let bestAhead = 1e9;
-    let bestX = 0;
-    let found = 0;
-    for (let i = 0; i < gates.length; i++) {
-      const g = gates[i];
-      if (!g || g.passed) continue;
-      const ahead = -g.z - dist;
-      if (ahead < -0.4 || ahead > 150) continue;
-      if (ahead < bestAhead) {
-        bestAhead = ahead;
-        bestX = g.x;
-        found = 1;
-      }
-    }
-    if (!found) return (botSide < 0 ? -1 : 1) * 3.05;
-    return sideStand(bestX < 0 ? -1 : 1);
+    const row = nearestRow(150);
+    if (!row.length) return 0;
+    return standOn(row[0].x);
   }
 
   function turtleX() {
     if (arenaStarted || level.id !== "1-1" || squadN >= 14) return 0;
+    const row = nearestRow(18);
     let best = null;
-    let bestAhead = 1e9;
-    for (let i = 0; i < gates.length; i++) {
-      const g = gates[i];
-      if (!g || g.passed) continue;
-      const ahead = -g.z - dist;
-      if (ahead < -0.2 || ahead > 18) continue;
+    for (let i = 0; i < row.length; i++) {
+      const g = row[i];
       if (g.op !== "add" || g.k > 6) continue;
-      if (ahead < bestAhead) {
-        best = g;
-        bestAhead = ahead;
-      }
+      best = g;
+      break;
     }
     if (!best) return 0;
-    return sideStand(best.x < 0 ? -1 : 1);
+    return standOn(best.x);
   }
 
   function botX() {
@@ -4373,7 +4340,6 @@ export function createPlay(scene, camera, audio) {
       const k = ENEMY[t];
       for (let i = 0; i < p.cap; i++) {
         if (!p.alive[i] || p.freeze[i] >= 1) continue;
-        if (laneOf(p.x[i]) !== laneOf(squadX)) continue;
         if (p.z[i] > -dist + 2.8) {
           releaseEnemy(t, i);
           continue;
@@ -4493,21 +4459,17 @@ export function createPlay(scene, camera, audio) {
       if (line - p.z[i] < 1.2) p.hit[i] = Math.max(p.hit[i], 0.35);
       return;
     }
-    const sway = Math.sin(clock * 1.7 + p.phase[i]) * 0.62;
-    const home = Math.sin(p.phase[i] * 1.3) * 0.28;
-    const want = clamp(home + sway, -RIVER_X, RIVER_X);
-    p.x[i] += clamp(want - p.x[i], -1, 1) * 2.2 * h;
-    if (p.x[i] > RIVER_X) p.x[i] = RIVER_X;
-    if (p.x[i] < -RIVER_X) p.x[i] = -RIVER_X;
-    if (laneOf(squadX) === "CENTER") {
-      if (p.z[i] < line - 1.6) p.z[i] += step;
-      else if (p.z[i] < line) p.z[i] = Math.min(line, p.z[i] + step);
-      if (p.z[i] > line) p.z[i] = line;
-      if (line - p.z[i] < 1.2) p.hit[i] = Math.max(p.hit[i], 0.35);
-    } else {
-      p.z[i] += step;
-      if (p.z[i] > -dist + 3.4) releaseEnemy(type, i);
-    }
+    const deckEdge = DECK_HALF - 0.7;
+    const nearLine = line - p.z[i] < 7;
+    const driftRate = nearLine ? 2.2 : 0.15;
+    const drift = clamp(squadX - p.x[i], -driftRate * h, driftRate * h);
+    p.x[i] += drift;
+    if (p.x[i] > deckEdge) p.x[i] = deckEdge;
+    if (p.x[i] < -deckEdge) p.x[i] = -deckEdge;
+    if (p.z[i] < line - 1.6) p.z[i] += step;
+    else if (p.z[i] < line) p.z[i] = Math.min(line, p.z[i] + step);
+    if (p.z[i] > line) p.z[i] = line;
+    if (line - p.z[i] < 1.2) p.hit[i] = Math.max(p.hit[i], 0.35);
   }
 
   function riverPressure() {
@@ -4555,6 +4517,12 @@ export function createPlay(scene, camera, audio) {
   }
 
   function updateOverflow(h) {
+    h;
+    riverPress = 0;
+    riverFill = 0;
+    riverStage = 0;
+    overflowWarn = 0;
+    return;
     const press = riverPressure();
     riverPress = press;
     const rank = bossRank();
@@ -4757,7 +4725,6 @@ export function createPlay(scene, camera, audio) {
             c.dirty = 1;
           }
         } else if (c.state === "idle" && Math.abs(z - c.z) < 1.05) {
-          if (laneOf(c.x) !== laneOf(squadX)) continue;
           const reach = Math.max(0.7, lat * 0.85) + 0.35;
           const d = Math.abs(squadX - c.x);
           if (d >= reach) continue;
@@ -4970,7 +4937,7 @@ export function createPlay(scene, camera, audio) {
           } else if (t === 4) {
             riverDrift(t, i, h, k.speed);
             if (!p.alive[i]) continue;
-            if (laneOf(p.x[i]) === laneOf(squadX)) {
+            {
               p.lob[i] -= h;
               if (p.lob[i] <= 0) {
                 p.lob[i] = 3;
@@ -5427,20 +5394,14 @@ export function createPlay(scene, camera, audio) {
     shownGun = nextGun;
     if (nextGun && shown) {
       if (nextGun.material && nextGun.material.emissive) {
+        nextGun.material.color.set("#ffffff");
         if (tier >= 4) {
-          nextGun.material.color.set("#F4E6C3");
           nextGun.material.emissive.set("#F5C400");
           nextGun.material.emissiveIntensity = 0.45;
         } else if (tier >= 3) {
-          nextGun.material.color.set("#ffffff");
           nextGun.material.emissive.set("#F5C400");
           nextGun.material.emissiveIntensity = 0.22;
-        } else if (tier >= 2) {
-          nextGun.material.color.set(mods.color || "#ffffff");
-          nextGun.material.emissive.set("#000000");
-          nextGun.material.emissiveIntensity = 0;
         } else {
-          nextGun.material.color.set("#ffffff");
           nextGun.material.emissive.set("#000000");
           nextGun.material.emissiveIntensity = 0;
         }
@@ -5469,7 +5430,7 @@ export function createPlay(scene, camera, audio) {
     const glowMid = -FORM_LEADER + (layGlow.gap * 0.95 + layGlow.h) * 0.5;
     laneGlow.scale.set(1, glowDepth, 1);
     laneGlow.position.set(laneCenter(squadX), 0.36, -dist + glowMid + back);
-    laneGlow.visible = ended !== "lose" && !labMode;
+    laneGlow.visible = false;
     const splashOn = riverStage >= 2 && laneOf(squadX) !== "CENTER" && !arenaStarted && ended !== "lose";
     spillSheet.visible = splashOn;
     if (splashOn) {
@@ -5636,7 +5597,7 @@ export function createPlay(scene, camera, audio) {
     paintShots(vducks, "vduck", cam);
     paintLook(cam);
 
-    const beamOn = mods.pattern === "beam" && running && !ended && shown > 0;
+    const beamOn = (mods.pattern === "bolt" || mods.pattern === "beam") && running && !ended && shown > 0;
     const beamVis = beamOn ? Math.min(12, shown) : 0;
     beamMesh.count = beamVis;
     beamSoft.count = beamVis;
@@ -5730,7 +5691,7 @@ export function createPlay(scene, camera, audio) {
     chillMesh.visible = chills > 0;
     if (chills) chillMesh.instanceMatrix.needsUpdate = true;
     const coneOn = false;
-    const streamOn = false;
+    const streamOn = mods.pattern === "stream" && running && !ended && shown > 0;
     const origins = Math.max(1, Math.ceil(Math.max(1, shown) / 10));
     for (let i = 0; i < 6; i++) {
       const s = Math.min(shown - 1, i * 10);
@@ -5799,18 +5760,17 @@ export function createPlay(scene, camera, audio) {
       if (digits.instanceColor) digits.instanceColor.needsUpdate = true;
     }
 
-    gateFrame.count = 0;
     gateOutline.count = 0;
-    gatePanel.count = 0;
     gateRim.count = 0;
     gateStrip.count = 0;
     centrePost.count = 0;
-    gateFrame.visible = false;
     gateOutline.visible = false;
-    gatePanel.visible = false;
     gateRim.visible = false;
     gateStrip.visible = false;
     centrePost.visible = false;
+    let shownG = 0;
+    const frameM = gateFrame.instanceMatrix.array;
+    const panelM = gatePanel.instanceMatrix.array;
     for (let i = 0; i < gates.length; i++) {
       const g = gates[i];
       const near = Math.abs(-g.z - dist) < 80;
@@ -5823,13 +5783,25 @@ export function createPlay(scene, camera, audio) {
       }
       const sign = signs[i].mesh;
       sign.visible = !!s;
-      if (s) {
-        sign.position.set(g.x, 1.12, g.z + 0.08);
-        sign.renderOrder = 4;
-        sign.quaternion.identity();
-        const bump = 1 + g.bump * 0.12;
-        sign.scale.set(1.106 * bump, 0.93 * bump * flipY, 1);
-      }
+      if (!s) continue;
+      writeTRS(frameM, shownG, g.x, 0, g.z, 0, 1, 1, 1);
+      writeTRS(panelM, shownG, g.x, 1.86, g.z, 0, 1.12, 1.18 * flipY, 1);
+      gatePanel.setColorAt(shownG, gateTint(g.op));
+      shownG++;
+      sign.position.set(g.x, 1.96, g.z + 0.12);
+      sign.renderOrder = 4;
+      sign.quaternion.identity();
+      const bump = 1 + g.bump * 0.12;
+      sign.scale.set(1.28 * bump, 1.48 * bump * flipY, 1);
+    }
+    gateFrame.count = shownG;
+    gatePanel.count = shownG;
+    gateFrame.visible = shownG > 0;
+    gatePanel.visible = shownG > 0;
+    if (shownG) {
+      gateFrame.instanceMatrix.needsUpdate = true;
+      gatePanel.instanceMatrix.needsUpdate = true;
+      if (gatePanel.instanceColor) gatePanel.instanceColor.needsUpdate = true;
     }
     for (let i = gates.length; i < signs.length; i++) signs[i].mesh.visible = false;
     let flashes = 0;
@@ -6688,19 +6660,19 @@ export function createPlay(scene, camera, audio) {
     reset();
     running = true;
     for (let i = 0; i < RENDER_CAP; i++) cds[i] = 9;
-    const gateAt = (op, side) => {
+    const gateAt = (op) => {
       const evs = level.events;
       for (let i = 0; i < evs.length; i++) {
         if (evs[i].kind !== "gate") continue;
-        if (evs[i].op === op && evs[i].side === side) return evs[i];
+        if (evs[i].op === op) return evs[i];
       }
       return null;
     };
     squadN = 10;
-    squadX = -GATE_X;
-    targetX = -GATE_X;
-    const mulEv = gateAt("mul", 0);
+    const mulEv = gateAt("mul");
     const atMul = mulEv ? mulEv.at : -1;
+    squadX = mulEv ? mulEv.x : 0;
+    targetX = squadX;
     dist = atMul - 0.3;
     prevZ = -dist;
     step(0.4);
@@ -6709,10 +6681,10 @@ export function createPlay(scene, camera, audio) {
     reset();
     running = true;
     for (let i = 0; i < RENDER_CAP; i++) cds[i] = 9;
-    const subEv = gateAt("sub", 1);
+    const subEv = gateAt("sub");
     squadN = 11;
-    squadX = GATE_X;
-    targetX = GATE_X;
+    squadX = subEv ? subEv.x : 0;
+    targetX = squadX;
     const atSub = subEv ? subEv.at : -1;
     const wantSub = subEv ? applyGate(11, "sub", subEv.k, 0) : -1;
     dist = atSub - 0.3;
@@ -6754,18 +6726,21 @@ export function createPlay(scene, camera, audio) {
       if (spreadP.x[i] < spreadLo) spreadLo = spreadP.x[i];
       if (spreadP.x[i] > spreadHi) spreadHi = spreadP.x[i];
     }
-    if (spreadN < 20 || spreadLo < -1.31 || spreadHi > 1.31) fails.push("river spawn " + spreadN + " " + spreadLo.toFixed(2) + ".." + spreadHi.toFixed(2));
+    if (spreadN < 20 || spreadHi - spreadLo < 3.2 || spreadLo < -4.2 || spreadHi > 4.2) fails.push("crowd spawn " + spreadN + " " + spreadLo.toFixed(2) + ".." + spreadHi.toFixed(2));
 
     reset();
     running = true;
     spawnWave({ at: 180, kind: "wave", clog: 24, suds: 4, hair: 1, spit: 1, leaf: 1, duck: 1, spd: 1.1 });
+    let waveWide = 0;
     for (let t = 0; t < TYPES; t++) {
       const wp = pools[t];
       for (let i = 0; i < wp.cap; i++) {
         if (!wp.alive[i]) continue;
-        if (Math.abs(wp.x[i]) > 1.31) fails.push("wave lane " + t + " " + wp.x[i].toFixed(2));
+        if (Math.abs(wp.x[i]) > CROWD_X + 0.2) fails.push("wave deck " + t + " " + wp.x[i].toFixed(2));
+        if (Math.abs(wp.x[i]) > 1.6) waveWide++;
       }
     }
+    if (waveWide < 4) fails.push("wave narrow " + waveWide);
 
     reset();
     running = true;
@@ -6776,10 +6751,11 @@ export function createPlay(scene, camera, audio) {
     squadX = -3;
     const sideHp = bossState.hp;
     hurtBoss(30, 0, 0, 0, 0, 1.2, -20);
-    if (bossState.hp !== sideHp) fails.push("side boss " + bossState.hp);
+    if (!(bossState.hp < sideHp)) fails.push("off lane boss " + bossState.hp);
+    const midHp = bossState.hp;
     squadX = 0;
     hurtBoss(30, 0, 0, 0, 0, 1.2, -20);
-    if (!(bossState.hp < sideHp)) fails.push("center boss " + bossState.hp);
+    if (!(bossState.hp < midHp)) fails.push("center boss " + bossState.hp);
     bossState.alive = 0;
     bossState.hp = 0;
 
@@ -6822,7 +6798,7 @@ export function createPlay(scene, camera, audio) {
     let barrelShift = 0;
     for (let i = 0; i < crates.length; i++) {
       if (crates[i].state !== "idle") continue;
-      if (Math.abs(crates[i].x) < 2.2) fails.push("barrel x " + crates[i].x);
+      if (Math.abs(crates[i].x) > 3.6) fails.push("barrel x " + crates[i].x);
       barrelShift += crates[i].hp;
     }
     const barrelBefore = barrelShift;
@@ -6857,85 +6833,20 @@ export function createPlay(scene, camera, audio) {
     bfall[shot] = 0;
     balls.tag[shot] = ++shotTag;
     for (let i = 0; i < 60; i++) step(0.05);
-    if (foe >= 0 && pools[0].alive[foe] && pools[0].hp[foe] !== foeHp) fails.push("left fire river");
-    if (foe >= 0 && !pools[0].alive[foe]) fails.push("left fire river dead");
-
-    const overflowLabels = () => {
-      let n = 0;
-      for (let i = 0; i < words.length; i++) {
-        if (words[i].text === "OVERFLOW!" && words[i].life > 0) n++;
-      }
-      return n;
-    };
-    const pumpSpill = (need) => {
-      holdFire = 1;
-      squadN = 30;
-      squadX = -3;
-      targetX = -3;
-      const far = spawnEnemy(0, 0.15, -dist - 48);
-      for (let i = 0; i < 48; i++) {
-        const id = spawnEnemy(0, (i % 5) * 0.2 - 0.4, -dist - 6 - i * 0.25);
-        if (id >= 0) pools[0].freeze[id] = 1;
-      }
-      let t = 0;
-      let yellow = -1;
-      let dz = 0;
-      while (t < 12 && overflowCount < 1) {
-        const z0 = far >= 0 ? pools[0].z[far] : 0;
-        step(0.05);
-        t += 0.05;
-        if (yellow < 0 && riverFill + 1e-4 >= RIVER_YELLOW) yellow = t;
-        if (overflowCount >= 1 && far >= 0) dz = Math.abs(pools[0].z[far] - z0);
-      }
-      const lead = yellow < 0 ? -1 : t - yellow;
-      if (lead + 1e-3 < need) fails.push("warn lead " + level.id + " " + (lead < 0 ? "none" : lead.toFixed(2)));
-      if (overflowCount !== 1) fails.push("spill once " + level.id + " " + overflowCount);
-      if (overflowCool < RIVER_COOL - 0.08) fails.push("cool " + level.id + " " + overflowCool.toFixed(2));
-      if (overflowLabel > 1) fails.push("label flag " + overflowLabel);
-      if (overflowLabels() > 0) fails.push("overflow words " + overflowLabels());
-      if (dz > 1) fails.push("spill snap " + level.id + " " + dz.toFixed(2));
-      let group = 0;
-      let spilledN = 0;
-      for (let i = 0; i < pools[0].cap; i++) {
-        if (!pools[0].alive[i]) continue;
-        const z = pools[0].z[i];
-        if (z > -dist + 0.5 || z < -dist - 23) continue;
-        group++;
-        if (pools[0].spill[i] !== 0) spilledN++;
-      }
-      const frac = group > 0 ? spilledN / group : 0;
-      if (frac < 0.15 || frac > 0.35) fails.push("spill frac " + level.id + " " + frac.toFixed(2));
-      const stuck = overflowCount;
-      for (let i = 0; i < 80; i++) step(0.05);
-      if (overflowCount !== stuck) fails.push("cool breach " + level.id + " " + overflowCount);
-      if (overflowLabels() > 0) fails.push("overflow words late " + level.id);
-    };
+    if (foe >= 0 && pools[0].alive[foe] && pools[0].hp[foe] === foeHp) fails.push("crowd shot missed");
 
     reset();
     running = true;
     bench = 1;
-    pumpSpill(2.45);
-
-    level = levelOf("1-5");
-    reset();
-    running = true;
-    bench = 1;
-    pumpSpill(1.45);
-
-    reset();
-    running = true;
-    bench = 1;
-    squadX = 0;
-    targetX = 0;
+    squadX = -2.4;
+    targetX = -2.4;
     holdFire = 1;
-    for (let i = 0; i < 48; i++) {
-      const id = spawnEnemy(0, (i % 5) * 0.2 - 0.4, -6 - i * 0.2);
+    for (let i = 0; i < 40; i++) {
+      const id = spawnEnemy(0, (i % 7) * 0.7 - 2.1, -dist - 8 - i * 0.3);
       if (id >= 0) pools[0].freeze[id] = 1;
     }
-    for (let i = 0; i < 40; i++) step(0.05);
-    let centerSpill = 0;
-    for (let i = 0; i < pools[0].cap; i++) if (pools[0].alive[i] && pools[0].spill[i] !== 0) centerSpill++;
-    if (centerSpill !== 0 || overflowCount !== 0) fails.push("overflow in center");
+    for (let i = 0; i < 80; i++) step(0.05);
+    if (overflowCount !== 0 || riverFill > 0.01) fails.push("river puzzle " + overflowCount);
 
     level = levelOf("1-1");
     reset();
@@ -6943,20 +6854,17 @@ export function createPlay(scene, camera, audio) {
     bench = 1;
     holdFire = 1;
     squadN = 3;
-    let smallBarrel = null;
-    for (let i = 0; i < crates.length; i++) {
-      if (crates[i].state === "idle" && crates[i].kind === "volunteer") {
-        smallBarrel = crates[i];
-        break;
-      }
-    }
-    if (!smallBarrel) fails.push("no small barrel");
+    const ramBox = crates[0];
+    if (!ramBox) fails.push("no crate");
     else {
-      if (smallBarrel.hp > 10 || smallBarrel.hp < 6) fails.push("early barrel " + smallBarrel.hp);
-      dist = -smallBarrel.z;
+      ramBox.kind = "volunteer";
+      ramBox.hp = 8;
+      ramBox.max = 8;
+      ramBox.state = "idle";
+      dist = -ramBox.z;
       prevZ = -dist;
-      squadX = smallBarrel.x;
-      targetX = smallBarrel.x;
+      squadX = ramBox.x;
+      targetX = ramBox.x;
       step(0.05);
       if (ended === "lose" || squadN < 1) fails.push("barrel wipe " + squadN);
       if (squadN !== 1) fails.push("barrel keep " + squadN);

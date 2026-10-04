@@ -700,20 +700,14 @@ export function streamGeo() {
 
 export function buildTile() {
   const parts = [];
-  const deck = "#C9C6D4";
-  const seam = "#B7B3C2";
+  const woods = ["#E4B56A", "#D7A45A", "#E8C07A", "#C9954A"];
+  const seam = "#C48A3E";
   const red = "#E23B32";
-  const river = "#8EC6DE";
-  const stripe = "#F4FBFF";
   for (let i = 0; i < 10; i++) {
     const z = -1 - i * 2;
-    parts.push(place(box(3.333, 0.28, 2), deck, 0, null, -3.3335, 0.14, z));
-    parts.push(place(box(3.334, 0.28, 2), river, 0, null, 0, 0.14, z));
-    parts.push(place(box(3.333, 0.28, 2), deck, 0, null, 3.3335, 0.14, z));
-    parts.push(place(box(10, 0.02, 0.05), seam, 0, null, 0, 0.29, -i * 2));
+    parts.push(place(box(10, 0.28, 1.92), woods[i % woods.length], 0, null, 0, 0.14, z));
+    parts.push(place(box(10, 0.025, 0.08), seam, 0, null, 0, 0.3, -i * 2));
   }
-  parts.push(place(box(0.22, 0.04, 20), stripe, 0, null, -1.667, 0.32, -10));
-  parts.push(place(box(0.22, 0.04, 20), stripe, 0, null, 1.667, 0.32, -10));
   const girder = box(0.28, 0.55, 20);
   parts.push(place(girder, red, 0, null, -5.05, 0.48, -10));
   parts.push(place(girder, red, 0, null, 5.05, 0.48, -10));
@@ -746,12 +740,13 @@ export function buildCrateGeo() {
 }
 
 export function buildGateFrame() {
-  const post = box(0.18, 3.6, 0.22);
-  const beam = box(2.05, 0.26, 0.2);
+  const post = box(0.16, 3.4, 0.18);
+  const beam = box(2.55, 0.22, 0.18);
+  const wood = "#8B5A2B";
   return mergeParts([
-    place(post, "#E7EEF8", 0, null, -1.0, 1.8, 0),
-    place(post, "#E7EEF8", 0, null, 1.0, 1.8, 0),
-    place(beam, "#E7EEF8", 0, null, 0, 3.55, 0),
+    place(post, wood, 0, null, -1.22, 1.7, 0),
+    place(post, wood, 0, null, 1.22, 1.7, 0),
+    place(beam, wood, 0, null, 0, 3.35, 0),
   ]);
 }
 
