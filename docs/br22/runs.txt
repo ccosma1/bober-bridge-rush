@@ -1,0 +1,9 @@
+br22 denser road and readable guns. Self-test fails []. Soldier 536, bober 548, boss 2014. Enemies [512, 5352, 120, 2448, 3640, 1484, 2360]. No gun-tris warning.
+
+Gate rows are 74 m apart. A small pack and a mid pack sit between the banners. The keeper is at 324 m. Maple Flamer is still the only stream.
+
+Human bot, hold and step:
+1-1 win n 29, weapon dambust, theme 0, kills 72, dist 324.
+2-1 win n 6, weapon barrage, theme 1, kills 95, dist 324.
+
+Phone stills at 390x844: fight.png plus one pose each for burst, dambust, saw, rail, storm, flame, barrage, and aurora.

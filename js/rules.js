@@ -2,7 +2,7 @@
 // br3 gun table. Lab may multiply a tier's DMG; the comment block at the
 // bottom of weaponMods records the numbers that passed the gun lab.
 
-export const BUILD = "br21";
+export const BUILD = "br22";
 export const SIM_CAP = 300;
 export const RENDER_CAP = 60;
 export const LIVE_CAP = 320;
@@ -268,8 +268,11 @@ function pushWave(evs, at, mix) {
 
 function waveMix(ch, st, kind) {
   const heat = ch * 2 + ((st / 3) | 0);
+  const spd = +(1 + ch * 0.03).toFixed(2);
+  // Popcorn between the banners. Reds only, so the squad clears them before the next toll.
+  if (kind === "skim") return { clog: 3 + Math.min(2, heat >> 1), spd };
   let clog = kind === "open" ? 8 + Math.min(4, st) : kind === "gate" ? 10 + Math.min(6, heat) : 7 + Math.min(5, heat);
-  const ev = { clog, spd: +(1 + ch * 0.03).toFixed(2) };
+  const ev = { clog, spd };
   if (ch === 0 && st >= 3 && kind === "mid") ev.duck = 1;
   if (ch === 0 && st >= 6 && kind === "gate") ev.suds = 1;
   if (ch === 1) {
@@ -335,21 +338,24 @@ function spanRoad(index) {
   const ch = (index / 10) | 0;
   const st = index % 10;
   const guns = spanGuns(index);
-  const gap = 120;
-  const gates = [78, 78 + gap, 78 + gap * 2, 78 + gap * 3];
+  const gap = 74;
+  const gates = [68, 68 + gap, 68 + gap * 2, 68 + gap * 3];
   const evs = [];
-  pushWave(evs, 36, waveMix(ch, st, "open"));
+  pushWave(evs, 16, waveMix(ch, st, "open"));
   for (let r = 0; r < gates.length; r++) {
     const g = gates[r];
-    pushWave(evs, g - 12, waveMix(ch, st, "gate"));
+    pushWave(evs, g - 10, waveMix(ch, st, "gate"));
     const ops = rowOps(index, r);
     evs.push(gateAt(g, -2.45, ops[0], ops[1]));
     evs.push(gateAt(g, 2.45, ops[2], ops[3]));
-    if (r < guns.length) evs.push(gunAt(g + 44, guns[r]));
-    if (r < gates.length - 1) pushWave(evs, g + 70, waveMix(ch, st, "mid"));
+    if (r < guns.length) evs.push(gunAt(g + 18, guns[r]));
+    if (r < gates.length - 1) {
+      pushWave(evs, g + 22, waveMix(ch, st, "skim"));
+      pushWave(evs, g + 40, waveMix(ch, st, "mid"));
+    }
   }
-  const bossAt = gates[3] + 76;
-  pushWave(evs, gates[3] + 40, waveMix(ch, st, "mid"));
+  const bossAt = gates[3] + 34;
+  pushWave(evs, gates[3] + 14, waveMix(ch, st, "skim"));
   evs.push({ at: bossAt, kind: "boss" });
   return evs;
 }
@@ -913,7 +919,7 @@ export function rhythmIssues() {
         if (waves[w].front < ats[i] && waves[w].end > ats[i]) held = 1;
       }
       if (!held) fails.push(id + " choice quiet " + ats[i]);
-      if (i > 0 && ats[i] - ats[i - 1] < 100) fails.push(id + " row gap " + ats[i - 1] + ".." + ats[i]);
+      if (i > 0 && ats[i] - ats[i - 1] < 70) fails.push(id + " row gap " + ats[i - 1] + ".." + ats[i]);
     }
     for (let i = 0; i < evs.length; i++) {
       if (evs[i].kind !== "crate") continue;

@@ -1,6 +1,6 @@
 # Bober Bridge Rush
 
-Phone-first bridge crowd rush. Shoot the packs between the toll banners, pick a side, and hold four spans of ten bridges each. Twelve guns, and one of them is a flamethrower. The road runs from 1-1 Pine Bridge to 4-10 Dam Keep.
+Phone-first bridge crowd rush. Packs meet you between the toll banners, so the span stays a fight. Pick a side and hold four spans of ten bridges each. Twelve guns, and one of them is a flamethrower. The road runs from 1-1 Pine Bridge to 4-10 Dam Keep.
 
 Fan game. Unofficial. The in-game currency is $BOBER. Nothing here is real money.
 
@@ -10,9 +10,9 @@ Open `index.html` through a static server. Three.js r170 loads from the jsDelivr
 START.bat
 ```
 
-That serves http://127.0.0.1:8792/?v=br21
+That serves http://127.0.0.1:8792/?v=br22
 
-Build tag: br21
+Build tag: br22
 
 ## Credits
 
