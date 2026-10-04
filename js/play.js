@@ -20,9 +20,22 @@ import {
   formationOffsets,
   formationRadius,
   formationHalfX,
+  formationLayout,
   laneOf,
+  laneCenter,
   RIVER_X,
   RIVER_CAP,
+  RIVER_YELLOW,
+  RIVER_RED,
+  RIVER_COOL,
+  RIVER_SPILL,
+  FORM_LEADER,
+  FORM_MAX_W,
+  barrelNumber,
+  riverApproach,
+  riverRiseRate,
+  riverDrainRate,
+  riverWarnLead,
   freshGate,
   gateBlue,
   gateLabel,
@@ -57,7 +70,7 @@ import {
   CHARGE_LEAD,
   PINCH_BLOB,
   volleyPlan,
-} from "./rules.js?v=br15";
+} from "./rules.js?v=br16";
 import {
   animToon,
   attachOutline,
@@ -77,7 +90,7 @@ import {
   writeLog,
   writeQuat,
   writeTRS,
-} from "./mats.js?v=br15";
+} from "./mats.js?v=br16";
 import {
   arrowGeo,
   buildBaron,
@@ -106,7 +119,7 @@ import {
   sawDiscGeo,
   streakGeo,
   streamGeo,
-} from "./build.js?v=br15";
+} from "./build.js?v=br16";
 
 const STRIDE = 320;
 const CAPS = [320, 320, 320, 120, 120, 120, 120];
@@ -206,6 +219,36 @@ export function createPlay(scene, camera, audio) {
   leaderRing.frustumCulled = false;
   leaderRing.renderOrder = 2;
   scene.add(leaderRing);
+  const laneGlow = new THREE.Mesh(
+    new THREE.PlaneGeometry(2.7, 1),
+    new THREE.MeshBasicMaterial({
+      color: 0xfff6d2,
+      transparent: true,
+      opacity: 0.34,
+      depthWrite: false,
+      toneMapped: false,
+    })
+  );
+  laneGlow.rotation.x = -Math.PI / 2;
+  laneGlow.position.y = 0.36;
+  laneGlow.frustumCulled = false;
+  laneGlow.renderOrder = 2;
+  scene.add(laneGlow);
+  const spillSheet = new THREE.Mesh(
+    new THREE.PlaneGeometry(1.35, 2.4),
+    new THREE.MeshBasicMaterial({
+      color: 0x7ed8ff,
+      transparent: true,
+      opacity: 0.86,
+      depthWrite: false,
+      side: THREE.DoubleSide,
+      toneMapped: false,
+    })
+  );
+  spillSheet.frustumCulled = false;
+  spillSheet.visible = false;
+  spillSheet.renderOrder = 3;
+  scene.add(spillSheet);
 
   const pillarMat = new THREE.ShaderMaterial({
     transparent: true,
@@ -1049,6 +1092,14 @@ export function createPlay(scene, camera, audio) {
   let overflowCool = 0;
   let overflowWarn = 0;
   let overflowCount = 0;
+  let overflowAge = 0;
+  let overflowLabel = 0;
+  let riverStage = 0;
+  let splashT = 0;
+  let botStyle = "";
+  let botThink = 0;
+  let botWant = 0;
+  let botSide = 1;
   const RIVER_W = [1, 2, 3, 2, 2, 1, 1];
 
   const view = {
@@ -1061,7 +1112,7 @@ export function createPlay(scene, camera, audio) {
     calls: 0, mPerPx: 0.02, gate0: "+5", crateHp: 480, targetX: 0, slow: 0, shake: 0,
     levelId: "1-1", levelName: level.name, intro: level.intro, winTitle: level.win,
     river: 0, dam: 1, theme: 0, toastT: 0, toastName: "", toastLine: "",
-    barkT: 0, bark: "", words, slabs: 0,
+    barkT: 0, bark: "", words, slabs: 0, riverFill: 0, riverStage: 0, overflow: 0, overflowLabel: 0,
   };
   let slabQuads = 0;
   function flagSlab(a, b, c) {
@@ -1672,12 +1723,12 @@ export function createPlay(scene, camera, audio) {
     return x;
   }
 
-  function buildClogPlan(room, zFront, salt) {
+  function buildClogPlan(room, zFront, salt, stretch) {
     const spots = new Array(room);
     const anchors = [{ cx: 0, cz: zFront, lane: 1 }];
     if (room <= 0) return { spots, anchors };
     const rng = waveRand((salt * 997 + room * 13 + 17) >>> 0);
-    const span = Math.min(64, Math.max(16, room * 0.7));
+    const span = Math.min(78, Math.max(16, room * 0.7)) * (stretch || 1);
     for (let i = 0; i < room; i++) {
       const t = room <= 1 ? 0.5 : i / (room - 1);
       const belly = Math.abs(t - 0.5);
@@ -1716,13 +1767,14 @@ export function createPlay(scene, camera, audio) {
 
   function spawnWave(ev) {
     const expect = labMode || hpMulOverride ? 0 : expectedSquad(level, ev.at);
-    const modsW = expect ? waveMods(expect) : { nMul: 1, hpMul: 1 };
+    const rank = bossRank();
+    const modsW = expect ? waveMods(expect, rank) : { nMul: 1, hpMul: 1 };
     waveHpMul = modsW.hpMul;
     const grow = (n) => (n ? Math.max(1, Math.round(n * modsW.nMul)) : 0);
     const zFront = -(ev.at + CHARGE_LEAD);
     waveFlow = ev.spd > 0 ? ev.spd : 1;
     const clogN = grow(ev.clog || 0);
-    const plan = buildClogPlan(dumpRoom(0, clogN), zFront, ev.at | 0);
+    const plan = buildClogPlan(dumpRoom(0, clogN), zFront, ev.at | 0, rank <= 2 ? 1.28 : 1);
     if (clogN) spawnKept(0, clogN, plan.spots);
     const anchors = plan.anchors;
     const putEdge = (type, count, salt) => {
@@ -1911,6 +1963,10 @@ export function createPlay(scene, camera, audio) {
           c.eased = 0;
           c.reward = kind === "volunteer" ? (item.hp || level.vol) : 0;
           c.extra = kind === "volunteer" ? "+" + c.reward : "";
+          if (kind === "volunteer") {
+            c.hp = barrelNumber(level.id, c.hp);
+            c.max = c.hp;
+          }
           c.stamp = 0;
           c.top.visible = kind === "duck";
           if (c.mesh.material) {
@@ -2094,10 +2150,15 @@ export function createPlay(scene, camera, audio) {
   }
 
   function ramCrate(c) {
-    const cost = Math.max(1, Math.ceil((c.hp || 1) / 10));
-    if (squadN <= 4 && cost >= squadN) {
+    const cost = Math.max(1, c.hp | 0);
+    if (cost >= squadN) {
       const lose = Math.max(0, squadN - 1);
-      if (lose > 0) hurtSquad(lose, 1);
+      if (lose > 0) {
+        c.hp = Math.max(1, (c.hp | 0) - lose);
+        c.max = Math.max(c.max || 0, c.hp);
+        c.dirty = 1;
+        hurtSquad(lose, 1);
+      }
       word("BONK", squadX, 2.2, -dist, 1, 1);
       dist = Math.max(0, dist - 0.85);
       publish();
@@ -2256,7 +2317,7 @@ export function createPlay(scene, camera, audio) {
     if (bossKind === "baron") say("BY ORDER OF THE DRAIN.");
     // A one-rail crew still reaches these bosses oversized. The opening loss is what shrinks the finish.
     if (bossRank() >= 4 && bossRank() <= 9) {
-      const crowd = [0, 0, 0, 0, 42, 46, 18, 40, 24, 24][bossRank()] || 0;
+      const crowd = [0, 0, 0, 0, 42, 46, 50, 20, 48, 50][bossRank()] || 0;
       if (crowd) {
         hurtSquad(crowd);
         word("CROWD!", squadX, 2.6, -dist, 1, 1);
@@ -4074,7 +4135,157 @@ export function createPlay(scene, camera, audio) {
     return bestN >= 0 ? bestX : 0;
   }
 
+  // Inner edge clears barrels on x=±3. Outer edge clears barrels on x=±2.2.
+  // Both stay in the side lane and inside the 2.6 m gate.
+  function sideStand(sign) {
+    const aim = ((runSeed | 0) & 1) ? 0.08 : -0.08;
+    const gateX = sign * GATE_X;
+    const slop = PANEL_W * 0.5 + 0.5;
+    const reach = 1.42;
+    const candidates = [sign * 1.66 + aim, sign * 3.15, sign * 3.85];
+    let best = candidates[0];
+    let bestScore = -1e9;
+    for (let i = 0; i < candidates.length; i++) {
+      const x = candidates[i];
+      if (laneOf(x) === "CENTER") continue;
+      let score = Math.abs(x - gateX) < slop ? 6 : 0;
+      for (let c = 0; c < crates.length; c++) {
+        const box = crates[c];
+        if (box.state !== "idle") continue;
+        if (box.kind === "weapon" || box.kind === "tier" || box.kind === "mystery") continue;
+        const ahead = -box.z - dist;
+        if (ahead < -1.2 || ahead > 9) continue;
+        if (Math.abs(x - box.x) < reach) score -= 5;
+      }
+      if (score > bestScore) {
+        bestScore = score;
+        best = x;
+      }
+    }
+    return best;
+  }
+
+  function centreAim() {
+    const aim = ((runSeed | 0) & 1) ? 0.4 : -0.4;
+    return aim;
+  }
+
+  function gateRoll(z) {
+    const n = (((runSeed | 0) * 1103515245) + (((Math.abs(z * 10) | 0) * 12345) >>> 0)) >>> 0;
+    return n % 100;
+  }
+
+  function humanLootX() {
+    const dps = Math.max(8, (mods.dmg || 12) * (mods.pellets || 1) * (mods.rate || 1) * Math.min(squadN, 40));
+    let best = null;
+    let bestAhead = 1e9;
+    for (let i = 0; i < crates.length; i++) {
+      const c = crates[i];
+      if (c.state !== "idle") continue;
+      const ahead = -c.z - dist;
+      if (ahead < -1.3 || ahead > 20) continue;
+      let want = 0;
+      if (c.kind === "weapon" || c.kind === "tier" || c.kind === "mystery") want = cratePay(c) > 0 ? 1 : 0;
+      else if (c.kind === "volunteer" && squadN < 160) {
+        const time = Math.max(0.45, ahead / ADVANCE + 0.4);
+        want = c.hp / dps <= time ? 1 : 0;
+      }
+      if (!want || ahead >= bestAhead) continue;
+      best = c;
+      bestAhead = ahead;
+    }
+    return best ? best.x : 0;
+  }
+
+  function humanX() {
+    if (arenaStarted) {
+      let hx = 0;
+      let hr = 2.1;
+      let big = 0;
+      for (let i = 0; i < hazards.n; i++) {
+        if (!hazards.alive[i] || (hazards.extra2[i] || 0) < 40) continue;
+        big = 1;
+        hx = hazards.x[i];
+        hr = hazards.extra[i] || 2.1;
+      }
+      // Tub paper arms on the squad and stays under it. Step to the side
+      // with room so the formation clears the circle, then shoot again.
+      if (big) {
+        const lat = formationHalfX(Math.max(squadN, 1));
+        const lim = Math.max(0.4, half - lat);
+        const need = hr + lat + 0.25;
+        const sign = (hx + lim) >= (lim - hx) ? -1 : 1;
+        return clamp(hx + sign * need, -lim, lim);
+      }
+      return centreAim();
+    }
+    let best = null;
+    let bestAhead = 1e9;
+    for (let i = 0; i < gates.length; i++) {
+      const g = gates[i];
+      if (!g || g.passed) continue;
+      const ahead = -g.z - dist;
+      if (ahead < -0.3 || ahead > 14) continue;
+      let take = 0;
+      if (g.op === "sub" || g.op === "div") take = 0;
+      else if (g.op === "add" && squadN < 8) take = 1;
+      else if (g.op === "mul" && g.tenths >= 15) take = 1;
+      else if (applyGate(squadN, g.op, g.k, g.tenths) > squadN && gateRoll(g.z) < 62) take = 1;
+      if (!take) continue;
+      if (ahead < bestAhead) {
+        best = g;
+        bestAhead = ahead;
+      }
+    }
+    if (best) return sideStand(best.x < 0 ? -1 : 1);
+    const loot = humanLootX();
+    if (loot) return loot;
+    return centreAim();
+  }
+
+  function greedyX() {
+    if (arenaStarted) return centreAim();
+    let bestAhead = 1e9;
+    let bestX = 0;
+    let found = 0;
+    for (let i = 0; i < gates.length; i++) {
+      const g = gates[i];
+      if (!g || g.passed) continue;
+      const ahead = -g.z - dist;
+      if (ahead < -0.4 || ahead > 150) continue;
+      if (ahead < bestAhead) {
+        bestAhead = ahead;
+        bestX = g.x;
+        found = 1;
+      }
+    }
+    if (!found) return (botSide < 0 ? -1 : 1) * 3.05;
+    return sideStand(bestX < 0 ? -1 : 1);
+  }
+
+  function turtleX() {
+    if (arenaStarted || level.id !== "1-1" || squadN >= 14) return 0;
+    let best = null;
+    let bestAhead = 1e9;
+    for (let i = 0; i < gates.length; i++) {
+      const g = gates[i];
+      if (!g || g.passed) continue;
+      const ahead = -g.z - dist;
+      if (ahead < -0.2 || ahead > 18) continue;
+      if (g.op !== "add" || g.k > 6) continue;
+      if (ahead < bestAhead) {
+        best = g;
+        bestAhead = ahead;
+      }
+    }
+    if (!best) return 0;
+    return sideStand(best.x < 0 ? -1 : 1);
+  }
+
   function botX() {
+    if (botStyle === "human") return humanX();
+    if (botStyle === "greedy") return greedyX();
+    if (botStyle === "turtle") return turtleX();
     return autoX();
   }
 
@@ -4222,7 +4433,7 @@ export function createPlay(scene, camera, audio) {
   }
 
   function contactZ() {
-    return -dist - Math.max(0.4, radius) - 1.15 - 0.75;
+    return -dist - FORM_LEADER - 0.75;
   }
 
   function bossDrawZ() {
@@ -4276,8 +4487,8 @@ export function createPlay(scene, camera, audio) {
     const line = contactZ();
     const spill = p.spill[i];
     if (spill !== 0) {
-      p.x[i] += clamp(spill - p.x[i], -1, 1) * 7 * h;
-      if (p.z[i] < line) p.z[i] += step * 2.2;
+      p.x[i] += clamp(spill - p.x[i], -1, 1) * 3.1 * h;
+      if (p.z[i] < line) p.z[i] += step;
       if (p.z[i] > line) p.z[i] = line;
       if (line - p.z[i] < 1.2) p.hit[i] = Math.max(p.hit[i], 0.35);
       return;
@@ -4330,7 +4541,7 @@ export function createPlay(scene, camera, audio) {
       }
     }
     list.sort((a, b) => pools[(b / 10000) | 0].z[b % 10000] - pools[(a / 10000) | 0].z[a % 10000]);
-    const take = Math.max(1, Math.round(list.length * 0.5));
+    const take = Math.max(1, Math.round(list.length * RIVER_SPILL));
     const tx = squadX < 0 ? -3 : 3;
     const n = Math.min(list.length, take);
     for (let k = 0; k < n; k++) {
@@ -4338,43 +4549,56 @@ export function createPlay(scene, camera, audio) {
       const t = (id / 10000) | 0;
       const i = id % 10000;
       pools[t].spill[i] = tx;
-      const line = contactZ();
-      if (pools[t].z[i] < line - 7) pools[t].z[i] = line - 7;
     }
     overflowCount++;
+    overflowLabel = 1;
   }
 
   function updateOverflow(h) {
     const press = riverPressure();
     riverPress = press;
-    const cap = RIVER_CAP[bossRank()] || 12;
-    riverFill = cap > 0 ? Math.min(1.4, press / cap) : 0;
-    if (overflowCool > 0) overflowCool -= h;
+    const rank = bossRank();
+    const cap = RIVER_CAP[rank] || 12;
+    const target = cap > 0 ? Math.min(1, press / cap) : 0;
     const side = !arenaStarted && laneOf(squadX) !== "CENTER";
-    if (!side) {
-      overflowT = 0;
-      overflowWarn = 0;
-      return;
-    }
-    if (press > cap && overflowCool <= 0) {
+    if (overflowCool > 0) overflowCool = Math.max(0, overflowCool - h);
+    if (overflowT > 0) {
+      overflowT = Math.max(0, overflowT - h);
       if (overflowT <= 0) {
-        overflowT = 1;
-        overflowWarn = 1;
-        const edgeX = squadX < 0 ? -1.5 : 1.5;
-        puff(edgeX, 0.45, -dist - 2.2, 5, 10, 2.4, 0.45, 0.55);
-        word("OVERFLOW!", squadX, 2.4, -dist - 1.2, 1, 1);
-      }
-      overflowT -= h;
-      if (overflowT <= 0) {
-        spillFront();
-        overflowCool = 0.7;
         overflowWarn = 0;
+        overflowLabel = 0;
       }
-    } else if (overflowT > 0 && press <= cap) {
-      overflowT = 0;
-      overflowWarn = 0;
-    } else if (overflowWarn && overflowT > 0) {
+    }
+    if (overflowCool > 0) {
+      const held = Math.min(target, 0.55);
+      riverFill = riverFill > held ? Math.max(held, riverFill - riverDrainRate() * h) : held;
+    } else if (riverFill < target) {
+      const rate = riverFill < RIVER_YELLOW ? riverApproach() : riverRiseRate(rank);
+      riverFill = Math.min(target, riverFill + rate * h);
+    } else if (riverFill > target) {
+      riverFill = Math.max(target, riverFill - riverDrainRate() * h);
+    }
+    if (riverFill < RIVER_YELLOW - 0.02) overflowAge = 0;
+    else overflowAge += h;
+    riverStage = riverFill >= RIVER_RED ? 2 : riverFill >= RIVER_YELLOW ? 1 : 0;
+    if (riverStage === 2 && side) {
+      splashT -= h;
+      if (splashT <= 0) {
+        splashT = 0.22;
+        const edgeX = squadX < 0 ? -1.5 : 1.5;
+        puff(edgeX, 0.25, -dist - 1.6, 5, 7, 1.5, 0.6, 0.48);
+      }
+    } else if (riverStage < 2) splashT = 0;
+    if (!side || overflowCool > 0 || overflowWarn) return;
+    const lead = riverWarnLead(rank);
+    if (riverFill >= 1 && overflowAge + 1e-3 >= lead) {
+      spillFront();
+      overflowCool = RIVER_COOL;
       overflowWarn = 1;
+      overflowT = 1.25;
+      overflowAge = 0;
+      riverFill = Math.min(riverFill, 0.48);
+      riverStage = 0;
     }
   }
 
@@ -4419,10 +4643,18 @@ export function createPlay(scene, camera, audio) {
     radius = formationRadius(Math.max(squadN, 1), half);
     const lat = formationHalfX(Math.max(squadN, 1));
     if (!ended) {
-      if (bot) targetX = botX();
+      const steerBot = bot && (botStyle === "human" || botStyle === "greedy" || botStyle === "turtle");
+      if (steerBot) {
+        botThink -= h;
+        if (botThink <= 0) {
+          botWant = botX();
+          botThink = arenaStarted ? 0.08 : (botStyle === "human" ? 0.35 : 0.08);
+        }
+        targetX = botWant;
+      } else if (bot) targetX = botX();
       else if (axis && !pointing) targetX += axis * STEER_MAX * h;
       targetX = clampLane(targetX, lat, half);
-      if (bot) squadX = targetX;
+      if (bot && !steerBot) squadX = targetX;
       else {
         const maxStep = STEER_MAX * h;
         const dx = targetX - squadX;
@@ -4443,7 +4675,7 @@ export function createPlay(scene, camera, audio) {
           const rel = -c.z - dist;
           if (rel > 12 || rel < -0.4) continue;
           if (Math.abs(squadX - c.x) > body + 0.55) continue;
-          const cost = Math.max(1, Math.ceil((c.hp || 1) / 10));
+          const cost = Math.max(1, c.hp | 0);
           if (cost < squadN) continue;
           const left = c.x - 1.9;
           const right = c.x + 1.9;
@@ -4525,7 +4757,8 @@ export function createPlay(scene, camera, audio) {
             c.dirty = 1;
           }
         } else if (c.state === "idle" && Math.abs(z - c.z) < 1.05) {
-          const reach = Math.max(0.85, lat) + 0.45;
+          if (laneOf(c.x) !== laneOf(squadX)) continue;
+          const reach = Math.max(0.7, lat * 0.85) + 0.35;
           const d = Math.abs(squadX - c.x);
           if (d >= reach) continue;
           if (c.kind === "weapon" || c.kind === "tier" || c.kind === "mystery") {
@@ -4625,8 +4858,12 @@ export function createPlay(scene, camera, audio) {
           armHazard(edge * 0.55, land - 0.2, 0.52, 1.2, 2);
         } else if (bossKind === "tub" && bossState.cool <= 0) {
           bossState.cool = 7;
-          dump(0, 8 + bossRank() * 2, bossState.z + 2.2, 6);
-          armHazard(squadX, -dist, 2.1, 0.45, 2 + bossRank() * 6);
+          const rank = bossRank();
+          // A narrow squad fits inside the old paper. Late tubs give a
+          // shorter pack and a step that still clears the circle.
+          const late = rank >= 7;
+          dump(0, late ? 8 : 8 + rank * 2, bossState.z + 2.2, 6);
+          armHazard(squadX, -dist, late ? 1.55 : 2.1, late ? 0.6 : 0.45, late ? 2 + rank * 2 : 2 + rank * 6);
         } else if (bossKind === "grunk") {
           if (!bossState.taxed && bossSec > 4.5 && bossRank() === 5) {
             bossState.taxed = 1;
@@ -4922,7 +5159,9 @@ export function createPlay(scene, camera, audio) {
     view.barkT = barkT;
     view.bark = barkText;
     view.riverFill = riverFill;
+    view.riverStage = riverStage;
     view.overflow = overflowWarn;
+    view.overflowLabel = overflowLabel;
     if (arenaStarted) {
       view.bar = bossMaxHp > 0 ? bossState.hp / bossMaxHp : 0;
       view.barText = level.bossName;
@@ -4959,6 +5198,13 @@ export function createPlay(scene, camera, audio) {
     overflowCool = 0;
     overflowWarn = 0;
     overflowCount = 0;
+    overflowAge = 0;
+    overflowLabel = 0;
+    riverStage = 0;
+    splashT = 0;
+    botStyle = "";
+    botThink = 0;
+    botWant = 0;
     pinch = 0;
     gateWait = -1;
     gateWaitI = -1;
@@ -5214,13 +5460,28 @@ export function createPlay(scene, camera, audio) {
     }
     bober.scale.setScalar(boberScale0);
     bober.rotation.y = yawS;
-    bober.position.set(squadX + wob, DECK, -dist - radius - 1.15 + back);
-    leaderRing.position.set(squadX + wob, DECK + 0.04, -dist - radius - 1.15 + back);
+    const leadZ = -dist - FORM_LEADER + back;
+    bober.position.set(squadX + wob, DECK, leadZ);
+    leaderRing.position.set(squadX + wob, DECK + 0.04, leadZ);
     leaderRing.visible = ended !== "lose" && !labMode;
+    const layGlow = formationLayout(Math.max(squadN, 1));
+    const glowDepth = Math.max(2.2, FORM_LEADER + layGlow.h + 1.35);
+    const glowMid = -FORM_LEADER + (layGlow.gap * 0.95 + layGlow.h) * 0.5;
+    laneGlow.scale.set(1, glowDepth, 1);
+    laneGlow.position.set(laneCenter(squadX), 0.36, -dist + glowMid + back);
+    laneGlow.visible = ended !== "lose" && !labMode;
+    const splashOn = riverStage >= 2 && laneOf(squadX) !== "CENTER" && !arenaStarted && ended !== "lose";
+    spillSheet.visible = splashOn;
+    if (splashOn) {
+      const edge = squadX < 0 ? -1.85 : 1.85;
+      const rise = 0.35 + (Math.sin(clock * 7) * 0.5 + 0.5) * 0.85;
+      spillSheet.position.set(edge, 1.42 + rise * 0.4, -dist - 2.2);
+      spillSheet.scale.set(1.05, 0.78 + rise * 0.4, 1);
+    }
     if (boberLive) {
       bober.visible = false;
       boberLive.visible = ended !== "lose" && !labMode;
-      boberLive.position.set(squadX + wob, DECK, -dist - radius - 1.15 + back);
+      boberLive.position.set(squadX + wob, DECK, leadZ);
       boberLive.rotation.y = yawS;
       if (boberMixer) boberMixer.update(1 / 60);
     }
@@ -5229,7 +5490,7 @@ export function createPlay(scene, camera, audio) {
       boberGunLive.visible = !!(src && boberLive && boberLive.visible);
       if (src) boberGunLive.geometry = src.geometry;
       if (src && src.material && src.material.color) boberGunLive.material.color.copy(src.material.color);
-      boberGunLive.position.set(squadX + wob, DECK + 0.62, -dist - radius - 1.15 + back + 0.08);
+      boberGunLive.position.set(squadX + wob, DECK + 0.62, leadZ + 0.08);
       boberGunLive.rotation.y = yawS;
       boberGunLive.scale.setScalar(1.45);
     }
@@ -5628,7 +5889,7 @@ export function createPlay(scene, camera, audio) {
     };
     if (shown > 0 && ended !== "lose") {
       for (let i = 0; i < shown; i++) blobAt(squadX + fx[i], -dist + fz[i], 1);
-      blobAt(squadX, -dist - radius - 1.15, 1.15);
+      blobAt(squadX, -dist - FORM_LEADER, 1.15);
     }
     for (let t = 0; t < TYPES && bw < 400; t++) {
       const p = pools[t];
@@ -6279,8 +6540,11 @@ export function createPlay(scene, camera, audio) {
     snap.level = level.id;
     snap.bark = barkText;
     snap.riverFill = riverFill;
+    snap.riverStage = riverStage;
     snap.overflow = overflowWarn;
+    snap.overflowLabel = overflowLabel;
     snap.overflows = overflowCount;
+    snap.cool = overflowCool;
     snap.press = riverPress;
     snap.loot = "";
     for (let li = 0; li < crates.length; li++) {
@@ -6528,7 +6792,7 @@ export function createPlay(scene, camera, audio) {
       if (formX[i] < formLo) formLo = formX[i];
       if (formX[i] > formHi) formHi = formX[i];
     }
-    if (formHi - formLo > 2.6) fails.push("form wide " + (formHi - formLo).toFixed(2));
+    if (formHi - formLo > FORM_MAX_W + 1e-4) fails.push("form wide " + (formHi - formLo).toFixed(2));
 
     reset();
     running = true;
@@ -6596,35 +6860,107 @@ export function createPlay(scene, camera, audio) {
     if (foe >= 0 && pools[0].alive[foe] && pools[0].hp[foe] !== foeHp) fails.push("left fire river");
     if (foe >= 0 && !pools[0].alive[foe]) fails.push("left fire river dead");
 
+    const overflowLabels = () => {
+      let n = 0;
+      for (let i = 0; i < words.length; i++) {
+        if (words[i].text === "OVERFLOW!" && words[i].life > 0) n++;
+      }
+      return n;
+    };
+    const pumpSpill = (need) => {
+      holdFire = 1;
+      squadN = 30;
+      squadX = -3;
+      targetX = -3;
+      const far = spawnEnemy(0, 0.15, -dist - 48);
+      for (let i = 0; i < 48; i++) {
+        const id = spawnEnemy(0, (i % 5) * 0.2 - 0.4, -dist - 6 - i * 0.25);
+        if (id >= 0) pools[0].freeze[id] = 1;
+      }
+      let t = 0;
+      let yellow = -1;
+      let dz = 0;
+      while (t < 12 && overflowCount < 1) {
+        const z0 = far >= 0 ? pools[0].z[far] : 0;
+        step(0.05);
+        t += 0.05;
+        if (yellow < 0 && riverFill + 1e-4 >= RIVER_YELLOW) yellow = t;
+        if (overflowCount >= 1 && far >= 0) dz = Math.abs(pools[0].z[far] - z0);
+      }
+      const lead = yellow < 0 ? -1 : t - yellow;
+      if (lead + 1e-3 < need) fails.push("warn lead " + level.id + " " + (lead < 0 ? "none" : lead.toFixed(2)));
+      if (overflowCount !== 1) fails.push("spill once " + level.id + " " + overflowCount);
+      if (overflowCool < RIVER_COOL - 0.08) fails.push("cool " + level.id + " " + overflowCool.toFixed(2));
+      if (overflowLabel > 1) fails.push("label flag " + overflowLabel);
+      if (overflowLabels() > 0) fails.push("overflow words " + overflowLabels());
+      if (dz > 1) fails.push("spill snap " + level.id + " " + dz.toFixed(2));
+      let group = 0;
+      let spilledN = 0;
+      for (let i = 0; i < pools[0].cap; i++) {
+        if (!pools[0].alive[i]) continue;
+        const z = pools[0].z[i];
+        if (z > -dist + 0.5 || z < -dist - 23) continue;
+        group++;
+        if (pools[0].spill[i] !== 0) spilledN++;
+      }
+      const frac = group > 0 ? spilledN / group : 0;
+      if (frac < 0.15 || frac > 0.35) fails.push("spill frac " + level.id + " " + frac.toFixed(2));
+      const stuck = overflowCount;
+      for (let i = 0; i < 80; i++) step(0.05);
+      if (overflowCount !== stuck) fails.push("cool breach " + level.id + " " + overflowCount);
+      if (overflowLabels() > 0) fails.push("overflow words late " + level.id);
+    };
+
     reset();
     running = true;
     bench = 1;
-    squadX = -3;
-    targetX = -3;
-    let spilled = 0;
-    for (let i = 0; i < 48; i++) {
-      const id = spawnEnemy(0, (i % 5) * 0.2 - 0.4, -6 - i * 0.2);
-      if (id >= 0) pools[0].freeze[id] = 1;
-    }
-    step(0.25);
-    if (overflowCount !== 0) fails.push("overflow early");
-    for (let i = 0; i < 24; i++) step(0.05);
-    for (let i = 0; i < pools[0].cap; i++) if (pools[0].alive[i] && pools[0].spill[i] !== 0) spilled++;
-    if (spilled < 1) fails.push("overflow spill " + spilled);
+    pumpSpill(2.45);
+
+    level = levelOf("1-5");
+    reset();
+    running = true;
+    bench = 1;
+    pumpSpill(1.45);
 
     reset();
     running = true;
     bench = 1;
     squadX = 0;
     targetX = 0;
+    holdFire = 1;
     for (let i = 0; i < 48; i++) {
       const id = spawnEnemy(0, (i % 5) * 0.2 - 0.4, -6 - i * 0.2);
       if (id >= 0) pools[0].freeze[id] = 1;
     }
-    for (let i = 0; i < 30; i++) step(0.05);
+    for (let i = 0; i < 40; i++) step(0.05);
     let centerSpill = 0;
     for (let i = 0; i < pools[0].cap; i++) if (pools[0].alive[i] && pools[0].spill[i] !== 0) centerSpill++;
     if (centerSpill !== 0 || overflowCount !== 0) fails.push("overflow in center");
+
+    level = levelOf("1-1");
+    reset();
+    running = true;
+    bench = 1;
+    holdFire = 1;
+    squadN = 3;
+    let smallBarrel = null;
+    for (let i = 0; i < crates.length; i++) {
+      if (crates[i].state === "idle" && crates[i].kind === "volunteer") {
+        smallBarrel = crates[i];
+        break;
+      }
+    }
+    if (!smallBarrel) fails.push("no small barrel");
+    else {
+      if (smallBarrel.hp > 10 || smallBarrel.hp < 6) fails.push("early barrel " + smallBarrel.hp);
+      dist = -smallBarrel.z;
+      prevZ = -dist;
+      squadX = smallBarrel.x;
+      targetX = smallBarrel.x;
+      step(0.05);
+      if (ended === "lose" || squadN < 1) fails.push("barrel wipe " + squadN);
+      if (squadN !== 1) fails.push("barrel keep " + squadN);
+    }
 
     bench = 0;
     reset();
@@ -7338,7 +7674,18 @@ export function createPlay(scene, camera, audio) {
       publish();
     },
     setBot(v) {
+      if (v === "human" || v === "greedy" || v === "turtle" || v === "balanced") {
+        bot = true;
+        botStyle = v;
+        botThink = 0;
+        botWant = squadX;
+        botSide = ((runSeed | 0) & 1) ? 1 : -1;
+        return;
+      }
       bot = !!v;
+      botStyle = bot ? "balanced" : "";
+      botThink = 0;
+      botWant = squadX;
     },
     setSeed(s) {
       runSeed = s || 12345;

@@ -1,6 +1,6 @@
 import * as THREE from "three";
-import { toon, pineTexture, skyTexture, goldenSkyTexture, writeTRS } from "./mats.js?v=br15";
-import { buildTile } from "./build.js?v=br15";
+import { toon, pineTexture, skyTexture, goldenSkyTexture, writeTRS } from "./mats.js?v=br16";
+import { buildTile } from "./build.js?v=br16";
 
 const TILE = 20;
 const TILES = 10;
@@ -74,6 +74,41 @@ export function createWorld(scene) {
   water.position.set(0, -1.2, -560);
   water.frustumCulled = false;
   group.add(water);
+
+  const deckFlowUniforms = { uTime: { value: 0 } };
+  const deckFlow = new THREE.Mesh(
+    new THREE.PlaneGeometry(2.85, 90),
+    new THREE.ShaderMaterial({
+      transparent: true,
+      depthWrite: false,
+      uniforms: deckFlowUniforms,
+      vertexShader: `
+        varying vec2 vUv;
+        void main() {
+          vUv = uv;
+          gl_Position = projectionMatrix * modelViewMatrix * vec4(position, 1.0);
+        }
+      `,
+      fragmentShader: `
+        uniform float uTime;
+        varying vec2 vUv;
+        void main() {
+          float flow = sin(vUv.y * 48.0 - uTime * 1.6) * 0.5 + 0.5;
+          float flow2 = sin(vUv.x * 18.0 + vUv.y * 22.0 - uTime * 0.9);
+          float band = smoothstep(0.35, 0.85, flow) * 0.55;
+          vec3 col = mix(vec3(0.45, 0.72, 0.86), vec3(0.82, 0.94, 1.0), band);
+          float alpha = 0.22 + flow2 * 0.06 + band * 0.1;
+          float edge = smoothstep(0.0, 0.08, vUv.x) * smoothstep(1.0, 0.92, vUv.x);
+          gl_FragColor = vec4(col, alpha * edge);
+        }
+      `,
+    })
+  );
+  deckFlow.rotation.x = -Math.PI / 2;
+  deckFlow.position.set(0, 0.345, 0);
+  deckFlow.frustumCulled = false;
+  deckFlow.renderOrder = 1;
+  group.add(deckFlow);
 
   const dam = new THREE.Group();
   const segN = 16;
@@ -252,6 +287,8 @@ export function createWorld(scene) {
 
   function follow(x, z, half, time, river, damScale, theme, cam) {
     waterUniforms.uTime.value = time;
+    deckFlowUniforms.uTime.value = time;
+    deckFlow.position.set(0, 0.345, z - 18);
     const drop = river || 0;
     const scale = damScale || 1;
     water.position.y = -1.2 + drop;

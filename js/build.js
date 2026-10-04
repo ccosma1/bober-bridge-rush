@@ -703,15 +703,17 @@ export function buildTile() {
   const deck = "#C9C6D4";
   const seam = "#B7B3C2";
   const red = "#E23B32";
+  const river = "#8EC6DE";
+  const stripe = "#F4FBFF";
   for (let i = 0; i < 10; i++) {
-    parts.push(place(box(10, 0.28, 2), deck, 0, null, 0, 0.14, -1 - i * 2));
+    const z = -1 - i * 2;
+    parts.push(place(box(3.333, 0.28, 2), deck, 0, null, -3.3335, 0.14, z));
+    parts.push(place(box(3.334, 0.28, 2), river, 0, null, 0, 0.14, z));
+    parts.push(place(box(3.333, 0.28, 2), deck, 0, null, 3.3335, 0.14, z));
     parts.push(place(box(10, 0.02, 0.05), seam, 0, null, 0, 0.29, -i * 2));
   }
-  for (let i = 0; i < 5; i++) {
-    const z = -2 - i * 4;
-    parts.push(place(box(0.14, 0.025, 1.35), "#F7F8FA", 0, null, -1.7, 0.3, z));
-    parts.push(place(box(0.14, 0.025, 1.35), "#F7F8FA", 0, null, 1.7, 0.3, z));
-  }
+  parts.push(place(box(0.22, 0.04, 20), stripe, 0, null, -1.667, 0.32, -10));
+  parts.push(place(box(0.22, 0.04, 20), stripe, 0, null, 1.667, 0.32, -10));
   const girder = box(0.28, 0.55, 20);
   parts.push(place(girder, red, 0, null, -5.05, 0.48, -10));
   parts.push(place(girder, red, 0, null, 5.05, 0.48, -10));

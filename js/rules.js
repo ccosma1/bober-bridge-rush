@@ -2,7 +2,7 @@
 // br3 gun table. Lab may multiply a tier's DMG; the comment block at the
 // bottom of weaponMods records the numbers that passed the gun lab.
 
-export const BUILD = "br15";
+export const BUILD = "br16";
 export const SIM_CAP = 300;
 export const RENDER_CAP = 60;
 export const LIVE_CAP = 320;
@@ -13,10 +13,16 @@ export const RANGE = 28;
 export const DECK_HALF = 4.5;
 export const BOSS_HALF = 4.5;
 export const FORM_GAP = 0.58;
-export const FORM_MAX_W = 2.6;
+export const FORM_MAX_W = 2.4;
+export const FORM_MAX_COLS = 4;
+export const FORM_LEADER = 1.15;
 export const LANE_EDGE = 1.5;
 export const RIVER_X = 1.3;
 export const RIVER_CAP = [40, 34, 24, 18, 15, 13, 12, 11, 10, 9];
+export const RIVER_YELLOW = 0.7;
+export const RIVER_RED = 0.9;
+export const RIVER_COOL = 4;
+export const RIVER_SPILL = 0.25;
 export const LANE_BLOB = 7.2;
 export const LANE_X = 2.2;
 export const GATE_X = 3;
@@ -244,7 +250,7 @@ export const LEVELS = {
         { type: "volunteer", hp: 14, x: 3 },
       ] },
       { at: 94, kind: "gate", side: 0, op: "mul", k: 2 },
-      { at: 124, kind: "wave", clog: 40, spd: 1 },
+      { at: 124, kind: "wave", clog: 32, spd: 1 },
       { at: 128, kind: "crate", layout: "row", items: [
         { type: "volunteer", hp: 12, x: -3 },
         { type: "volunteer", hp: 12, x: 3.6 },
@@ -258,7 +264,7 @@ export const LEVELS = {
         { type: "volunteer", hp: 12, x: 3 },
       ] },
       { at: 236, kind: "crate", layout: "single", items: [{ type: "weapon", gun: "mini", hp: 12, x: -3 }] },
-      { at: 248, kind: "wave", clog: 72, suds: 22, spd: 1 },
+      { at: 248, kind: "wave", clog: 44, suds: 8, spd: 1 },
       { at: 300, kind: "crate", layout: "row", items: [
         { type: "volunteer", hp: 12, x: -3 },
         { type: "volunteer", hp: 12, x: -3.6 },
@@ -267,7 +273,7 @@ export const LEVELS = {
       { at: 340, kind: "gate", side: 0, op: "add", k: 6 },
       { at: 366, kind: "crate", layout: "single", items: [{ type: "weapon", gun: "beam", hp: 12, x: 3 }] },
       { at: 392, kind: "gate", side: 1, op: "sub", k: 3 },
-      { at: 428, kind: "wave", clog: 64, suds: 16, duck: 1, spd: 1 },
+      { at: 428, kind: "wave", clog: 40, suds: 6, duck: 1, spd: 1 },
       { at: 456, kind: "crate", layout: "row", items: [
         { type: "tier", hp: 10, x: -3 },
         { type: "tier", hp: 10, x: 3.6 },
@@ -313,7 +319,7 @@ export const LEVELS = {
         { type: "weapon", gun: "rail", hp: 12, x: 3.6 },
         { type: "weapon", gun: "rail", hp: 12, x: 3 },
       ] },
-      { at: 122, kind: "wave", clog: 28, spd: 1 },
+      { at: 122, kind: "wave", clog: 20, spd: 1 },
       { at: 200, kind: "gate", side: 1, op: "add", k: 6 },
       { at: 224, kind: "crate", layout: "row", items: [
         { type: "weapon", gun: "glacier", hp: 12, x: -3 },
@@ -321,7 +327,7 @@ export const LEVELS = {
         { type: "weapon", gun: "glacier", hp: 12, x: 3 },
       ] },
       { at: 248, kind: "gate", side: 0, op: "add", k: 6 },
-      { at: 270, kind: "wave", clog: 40, suds: 6, spd: 1 },
+      { at: 270, kind: "wave", clog: 28, suds: 4, spd: 1 },
       { at: 360, kind: "crate", layout: "row", items: [
         { type: "volunteer", hp: 19, x: -3 },
         { type: "volunteer", hp: 14, x: 3.6 },
@@ -333,7 +339,7 @@ export const LEVELS = {
         { type: "weapon", gun: "barrage", hp: 12, x: 3 },
       ] },
       { at: 430, kind: "gate", side: 1, op: "sub", k: 4 },
-      { at: 470, kind: "wave", clog: 44, suds: 6, duck: 1, spd: 1 },
+      { at: 470, kind: "wave", clog: 30, suds: 4, duck: 1, spd: 1 },
       { at: 560, kind: "crate", layout: "row", items: [
         { type: "volunteer", hp: 19, x: -3 },
         { type: "volunteer", hp: 14, x: 3.6 },
@@ -390,7 +396,7 @@ export const LEVELS = {
         { type: "volunteer", hp: 8, x: 3 },
       ] },
       { at: 96, kind: "gate", side: 0, op: "mul", k: 2 },
-      { at: 118, kind: "wave", clog: 22, leafN: 1, spd: 1.05 },
+      { at: 118, kind: "wave", clog: 16, leafN: 1, spd: 1.05 },
       { at: 200, kind: "gate", side: 1, op: "add", k: 6 },
       { at: 236, kind: "crate", layout: "row", items: [
         { type: "weapon", gun: "burst", hp: 12, x: -3 },
@@ -402,7 +408,7 @@ export const LEVELS = {
         { type: "weapon", gun: "storm", hp: 12, x: -3.6 },
         { type: "weapon", gun: "storm", hp: 12, x: 3 },
       ] },
-      { at: 278, kind: "wave", clog: 36, suds: 8, leaf: 1, duck: 1, spd: 1.05 },
+      { at: 278, kind: "wave", clog: 24, suds: 4, leaf: 1, duck: 1, spd: 1.05 },
       { at: 370, kind: "crate", layout: "row", items: [
         { type: "volunteer", hp: 8, x: -3 },
         { type: "volunteer", hp: 2, x: 3.6 },
@@ -414,7 +420,7 @@ export const LEVELS = {
         { type: "tier", hp: 10, x: 3 },
       ] },
       { at: 430, kind: "gate", side: 1, op: "sub", k: 5 },
-      { at: 492, kind: "wave", clog: 36, suds: 6, spit: 1, hair: 1, leaf: 1, spd: 1.05 },
+      { at: 492, kind: "wave", clog: 24, suds: 4, spit: 1, hair: 1, leaf: 1, spd: 1.05 },
       { at: 580, kind: "crate", layout: "row", items: [
         { type: "volunteer", hp: 8, x: -3 },
         { type: "volunteer", hp: 2, x: 3.6 },
@@ -1293,16 +1299,56 @@ export function laneOf(x) {
   return "CENTER";
 }
 
-// Columns stay inside one 3 m lane. Extra soldiers add rows, not width.
+export function laneCenter(x) {
+  const lane = laneOf(x);
+  if (lane === "LEFT") return -3;
+  if (lane === "RIGHT") return 3;
+  return 0;
+}
+
+// Big squads pull in so four soldiers still sit inside one lane.
+export function formationGap(n) {
+  const shown = Math.max(1, shownCount(n) || 1);
+  if (shown >= 40) return 0.46;
+  if (shown >= 16) return 0.52;
+  return FORM_GAP;
+}
+
+// At most four soldiers across. Everyone else stands in a row behind.
 export function formationLayout(n) {
   const shown = Math.max(1, shownCount(n) || 1);
-  const maxCols = 1 + Math.floor((FORM_MAX_W + 1e-6) / FORM_GAP);
-  const ideal = Math.max(1, Math.ceil(Math.sqrt(shown)));
-  const cols = Math.max(1, Math.min(maxCols, ideal, shown));
+  const cols = Math.max(1, Math.min(FORM_MAX_COLS, shown));
   const rows = Math.max(1, Math.ceil(shown / cols));
-  const w = Math.max(0, cols - 1) * FORM_GAP;
-  const h = Math.max(0, rows - 1) * FORM_GAP;
-  return { shown, cols, rows, w, h };
+  const gap = formationGap(shown);
+  const w = Math.max(0, cols - 1) * gap;
+  const h = Math.max(0, rows - 1) * gap;
+  return { shown, cols, rows, w, h, gap };
+}
+
+export function barrelNumber(levelId, hp) {
+  const rank = Math.max(0, LEVEL_IDS.indexOf(levelId));
+  const n = Math.max(1, Math.round(hp || 1));
+  if (rank <= 1) return Math.max(6, Math.min(10, n));
+  // Keep the printed size, then add one per bridge so later barrels read higher.
+  return Math.max(1, Math.min(36, n + rank));
+}
+
+// Approach is 40% slower than a 0.5/s fill. Yellow to spill stays on the lead.
+export function riverApproach() {
+  return 0.3;
+}
+
+export function riverRiseRate(rank) {
+  const lead = (rank | 0) <= 2 ? 2.5 : 1.5;
+  return (1 - RIVER_YELLOW) / lead;
+}
+
+export function riverDrainRate() {
+  return 0.62;
+}
+
+export function riverWarnLead(rank) {
+  return (1 - RIVER_YELLOW) / riverRiseRate(rank);
 }
 
 export function formationRadius(n, half) {
@@ -1536,16 +1582,18 @@ export function formationOffsets(n, radius, outX, outZ) {
   const rows = lay.rows;
   const w = lay.w;
   const h = lay.h;
+  const gap = lay.gap;
   const fit = Math.max(0.2, Math.hypot(w * 0.5, h * 0.5) + 0.05);
   let scale = radius > 0 && fit > radius ? radius / fit : 1;
   if (w > FORM_MAX_W) scale = Math.min(scale, FORM_MAX_W / w);
-  const sx = FORM_GAP * scale;
-  const sy = FORM_GAP * scale;
+  const sx = gap * scale;
+  const sy = gap * scale;
+  const front = -FORM_LEADER + gap * 0.95;
   let i = 0;
   for (let r = 0; r < rows && i < shown; r++) {
     const rowCols = Math.min(cols, shown - i);
     const ox = -(rowCols - 1) * sx * 0.5;
-    const z = (r - (rows - 1) * 0.5) * sy;
+    const z = front + r * sy;
     for (let c = 0; c < rowCols; c++) {
       outX[i] = ox + c * sx;
       outZ[i] = z;
@@ -1679,13 +1727,16 @@ export function expectedSquad(level, at) {
   return n;
 }
 
-export function waveMods(expect) {
+export function waveMods(expect, rank) {
   const e = Math.max(3, expect || 3);
   const scale = e / 20;
-  return {
-    nMul: Math.min(1.65, Math.pow(Math.max(1, scale), 0.34)),
-    hpMul: Math.min(14, 1.35 + e * 0.04),
-  };
+  let nMul = Math.min(1.65, Math.pow(Math.max(1, scale), 0.34));
+  let hpMul = Math.min(14, 1.35 + e * 0.04);
+  if ((rank | 0) <= 2 && e >= 12) {
+    nMul *= 0.7;
+    hpMul *= 0.68;
+  }
+  return { nMul, hpMul };
 }
 
 export function bossMods(expect) {
@@ -1886,6 +1937,47 @@ export function selfTestRules() {
   eq(laneOf(3), "RIGHT", "lane right");
   const wide200 = formationLayout(200);
   if (wide200.w > FORM_MAX_W) fails.push("form width " + wide200.w);
+  const formNs = [5, 18, 50, 200];
+  for (let fi = 0; fi < formNs.length; fi++) {
+    const fn = formNs[fi];
+    const lay = formationLayout(fn);
+    if (lay.cols > FORM_MAX_COLS) fails.push("form cols " + fn + " " + lay.cols);
+    if (lay.w > 2.4 + 1e-6) fails.push("form cap " + fn + " " + lay.w.toFixed(3));
+    const fxs = new Float32Array(RENDER_CAP);
+    const fzs = new Float32Array(RENDER_CAP);
+    const got = formationOffsets(fn, 8, fxs, fzs);
+    let lo = 99;
+    let hi = -99;
+    let z0 = 99;
+    let z1 = -99;
+    for (let i = 0; i < got; i++) {
+      if (fxs[i] < lo) lo = fxs[i];
+      if (fxs[i] > hi) hi = fxs[i];
+      if (fzs[i] < z0) z0 = fzs[i];
+      if (fzs[i] > z1) z1 = fzs[i];
+    }
+    if (hi - lo > 2.4 + 1e-4) fails.push("form span " + fn + " " + (hi - lo).toFixed(3));
+    if (got > FORM_MAX_COLS && !(z1 > z0 + 0.2)) fails.push("form rows " + fn);
+    let sx = 0;
+    let sn = 0;
+    for (let i = 0; i < got; i++) {
+      if (fzs[i] > z0 + 0.05) continue;
+      sx += fxs[i];
+      sn++;
+    }
+    if (sn > 1 && Math.abs(sx / sn) > 0.05) fails.push("form front " + fn);
+  }
+  for (let i = 0; i < LEVEL_IDS.length; i++) {
+    const lead = riverWarnLead(i);
+    const need = i <= 2 ? 2.5 : 1.5;
+    if (lead + 1e-6 < need) fails.push("warn lead " + i + " " + lead.toFixed(2));
+  }
+  if (RIVER_COOL < 4) fails.push("overflow cool " + RIVER_COOL);
+  if (RIVER_SPILL < 0.2 || RIVER_SPILL > 0.3) fails.push("spill frac " + RIVER_SPILL);
+  if (riverDrainRate() <= riverApproach()) fails.push("drain slower than fill");
+  eq(barrelNumber("1-1", 14), 10, "barrel 1-1");
+  eq(barrelNumber("1-2", 4), 6, "barrel 1-2");
+  if (barrelNumber("1-10", 8) <= barrelNumber("1-3", 8)) fails.push("barrel scale");
   eq(DECK_HALF, 4.5, "deck half");
   eq(BOSS_HALF, 4.5, "boss half");
   eq(GATE_X, 3, "gate x");
@@ -1969,11 +2061,15 @@ export function selfTestRules() {
   const shown = formationOffsets(40, rad, xs, zs);
   eq(shown, 40, "shown");
   let wide = 0;
+  let zFront = 99;
+  let zBack = -99;
   for (let i = 0; i < shown; i++) {
-    if (xs[i] * xs[i] + zs[i] * zs[i] > rad * rad + 1e-4) fails.push("formation outside");
     if (Math.abs(xs[i]) > wide) wide = Math.abs(xs[i]);
+    if (zs[i] < zFront) zFront = zs[i];
+    if (zs[i] > zBack) zBack = zs[i];
   }
-  if (wide * 2 > LANE_BLOB + 0.2) fails.push("blob wide " + wide);
+  if (wide * 2 > 2.4 + 1e-4) fails.push("blob wide " + wide);
+  if (!(zBack > zFront)) fails.push("rows forward");
   if (Math.abs(clampLane(9, 1, 5) - 4) > 1e-6) fails.push("clamp lane");
   if (Math.abs(clampLane(9, 1, DECK_HALF) - (DECK_HALF - 1)) > 1e-6) fails.push("clamp deck");
   for (let i = 0; i < ENEMY.length; i++) {

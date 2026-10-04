@@ -167,6 +167,30 @@ button {
   background: var(--blue);
 }
 
+#river-note {
+  font: 900 10px/1 "Arial Black", Arial, sans-serif;
+  letter-spacing: 0.04em;
+  color: #f2c14e;
+  text-shadow: 0 1px 0 #1e1410;
+  white-space: nowrap;
+}
+
+#river-meter.rising #river-fill {
+  background: #f2c14e;
+}
+
+#river-meter.hot #river-fill {
+  background: #e23b4a;
+}
+
+#river-meter.hot #river-note {
+  color: #ff5a68;
+}
+
+#river-meter.hot {
+  animation: river-flash 0.28s steps(2, end) infinite;
+}
+
 #river-meter.warn {
   animation: river-flash 0.16s steps(2, end) infinite;
 }

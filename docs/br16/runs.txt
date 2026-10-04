@@ -1,0 +1,52 @@
+build-tag br16
+selfTest ok fails [] 
+page console: one 404 for /favicon.ico (no icon file). No script errors.
+rhythm ok
+layout ok
+rules ok
+
+Formation width <= 2.4 m at n = 5, 18, 50, 200.
+One OVERFLOW! banner. No overflow words. Cooldown 4 s.
+Yellow at 70%, red at 90%. Lead 2.5 s on 1-1..1-3, 1.5 s after.
+Side barrels 1-1/1-2 stay in 6-10. barrelNumber('1-8', 12) = 19.
+
+still 1-1 seed 11, centre, no steering:
+alive at 17.0s n=3 dist=128.2
+lose at 41.0s n=0 dist=262.7
+
+Human-style bot. Lane rule, 0.35 s road think, aim a little wide.
+Takes every early add (squad under 8), every mul at x1.5 or more, and about 62% of the other adds that grow the squad. Volunteers while n < 160. That is a bit more than half the gates.
+Wins 1-1..1-10 on seeds 11/22/33. Overflows 0.
+Finish squad mostly shrinks. Leftover bumps, in soldiers:
+11: 1-9 is 50, four above 1-8.
+22: 1-7 is 49, three above 1-6. 1-9 is 42, eight above 1-8.
+33: 1-9 is 47, above 1-8's 15. 1-10 is 21, under 1-9.
+11 [187, 133, 124, 97, 65, 57, 50, 46, 50, 36] OK
+22 [189, 151, 94, 75, 48, 46, 49, 34, 42, 30] OK
+33 [184, 149, 105, 92, 61, 58, 50, 15, 47, 21] OK
+
+BALANCED wins 1-1 through 1-10. Overflows 0.
+Not a strict shrink. 11 rises once at 1-6. 22 rises at 1-4, 1-8, and 1-10. 33 rises at 1-9.
+11 [243, 209, 124, 97, 67, 73, 47, 46, 35, 34] OK
+22 [201, 164, 72, 76, 48, 29, 28, 46, 18, 31] OK
+33 [224, 188, 107, 84, 61, 60, 48, 11, 44, 20] OK
+
+GREEDY wins 1-1, 1-2, and 1-3. Loses 1-4 through 1-10 on the road after overflows.
+11 [88/1, 66/0, 13/0, LOSE 1-4 d900 ov4 hp1369, LOSE 1-5 ov3, LOSE 1-6 ov3, LOSE 1-7 ov5, LOSE 1-8 ov4, LOSE 1-9 ov4, LOSE 1-10 ov4]
+22 [105/2, 80/0, 28/0, LOSE 1-4 d900 ov5 hp1172, LOSE 1-5 ov3, LOSE 1-6 ov3, LOSE 1-7 ov4, LOSE 1-8 ov4, LOSE 1-9 ov4, LOSE 1-10 ov4]
+33 [90/1, 65/0, 14/0, LOSE 1-4 d900 ov5 hp1330, LOSE 1-5 ov3, LOSE 1-6 ov4, LOSE 1-7 ov4, LOSE 1-8 ov5, LOSE 1-9 ov4, LOSE 1-10 ov4]
+
+TURTLE wins 1-1 at n=16 and is gone on 1-2, still on the road, boss untouched.
+11 win 1-1 n=16, lose 1-2 road dist 286 bossHp 2800
+22 win 1-1 n=16, lose 1-2 road dist 284 bossHp 2800
+33 win 1-1 n=16, lose 1-2 road dist 288 bossHp 2800
+
+Sequential unlocks on one page. Fresh-page traces are not these numbers.
+Stills: phone 390x844 except tower-pass-desk.png at 1440x900.
+levels-390.png level grid. tower-pass-desk.png red towers, blue centre lane.
+squad-18.png and squad-50.png inside the centre lane.
+lanes.png stripes, blue river, left-lane highlight.
+river-yellow.png / river-red.png / overflow-spill.png one banner, splash at 90%.
+side-barrel-small-squad.png n=1 alive, barrel 8, BONK.
+river-1-1.png thin centre pack, n=3.
+#build-tag br16
