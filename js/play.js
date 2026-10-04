@@ -71,7 +71,7 @@ import {
   CHARGE_LEAD,
   PINCH_BLOB,
   volleyPlan,
-} from "./rules.js?v=br17";
+} from "./rules.js?v=br18";
 import {
   animToon,
   attachOutline,
@@ -91,24 +91,20 @@ import {
   writeLog,
   writeQuat,
   writeTRS,
-} from "./mats.js?v=br17";
+} from "./mats.js?v=br18";
 import {
   arrowGeo,
   buildBaron,
   buildBigTub,
   buildBober,
-  buildClogling,
   buildCrateGeo,
   buildDuck,
   buildGateFrame,
   buildGrunk,
-  buildHairball,
-  buildHauler,
   buildLeaf,
   buildPedestal,
+  buildRedSoldier,
   buildSoldier,
-  buildSpitter,
-  buildSuds,
   buildWrench,
   bulletGeo,
   buildGrenade,
@@ -120,7 +116,7 @@ import {
   sawDiscGeo,
   streakGeo,
   streamGeo,
-} from "./build.js?v=br17";
+} from "./build.js?v=br18";
 
 const STRIDE = 320;
 const CAPS = [320, 320, 320, 120, 120, 120, 120];
@@ -160,15 +156,11 @@ function clamp(v, a, b) {
 export function createPlay(scene, camera, audio) {
   const soldierBuilt = buildSoldier();
   const boberBuilt = buildBober();
-  const builtE = [
-    buildClogling(),
-    buildSuds(),
-    buildHauler(),
-    buildHairball(),
-    buildSpitter(),
-    buildLeaf(),
-    buildDuck(),
-  ];
+  const redBuilt = buildRedSoldier();
+  const duckBuilt = buildDuck();
+  const leafBuilt = buildLeaf();
+  const builtE = [];
+  for (let ei = 0; ei < TYPES; ei++) builtE.push({ geo: redBuilt.geo.clone(), tris: redBuilt.tris });
   const baronBuilt = buildBaron();
   const tubBuilt = buildBigTub();
   const grunkBuilt = buildGrunk();
@@ -185,7 +177,7 @@ export function createPlay(scene, camera, audio) {
   soldierBuilt.geo.setAttribute("aPhase", new THREE.InstancedBufferAttribute(soldierPhase, 1));
   soldierBuilt.geo.setAttribute("aHit", new THREE.InstancedBufferAttribute(soldierHit, 1));
   soldierBuilt.geo.setAttribute("aChill", new THREE.InstancedBufferAttribute(new Float32Array(RENDER_CAP), 1));
-  const animShell = outlineAnim(0.035);
+  const animShell = outlineAnim(0.035, 0.5);
   const beaverMat = animToon(0.5);
   const beaverShell = outlineAnim(0.035, 0.5);
   const soldiers = new THREE.InstancedMesh(soldierBuilt.geo, beaverMat, RENDER_CAP);
@@ -287,7 +279,7 @@ export function createPlay(scene, camera, audio) {
     built.geo.setAttribute("aPhase", new THREE.InstancedBufferAttribute(phase, 1));
     built.geo.setAttribute("aHit", new THREE.InstancedBufferAttribute(hit, 1));
     built.geo.setAttribute("aChill", new THREE.InstancedBufferAttribute(new Float32Array(cap), 1));
-    const mesh = new THREE.InstancedMesh(built.geo, animToon(), cap);
+    const mesh = new THREE.InstancedMesh(built.geo, animToon(0.5), cap);
     mesh.renderOrder = 1;
     mesh.frustumCulled = false;
     mesh.count = 0;
@@ -562,8 +554,11 @@ export function createPlay(scene, camera, audio) {
   let ringN = 0;
   const puddles = makeShots(new THREE.CircleGeometry(0.45, 8), new THREE.MeshBasicMaterial({ color: 0xe0a030, transparent: true, opacity: 0.85, depthWrite: false, toneMapped: false }), PUDN);
   const hazards = makeShots(new THREE.RingGeometry(0.62, 1, 28), new THREE.MeshBasicMaterial({ color: 0xff4f5e, transparent: true, opacity: 0.72, depthWrite: false, toneMapped: false, side: THREE.DoubleSide }), HAZN);
-  const vducks = makeShots(builtE[6].geo, toon("#ffffff", { vertexColors: true }), DUCKN);
-  const stuckMesh = new THREE.InstancedMesh(builtE[5].geo, animToon(), 16);
+  const vducks = makeShots(duckBuilt.geo, toon("#ffffff", { vertexColors: true }), DUCKN);
+  leafBuilt.geo.setAttribute("aPhase", new THREE.InstancedBufferAttribute(new Float32Array(16), 1));
+  leafBuilt.geo.setAttribute("aHit", new THREE.InstancedBufferAttribute(new Float32Array(16), 1));
+  leafBuilt.geo.setAttribute("aChill", new THREE.InstancedBufferAttribute(new Float32Array(16), 1));
+  const stuckMesh = new THREE.InstancedMesh(leafBuilt.geo, animToon(), 16);
   stuckMesh.frustumCulled = false;
   stuckMesh.count = 0;
   stuckMesh.visible = false;
@@ -893,7 +888,7 @@ export function createPlay(scene, camera, audio) {
     tierFace.renderOrder = 3;
     tierFace.visible = false;
     mesh.add(tierFace);
-    const top = new THREE.Mesh(builtE[6].geo, toon("#ffffff", { vertexColors: true }));
+    const top = new THREE.Mesh(duckBuilt.geo, toon("#ffffff", { vertexColors: true }));
     top.position.set(0, 2.25, 0);
     top.scale.set(0.85, 0.85, 0.85);
     top.visible = false;
@@ -1259,7 +1254,10 @@ export function createPlay(scene, camera, audio) {
   let soldierScale0 = 0.85 / geoH(soldierBuilt.geo);
   const boberScale0 = 1.05 / geoH(boberBuilt.geo);
   const enemyScale = [];
-  for (let t = 0; t < TYPES; t++) enemyScale.push(ENEMY[t].tall / geoH(builtE[t].geo));
+  for (let t = 0; t < TYPES; t++) {
+    const worldH = 0.92 * (ENEMY[t].tall / ENEMY[0].tall);
+    enemyScale.push(worldH / geoH(builtE[t].geo));
+  }
   let soldierScale = soldierScale0;
   let boberScale = boberScale0;
   const squadGuns = new THREE.InstancedMesh(
@@ -5134,7 +5132,7 @@ export function createPlay(scene, camera, audio) {
       view.barText = level.bossName;
     } else {
       view.bar = level.len > 0 ? dist / level.len : 0;
-      view.barText = (counts[0] + counts[1] + counts[2] + counts[3] + counts[4]) > 0 ? "Clogs" : "";
+      view.barText = (counts[0] + counts[1] + counts[2] + counts[3] + counts[4]) > 0 ? "Reds" : "";
     }
   }
 
@@ -5519,17 +5517,14 @@ export function createPlay(scene, camera, audio) {
       for (let i = 0; i < p.cap; i++) {
         if (!p.alive[i] && !(p.corpse[i] > 0)) continue;
         const jitter = 1 + ((p.phase[i] * 17) % 1) * 0.08;
-        const bulk = ENEMY[t].bulk || 1;
         const sc = (enemyScale[t] || 1) * (p.radS[i] || 1) * jitter;
         const squash = p.hit[i] > 0 ? 0.9 : 1;
-        const y = (t === 5 ? 1.05 : DECK);
-        let yaw = t === 6 ? (p.side[i] < 0 ? Math.PI / 2 : -Math.PI / 2) : Math.PI;
-        yaw += p.spinA[i] || 0;
-        const roll = t === 3 ? clock * 6 + (p.spinA[i] || 0) : 0;
+        const y = DECK;
+        const yaw = Math.PI + (p.spinA[i] || 0);
         let ez = p.z[i];
         if (!labMode && ez > contactZ()) ez = contactZ();
-        writeTRS(m, w, p.x[i], y, ez, yaw, sc * bulk, sc * squash, sc * bulk);
-        ph[w] = p.phase[i] + (t === 5 ? clock : 0);
+        writeTRS(m, w, p.x[i], y, ez, yaw, sc, sc * squash, sc);
+        ph[w] = p.phase[i];
         ht[w] = p.hit[i];
         const chillA = p.mesh.geometry.getAttribute("aChill");
         if (chillA) chillA.array[w] = p.alive[i] && p.slowT[i] > 0 ? 1 : 0;
@@ -6660,6 +6655,7 @@ export function createPlay(scene, camera, audio) {
     reset();
     running = true;
     for (let i = 0; i < RENDER_CAP; i++) cds[i] = 9;
+    for (let i = 0; i < level.events.length; i++) if (level.events[i].kind === "wave") fired[i] = 1;
     const gateAt = (op) => {
       const evs = level.events;
       for (let i = 0; i < evs.length; i++) {
@@ -6681,6 +6677,7 @@ export function createPlay(scene, camera, audio) {
     reset();
     running = true;
     for (let i = 0; i < RENDER_CAP; i++) cds[i] = 9;
+    for (let i = 0; i < level.events.length; i++) if (level.events[i].kind === "wave") fired[i] = 1;
     const subEv = gateAt("sub");
     squadN = 11;
     squadX = subEv ? subEv.x : 0;
@@ -7157,6 +7154,8 @@ export function createPlay(scene, camera, audio) {
         gunMeshes[ids[i]] = mesh;
       }
       squadGuns.visible = false;
+      // Red bobers and the three bosses stay procedural. The baked crowd and the rig covered them.
+      return { ok: true, realCrowd };
       const enemyBake = [pack.clog, pack.suds, pack.hauler, null, pack.spit, null, null];
       for (let t = 0; t < enemyBake.length; t++) {
         if (!enemyBake[t]) continue;

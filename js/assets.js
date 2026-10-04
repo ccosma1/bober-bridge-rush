@@ -2,9 +2,9 @@ import * as THREE from "three";
 import { GLTFLoader } from "three/addons/loaders/GLTFLoader.js";
 import { MeshoptDecoder } from "three/addons/libs/meshopt_decoder.module.js";
 import { RGBELoader } from "three/addons/loaders/RGBELoader.js";
-import { bakeCrowd, staticMerge, mountRig, boxGeo } from "./vat.js?v=br17";
+import { bakeCrowd, staticMerge, mountRig, boxGeo } from "./vat.js?v=br18";
 
-const V = "br17";
+const V = "br18";
 const warned = {};
 
 function url(path) {

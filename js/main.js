@@ -1,11 +1,11 @@
 import * as THREE from "three";
-import { BUILD, GUN_COST, GUN_ORDER, WEAPONS, highestPlayable, isUnlockedLevel, rhythmText } from "./rules.js?v=br17";
-import { createWorld } from "./world.js?v=br17";
-import { createPlay } from "./play.js?v=br17";
-import { createAudio } from "./audio.js?v=br17";
-import { loadSave, rememberWin, rememberGun, writeSave, buyGun } from "./save.js?v=br17";
-import { drawWeaponIcon, setTime } from "./mats.js?v=br17";
-import { loadGame, CREDIT_LINES } from "./assets.js?v=br17";
+import { BUILD, GUN_COST, GUN_ORDER, WEAPONS, highestPlayable, isUnlockedLevel, rhythmText } from "./rules.js?v=br18";
+import { createWorld } from "./world.js?v=br18";
+import { createPlay } from "./play.js?v=br18";
+import { createAudio } from "./audio.js?v=br18";
+import { loadSave, rememberWin, rememberGun, writeSave, buyGun } from "./save.js?v=br18";
+import { drawWeaponIcon, setTime } from "./mats.js?v=br18";
+import { loadGame, CREDIT_LINES } from "./assets.js?v=br18";
 
 const save = loadSave();
 const canvas = document.getElementById("c");
@@ -237,7 +237,7 @@ function startRun(id) {
   document.getElementById("intro-name").textContent = play.view.levelName;
   const freshRun = !save.levelsCleared || !Object.keys(save.levelsCleared).some((key) => save.levelsCleared[key]);
   document.getElementById("intro-line").textContent = freshRun && levelId === "1-1"
-    ? "Rush the bridges. Blast the Clogs. Plug the Drain."
+    ? "Hold the waves. Pass the gates while they bite."
     : play.view.intro;
   const levelScreen = document.getElementById("level-screen");
   if (levelScreen) levelScreen.classList.add("hidden");
@@ -512,11 +512,11 @@ function frame(now) {
     renderer.toneMappingExposure = 1.22;
     rimLight.intensity = 0;
     if (titleFog && scene.fog === titleFog) scene.fog = runFog;
-    const fov = phone ? 62 : 46;
-    const back = phone ? 8.4 : 10.5;
-    const lift = phone ? 8.8 : 10.4;
-    const ahead = phone ? 7.8 : 9.4;
-    const lookY = 0.7;
+    const fov = phone ? 56 : 42;
+    const back = phone ? 7.4 : 10;
+    const lift = phone ? 13.8 : 14.5;
+    const ahead = phone ? 12 : 16;
+    const lookY = 1.0;
     if (camera.fov !== fov) {
       camera.fov = fov;
       camera.updateProjectionMatrix();

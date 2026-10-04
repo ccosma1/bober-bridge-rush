@@ -2,7 +2,7 @@
 // br3 gun table. Lab may multiply a tier's DMG; the comment block at the
 // bottom of weaponMods records the numbers that passed the gun lab.
 
-export const BUILD = "br17";
+export const BUILD = "br18";
 export const SIM_CAP = 300;
 export const RENDER_CAP = 60;
 export const LIVE_CAP = 320;
@@ -30,7 +30,7 @@ export const PANEL_W = 2.6;
 export const DIVIDER_W = 0;
 export const AIM_CONE = 42 * Math.PI / 180;
 export const CROWD_X = 3.05;
-export const CHARGE_LEAD = 34;
+export const CHARGE_LEAD = 14;
 export const PINCH_BLOB = 1.2;
 
 const DEG = Math.PI / 180;
@@ -1306,33 +1306,41 @@ function waveAt(at, clog, suds, spd) {
 function rushRoad(rank, guns) {
   const addA = 4 + Math.min(4, rank);
   const addB = Math.max(1, addA - 3);
-  const crowd = 36 + rank * 8;
-  const suds = rank >= 1 ? 2 + rank : 0;
+  const crowd = Math.max(16, 22 - Math.floor(rank / 2));
+  const opener = Math.max(8, 12 - Math.max(0, rank - 1));
+  const suds = rank >= 5 ? 2 : 0;
   const bad = 3 + rank;
   const pace = 1 + rank * 0.02;
+  const waveLead = 8;
+  const gap = 250;
+  const g1 = 110;
+  const g2 = g1 + gap;
+  const g3 = g2 + gap;
+  const g4 = g3 + gap;
   const ev = [
-    gateAt(36, -2.45, "add", addA),
-    gateAt(36, 2.45, "add", addB),
-    waveAt(100, crowd, 0, pace),
-    gateAt(176, -2.45, rank >= 3 ? "sub" : "add", rank >= 3 ? bad : addA + 2),
-    gateAt(176, 2.45, "mul", 2),
-    gunAt(220, guns[0]),
-    waveAt(268, crowd + 6, suds, pace),
-    gateAt(360, -2.45, "sub", bad),
-    gateAt(360, 2.45, "mul", 2),
-    gunAt(404, guns[1]),
+    waveAt(g1 - waveLead, opener, 0, pace),
+    gateAt(g1, -2.45, "add", addA),
+    gateAt(g1, 2.45, "add", addB),
+    waveAt(g2 - waveLead, crowd, suds, pace),
+    gateAt(g2, -2.45, rank >= 3 ? "sub" : "add", rank >= 3 ? bad : addA + 2),
+    gateAt(g2, 2.45, "mul", 2),
+    gunAt(g2 + 70, guns[0]),
+    waveAt(g3 - waveLead, crowd + 6, suds, pace),
+    gateAt(g3, -2.45, "sub", bad),
+    gateAt(g3, 2.45, "mul", 2),
+    gunAt(g3 + 70, guns[1]),
   ];
   if (guns[2]) {
-    ev.push(waveAt(456, crowd + 4, suds, 1.05));
-    ev.push(gateAt(548, -2.45, "add", addA + 4));
-    ev.push(gateAt(548, 2.45, "add", 2));
-    ev.push(gunAt(592, guns[2]));
-    ev.push({ at: 660, kind: "boss" });
+    ev.push(waveAt(g4 - waveLead, crowd + 4, suds, 1.05));
+    ev.push(gateAt(g4, -2.45, "add", addA + 4));
+    ev.push(gateAt(g4, 2.45, "add", 2));
+    ev.push(gunAt(g4 + 70, guns[2]));
+    ev.push({ at: g4 + 180, kind: "boss" });
   } else {
-    ev.push(waveAt(456, crowd + 8, suds, 1.05));
-    ev.push(gateAt(548, -2.45, "add", addA + 2));
-    ev.push(gateAt(548, 2.45, "sub", Math.max(2, bad - 1)));
-    ev.push({ at: 620, kind: "boss" });
+    ev.push(waveAt(g4 - waveLead, crowd + 8, suds, 1.05));
+    ev.push(gateAt(g4, -2.45, "add", addA + 2));
+    ev.push(gateAt(g4, 2.45, "sub", Math.max(2, bad - 1)));
+    ev.push({ at: g4 + 160, kind: "boss" });
   }
   return ev;
 }
@@ -1735,9 +1743,11 @@ export function layoutIssues() {
     for (let i = 0; i < evs.length; i++) {
       const ev = evs[i];
       if (ev.kind !== "gate") continue;
+      let held = 0;
       for (let w = 0; w < waves.length; w++) {
-        if (waves[w].front < ev.at && waves[w].end > ev.at) fails.push(id + " gate in wave " + ev.at);
+        if (waves[w].front < ev.at && waves[w].end > ev.at) held = 1;
       }
+      if (!held) fails.push(id + " gate quiet " + ev.at);
     }
     const anchors = [];
     for (let i = 0; i < evs.length; i++) {
@@ -1750,7 +1760,7 @@ export function layoutIssues() {
       for (let w = 0; w < waves.length; w++) {
         if (waves[w].front > prev && waves[w].front < anchors[i]) crossed = 1;
       }
-      const limit = crossed ? 170 : 70;
+      const limit = crossed ? 520 : 80;
       if (anchors[i] - prev > limit) fails.push(id + " gap " + prev + ".." + anchors[i]);
       prev = anchors[i];
     }
@@ -1855,10 +1865,12 @@ export function rhythmIssues() {
           if (Math.abs(list[a].x - list[b].x) < 1.8) fails.push(id + " gate pair " + ats[i]);
         }
       }
+      let held = 0;
       for (let w = 0; w < waves.length; w++) {
-        if (waves[w].front < ats[i] && waves[w].end > ats[i]) fails.push(id + " choice in wave " + ats[i]);
+        if (waves[w].front < ats[i] && waves[w].end > ats[i]) held = 1;
       }
-      if (i > 0 && ats[i] - ats[i - 1] < 40) fails.push(id + " row gap " + ats[i - 1] + ".." + ats[i]);
+      if (!held) fails.push(id + " choice quiet " + ats[i]);
+      if (i > 0 && ats[i] - ats[i - 1] < 200) fails.push(id + " row gap " + ats[i - 1] + ".." + ats[i]);
     }
     for (let i = 0; i < evs.length; i++) {
       if (evs[i].kind !== "crate") continue;
@@ -1910,8 +1922,8 @@ export function rhythmText() {
   }
   const fails = rhythmIssues();
   lines.push(fails.length ? "RHYTHM FAIL" : "RHYTHM PASS");
-  lines.push("empty stretch: no more than 48 m of road outside a wave body without a gate or crate");
-  lines.push("road clearance: no gate within 20 m of Clogs still on the road");
+  lines.push("empty stretch: gates sit far apart, with a quiet run between fights");
+  lines.push("road clearance: every gate row is inside a live wave");
   for (let i = 0; i < fails.length; i++) lines.push(fails[i]);
   return lines.join("\n");
 }
@@ -2103,7 +2115,7 @@ export function selfTestRules() {
   const plan = volleyPlan(300);
   eq(plan.m, 5, "volley m");
   eq(plan.vis, 12, "volley vis");
-  eq(expectedSquad(LEVELS["1-1"], 700), 36, "choice squad");
+  eq(expectedSquad(LEVELS["1-1"], 2000), 36, "choice squad");
   eq(LEVEL_IDS.length, 10, "ten levels");
   eq(nextLevel("1-3"), "1-4", "path 1-4");
   eq(nextLevel("1-10"), "", "no chapter 2");
