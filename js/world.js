@@ -1,6 +1,6 @@
 import * as THREE from "three";
-import { toon, pineTexture, skyTexture, goldenSkyTexture, writeTRS } from "./mats.js?v=br23";
-import { buildTile } from "./build.js?v=br23";
+import { toon, pineTexture, skyTexture, goldenSkyTexture, writeTRS } from "./mats.js?v=br24";
+import { buildTile } from "./build.js?v=br24";
 
 const TILE = 20;
 const TILES = 10;

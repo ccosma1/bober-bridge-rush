@@ -2,7 +2,7 @@
 // br3 gun table. Lab may multiply a tier's DMG; the comment block at the
 // bottom of weaponMods records the numbers that passed the gun lab.
 
-export const BUILD = "br23";
+export const BUILD = "br24";
 export const SIM_CAP = 300;
 export const RENDER_CAP = 60;
 export const LIVE_CAP = 320;
@@ -211,13 +211,13 @@ export const FAMILY_WEIGHT = {
 };
 
 export const ENEMY = [
-  { id: "clog", name: "Clogling", hp: 10, speed: 5.5, bite: 1, rad: 0.7, lat: 2.2, y: 0.86, tall: 1.6, bulk: 1.34 },
-  { id: "suds", name: "Suds Knight", hp: 50, foam: 40, speed: 3.5, bite: 2, rad: 0.8, lat: 1.4, y: 1.08, tall: 2.0, bulk: 1.26 },
-  { id: "hauler", name: "Sludge Hauler", hp: 400, speed: 2.5, bite: 5, rad: 1.08, lat: 1.5, y: 1.42, tall: 2.6, bulk: 1.24 },
-  { id: "hair", name: "Hairball", hp: 30, speed: 6, bite: 1, rad: 0.5, lat: 0, y: 0.5, tall: 1.0, bulk: 1 },
-  { id: "spit", name: "Pipe Spitter", hp: 70, speed: 8, bite: 2, rad: 0.74, lat: 1.15, y: 0.98, tall: 1.8, bulk: 1.2 },
-  { id: "leaf", name: "Leaf Swarm", hp: 4, speed: 8, bite: 0, rad: 0.32, lat: 0.4, y: 1.05, tall: 1.1, bulk: 1 },
-  { id: "duck", name: "Rubber Duck", hp: 30, speed: 3, bite: 0, rad: 0.42, lat: 3, y: 0.5, tall: 1.0, bulk: 1 },
+  { id: "clog", name: "Clogling", hp: 10, speed: 6.6, bite: 1, rad: 0.7, lat: 2.2, y: 0.86, tall: 1.6, bulk: 1.34 },
+  { id: "suds", name: "Suds Knight", hp: 50, foam: 40, speed: 4.2, bite: 2, rad: 0.8, lat: 1.4, y: 1.08, tall: 2.0, bulk: 1.26 },
+  { id: "hauler", name: "Sludge Hauler", hp: 400, speed: 3, bite: 5, rad: 1.08, lat: 1.5, y: 1.42, tall: 2.6, bulk: 1.24 },
+  { id: "hair", name: "Hairball", hp: 30, speed: 7.2, bite: 1, rad: 0.5, lat: 0, y: 0.5, tall: 1.0, bulk: 1 },
+  { id: "spit", name: "Pipe Spitter", hp: 70, speed: 9.6, bite: 2, rad: 0.74, lat: 1.15, y: 0.98, tall: 1.8, bulk: 1.2 },
+  { id: "leaf", name: "Leaf Swarm", hp: 4, speed: 9.6, bite: 0, rad: 0.32, lat: 0.4, y: 1.05, tall: 1.1, bulk: 1 },
+  { id: "duck", name: "Rubber Duck", hp: 30, speed: 3.6, bite: 0, rad: 0.42, lat: 3, y: 0.5, tall: 1.0, bulk: 1 },
 ];
 
 export const BOSS_TALL = { baron: 5, tub: 5.5, grunk: 6 };

@@ -72,7 +72,7 @@ import {
   PINCH_BLOB,
   volleyPlan,
   LEVEL_IDS,
-} from "./rules.js?v=br23";
+} from "./rules.js?v=br24";
 import {
   animToon,
   attachOutline,
@@ -92,7 +92,7 @@ import {
   writeLog,
   writeQuat,
   writeTRS,
-} from "./mats.js?v=br23";
+} from "./mats.js?v=br24";
 import {
   arrowGeo,
   buildBaron,
@@ -121,7 +121,7 @@ import {
   sawDiscGeo,
   streakGeo,
   streamGeo,
-} from "./build.js?v=br23";
+} from "./build.js?v=br24";
 
 const STRIDE = 320;
 const CAPS = [320, 320, 320, 120, 120, 120, 120];
