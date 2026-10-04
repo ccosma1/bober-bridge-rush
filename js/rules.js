@@ -2,7 +2,7 @@
 // br3 gun table. Lab may multiply a tier's DMG; the comment block at the
 // bottom of weaponMods records the numbers that passed the gun lab.
 
-export const BUILD = "br19";
+export const BUILD = "br20";
 export const SIM_CAP = 300;
 export const RENDER_CAP = 60;
 export const LIVE_CAP = 320;
@@ -50,135 +50,135 @@ export function migrateGun(id) {
 
 export const WEAPONS = {
   mini: {
-    id: "mini", name: "Gnasher Minigun", family: "BULLETS", pattern: "spin",
-    color: "#F5C400", pellets: 1, spread: 2.2 * DEG, shove: 0.35, len: 1.8, thick: 0.18, heavy: 0,
-    spinUp: 0.6, line: "Six barrels. It finds a rhythm.",
+    id: "mini", name: "Gnasher Jet", family: "FLAME", pattern: "stream",
+    color: "#F5C400", pellets: 1, spread: 5 * DEG, shove: 0, range: 14, len: 1.1, thick: 0.22, heavy: 0,
+    line: "A tight tongue. It keeps chewing.",
     tiers: [
-      { dmg: 8.59, rate: 3, rateMax: 6.3 },
-      { dmg: 9.67, rate: 3.45, rateMax: 7.3 },
-      { dmg: 15, rate: 3.45, rateMax: 7.3, spinUp: 0.3 },
-      { dmg: 17.72, rate: 4.1, rateMax: 8.7, spinUp: 0.3 },
+      { dmg: 1.35, rate: 16, burn: 3.2, range: 14 },
+      { dmg: 1.7, rate: 17, burn: 3.8, range: 14 },
+      { dmg: 2.1, rate: 17, burn: 4.2, range: 15 },
+      { dmg: 2.6, rate: 18, burn: 4.8, range: 16 },
     ],
   },
   dambust: {
-    id: "dambust", name: "Dam Buster", family: "BULLETS", pattern: "fan",
-    color: "#E86A1A", pellets: 9, spread: 26 * DEG, falloff: 14, shove: 1.5, len: 1.2, thick: 0.28, heavy: 1,
-    line: "Close range flips a Clog.",
+    id: "dambust", name: "Dam Wash", family: "FLAME", pattern: "stream",
+    color: "#E86A1A", pellets: 1, spread: 28 * DEG, shove: 0, range: 8, len: 0.9, thick: 0.4, heavy: 0,
+    line: "A wide wash. Short, and hot.",
     tiers: [
-      { dmg: 5.82, rate: 0.97, pellets: 9 },
-      { dmg: 7.5, rate: 1.12, pellets: 9 },
-      { dmg: 9.52, rate: 1.12, pellets: 10 },
-      { dmg: 10.48, rate: 1.12, pellets: 12 },
+      { dmg: 1.5, rate: 11, burn: 3.4, range: 8 },
+      { dmg: 1.9, rate: 12, burn: 4, range: 8 },
+      { dmg: 2.4, rate: 12, burn: 4.4, range: 9 },
+      { dmg: 2.9, rate: 13, burn: 5, range: 10 },
     ],
   },
   burst: {
-    id: "burst", name: "Incisor Rifle", family: "BULLETS", pattern: "burst",
-    color: "#4FC3FF", pellets: 3, spread: 0, shove: 0.2, len: 2.6, thick: 0.16, heavy: 0,
-    line: "Three rounds. The third bites deeper.",
+    id: "burst", name: "Incisor Torch", family: "FLAME", pattern: "stream",
+    color: "#FF8A2A", pellets: 1, spread: 9 * DEG, shove: 0, range: 11, len: 1, thick: 0.28, heavy: 0,
+    line: "The starter torch. Fast fire down the deck.",
     tiers: [
-      { dmg: 8.7, rate: 1.6, pellets: 3 },
-      { dmg: 11.17, rate: 1.84, pellets: 3 },
-      { dmg: 12.13, rate: 1.84, pellets: 4 },
-      { dmg: 15.44, rate: 2.1, pellets: 4, pierce: 1 },
+      { dmg: 1.7, rate: 12, burn: 3.2, range: 11 },
+      { dmg: 2.1, rate: 13, burn: 3.8, range: 11 },
+      { dmg: 2.6, rate: 13, burn: 4.2, range: 12 },
+      { dmg: 3.2, rate: 14, burn: 4.8, range: 13 },
     ],
   },
   saw: {
-    id: "saw", name: "Buzzblade", family: "BLADES", pattern: "disc",
-    color: "#D8DDE6", pellets: 1, spread: 0, shove: 0.4, len: 0.5, thick: 0.5, heavy: 1,
-    line: "It bounces. A kill splits it.",
+    id: "saw", name: "Ring Fire", family: "FLAME", pattern: "stream",
+    color: "#E07030", pellets: 1, spread: 16 * DEG, shove: 0, range: 9, len: 0.85, thick: 0.34, heavy: 0,
+    line: "A broad ring of flame.",
     tiers: [
-      { dmg: 12.99, rate: 0.9, bounces: 3 },
-      { dmg: 15.34, rate: 1.04, bounces: 3 },
-      { dmg: 17.14, rate: 1.04, bounces: 4, burn: 3 },
-      { dmg: 15.19, rate: 1.2, bounces: 5 },
+      { dmg: 1.6, rate: 13, burn: 3.4, range: 9 },
+      { dmg: 2, rate: 14, burn: 4, range: 9 },
+      { dmg: 2.5, rate: 14, burn: 4.4, range: 10 },
+      { dmg: 3, rate: 15, burn: 5, range: 11 },
     ],
   },
   rail: {
-    id: "rail", name: "Pine Rail", family: "ENERGY", pattern: "rail",
-    color: "#FFF6D8", pellets: 1, spread: 0, shove: 1.2, len: 2.8, thick: 0.3, heavy: 1,
-    charge: 0.45, line: "Coils light. Then the whole line.",
+    id: "rail", name: "Pine Torch", family: "FLAME", pattern: "stream",
+    color: "#FFB020", pellets: 1, spread: 4 * DEG, shove: 0, range: 15, len: 1.3, thick: 0.24, heavy: 0,
+    line: "The long tongue. It reaches the back row.",
     tiers: [
-      { dmg: 15.35, rate: 0.42, pierce: 40 },
-      { dmg: 18.41, rate: 0.48, pierce: 40 },
-      { dmg: 29.5, rate: 0.48, pierce: 40 },
-      { dmg: 14.6, rate: 0.55, pierce: 40 },
+      { dmg: 2.4, rate: 11, burn: 3.6, range: 15 },
+      { dmg: 2.9, rate: 12, burn: 4.2, range: 15 },
+      { dmg: 3.5, rate: 12, burn: 4.6, range: 16 },
+      { dmg: 4.1, rate: 13, burn: 5.2, range: 17 },
     ],
   },
   beam: {
-    id: "beam", name: "Beaver Beam", family: "ENERGY", pattern: "bolt",
-    color: "#FF2430", pellets: 1, spread: 0.8 * DEG, shove: 0, len: 0.9, thick: 0.12, heavy: 0,
-    line: "Red bolts. They do not sit still.",
+    id: "beam", name: "Red Rush", family: "FLAME", pattern: "stream",
+    color: "#FF3A1A", pellets: 1, spread: 7 * DEG, shove: 0, range: 12, len: 1, thick: 0.26, heavy: 0,
+    line: "The fastest mouth on the bridge.",
     tiers: [
-      { dmg: 4.82, rate: 10 },
-      { dmg: 5.09, rate: 11.3 },
-      { dmg: 5.47, rate: 11.3 },
-      { dmg: 5.5, rate: 12.5 },
+      { dmg: 1.45, rate: 16, burn: 3, range: 12 },
+      { dmg: 1.8, rate: 17, burn: 3.6, range: 12 },
+      { dmg: 2.2, rate: 17, burn: 4, range: 13 },
+      { dmg: 2.7, rate: 18, burn: 4.6, range: 14 },
     ],
   },
   storm: {
-    id: "storm", name: "Storm Tail", family: "ENERGY", pattern: "spark",
-    color: "#3A6BFF", pellets: 1, spread: 0, shove: 0.4, len: 0.35, thick: 0.35, heavy: 0, chain: 3,
-    line: "A spark ball. Then it leaps.",
+    id: "storm", name: "Storm Jet", family: "FLAME", pattern: "stream",
+    color: "#FF5A2A", pellets: 1, spread: 12 * DEG, shove: 0, range: 11, len: 1, thick: 0.3, heavy: 0,
+    line: "A roaring jet. It stays on them.",
     tiers: [
-      { dmg: 12.91, rate: 1.2, chain: 3 },
-      { dmg: 16.36, rate: 1.35, chain: 3 },
-      { dmg: 17.62, rate: 1.35, chain: 4 },
-      { dmg: 21, rate: 1.5, chain: 5 },
+      { dmg: 1.6, rate: 14, burn: 3.4, range: 11 },
+      { dmg: 2, rate: 15, burn: 4, range: 11 },
+      { dmg: 2.5, rate: 15, burn: 4.4, range: 12 },
+      { dmg: 3.1, rate: 16, burn: 5, range: 13 },
     ],
   },
   flame: {
-    id: "flame", name: "Maple Flamer", family: "ELEMENT", pattern: "stream",
-    color: "#FF6A1A", pellets: 1, spread: 12 * DEG, shove: 0, range: 10, len: 0.4, thick: 0.25, heavy: 0,
-    line: "Washes off Suds Knights.",
+    id: "flame", name: "Maple Flamer", family: "FLAME", pattern: "stream",
+    color: "#FF6A1A", pellets: 1, spread: 11 * DEG, shove: 0, range: 12, len: 1.05, thick: 0.3, heavy: 0,
+    line: "The full flamer. It sticks and burns.",
     tiers: [
-      { dmg: 1.33, rate: 14, burn: 4.2, range: 10 },
-      { dmg: 1.8, rate: 14, burn: 5.4, range: 10 },
-      { dmg: 2.67, rate: 14, burn: 5.6, range: 13 },
-      { dmg: 3.78, rate: 14, burn: 6.0, range: 13 },
+      { dmg: 1.8, rate: 14, burn: 4.2, range: 12 },
+      { dmg: 2.2, rate: 15, burn: 4.8, range: 12 },
+      { dmg: 2.8, rate: 15, burn: 5.4, range: 13 },
+      { dmg: 3.4, rate: 16, burn: 6, range: 14 },
     ],
   },
   glacier: {
-    id: "glacier", name: "Glacier Gun", family: "ELEMENT", pattern: "spike",
-    color: "#7DEBFF", pellets: 1, spread: 0, splash: 1.7, shove: 0.4, len: 1.1, thick: 0.28, heavy: 1,
-    line: "Three freezes and they shatter.",
+    id: "glacier", name: "White Heat", family: "FLAME", pattern: "stream",
+    color: "#FFE08A", pellets: 1, spread: 8 * DEG, shove: 0, range: 12, len: 1, thick: 0.26, heavy: 0,
+    line: "White-hot. The core eats armor.",
     tiers: [
-      { dmg: 2.07, rate: 0.62, splash: 1.7, slow: 2.4 },
-      { dmg: 6.15, rate: 0.7, splash: 1.8, slow: 2.4 },
-      { dmg: 9.35, rate: 0.7, splash: 2.0, slow: 2.4 },
-      { dmg: 16.41, rate: 0.75, splash: 2.2, slow: 2.4 },
+      { dmg: 1.7, rate: 15, burn: 3.6, range: 12 },
+      { dmg: 2.1, rate: 16, burn: 4.2, range: 12 },
+      { dmg: 2.6, rate: 16, burn: 4.6, range: 13 },
+      { dmg: 3.2, rate: 17, burn: 5.2, range: 14 },
     ],
   },
   barrage: {
-    id: "barrage", name: "Lodge Barrage", family: "EXPLOSIVE", pattern: "salvo",
-    color: "#FF2E63", pellets: 6, spread: 0, splash: 1.1, shove: 1.1, turn: 90, len: 1.4, thick: 0.22, heavy: 1,
-    line: "Six tubes. Soft homing.",
+    id: "barrage", name: "Lodge Jets", family: "FLAME", pattern: "stream",
+    color: "#FF4A2A", pellets: 1, spread: 20 * DEG, shove: 0, range: 10, len: 0.95, thick: 0.36, heavy: 0,
+    line: "Three mouths. The deck fills with fire.",
     tiers: [
-      { dmg: 3.6, rate: 0.71, pellets: 6, splash: 1.1 },
-      { dmg: 5.09, rate: 0.82, pellets: 6, splash: 1.1 },
-      { dmg: 6.38, rate: 0.82, pellets: 8, splash: 1.1 },
-      { dmg: 7.37, rate: 0.9, pellets: 10, splash: 1.1 },
+      { dmg: 1.4, rate: 12, burn: 3.2, range: 10 },
+      { dmg: 1.8, rate: 13, burn: 3.8, range: 10 },
+      { dmg: 2.2, rate: 13, burn: 4.2, range: 11 },
+      { dmg: 2.7, rate: 14, burn: 4.8, range: 12 },
     ],
   },
   cone: {
-    id: "cone", name: "Cone Grenadier", family: "EXPLOSIVE", pattern: "grenade",
-    color: "#6BCB3D", pellets: 1, spread: 0, splash: 1.8, shove: 1.4, len: 0.42, thick: 0.42, heavy: 1,
-    line: "It bounces. Then the deck rings.",
+    id: "cone", name: "Bell Mouth", family: "FLAME", pattern: "stream",
+    color: "#F08A28", pellets: 1, spread: 18 * DEG, shove: 0, range: 9, len: 0.9, thick: 0.38, heavy: 0,
+    line: "A fat bell of flame.",
     tiers: [
-      { dmg: 23.2, rate: 0.49, splash: 1.8 },
-      { dmg: 26.5, rate: 0.56, splash: 1.8 },
-      { dmg: 38.6, rate: 0.56, splash: 1.8 },
-      { dmg: 67.8, rate: 0.6, splash: 1.8 },
+      { dmg: 1.9, rate: 13, burn: 3.6, range: 9 },
+      { dmg: 2.4, rate: 14, burn: 4.2, range: 9 },
+      { dmg: 2.9, rate: 14, burn: 4.6, range: 10 },
+      { dmg: 3.5, rate: 15, burn: 5.2, range: 11 },
     ],
   },
   aurora: {
-    id: "aurora", name: "Aurora Cannon", family: "ENERGY", pattern: "orb",
-    color: "#3DFFB0", pellets: 1, spread: 0, splash: 2.4, shove: 0.6, len: 0.7, thick: 0.7, heavy: 1,
-    line: "It walks the bridge, then it pops.",
+    id: "aurora", name: "Gold Roar", family: "FLAME", pattern: "stream",
+    color: "#FFC14A", pellets: 1, spread: 14 * DEG, shove: 0, range: 13, len: 1.15, thick: 0.32, heavy: 0,
+    line: "A long gold roar down the bridge.",
     tiers: [
-      { dmg: 25, rate: 0.4, splash: 2.4 },
-      { dmg: 30.2, rate: 0.46, splash: 2.4 },
-      { dmg: 60.7, rate: 0.46, splash: 2.4 },
-      { dmg: 66.5, rate: 0.5, splash: 2.4 },
+      { dmg: 2, rate: 12, burn: 3.8, range: 13 },
+      { dmg: 2.5, rate: 13, burn: 4.4, range: 13 },
+      { dmg: 3.1, rate: 13, burn: 4.8, range: 14 },
+      { dmg: 3.7, rate: 14, burn: 5.4, range: 15 },
     ],
   },
 };
@@ -206,7 +206,7 @@ export const GUN_COST = {
 };
 
 export const FAMILY_WEIGHT = {
-  BULLETS: 1, BLADES: 1, ENERGY: 1, ELEMENT: 1, EXPLOSIVE: 1,
+  BULLETS: 1, BLADES: 1, ENERGY: 1, ELEMENT: 1, EXPLOSIVE: 1, FLAME: 1,
 };
 
 export const ENEMY = [
@@ -1306,8 +1306,8 @@ function waveAt(at, clog, suds, spd) {
 function rushRoad(rank, guns) {
   const addA = 4 + Math.min(4, rank);
   const addB = Math.max(1, addA - 3);
-  const crowd = Math.max(16, 22 - Math.floor(rank / 2));
-  const opener = Math.max(8, 12 - Math.max(0, rank - 1));
+  const crowd = Math.max(20, 28 - Math.floor(rank / 2));
+  const opener = Math.max(12, 20 - Math.max(0, rank - 1));
   const suds = rank >= 5 ? 2 : 0;
   const bad = 3 + rank;
   const pace = 1 + rank * 0.02;
@@ -1987,25 +1987,27 @@ export function selfTestRules() {
   shootGate(div, 6 * 40);
   eq(div.k, 15, "div cap");
 
-  eq(weaponMods("burst", 1).dmg, 8.7, "t1 dmg");
-  eq(Math.round(weaponMods("burst", 1).rate * 100), 160, "t1 rate");
-  eq(weaponMods("burst", 3).pellets, 4, "t3 burst");
-  eq(weaponMods("burst", 4).pierce, 1, "t4 pierce");
-  eq(weaponMods("dambust", 1).pellets, 9, "t1 pellets");
-  eq(weaponMods("dambust", 4).pellets, 12, "t4 pellets");
-  eq(weaponMods("mini", 1).pattern, "spin", "mini spin");
-  eq(Math.round(weaponMods("mini", 1).rateMax * 10), 63, "mini max");
-  eq(Math.round(weaponMods("beam", 1).dmg * 10), 48, "beam dmg");
-  eq(weaponMods("beam", 1).pattern, "bolt", "beam bolts");
-  eq(Math.round(weaponMods("flame", 1).dmg * 10), 13, "flame dmg");
+  eq(weaponMods("burst", 1).dmg, 1.7, "t1 dmg");
+  eq(Math.round(weaponMods("burst", 1).rate * 10), 120, "t1 rate");
+  eq(weaponMods("burst", 1).pattern, "stream", "burst flame");
+  eq(weaponMods("dambust", 1).pattern, "stream", "wash flame");
+  eq(weaponMods("mini", 1).pattern, "stream", "mini flame");
+  eq(weaponMods("mini", 1).rate >= 16 ? 1 : 0, 1, "mini fast");
+  eq(weaponMods("beam", 1).pattern, "stream", "beam flame");
+  eq(weaponMods("beam", 1).pierce, 0, "beam no pierce");
+  eq(Math.round(weaponMods("flame", 1).dmg * 10), 18, "flame dmg");
   eq(weaponMods("flame", 1).pattern, "stream", "flame stream");
-  eq(Math.round(weaponMods("glacier", 1).slow * 10), 24, "glacier slow");
-  eq(weaponMods("storm", 1).chain, 3, "storm chain");
-  eq(weaponMods("storm", 4).chain, 5, "storm t4");
-  eq(weaponMods("rail", 1).pierce, 40, "rail pierce");
-  eq(Math.round(weaponMods("rail", 1).charge * 100), 45, "rail charge");
-  eq(weaponMods("saw", 1).bounces, 3, "saw bounce");
-  eq(weaponMods("aurora", 1).pattern, "orb", "aurora orb");
+  eq(weaponMods("glacier", 1).slow, 0, "glacier no freeze");
+  eq(weaponMods("storm", 1).chain, 0, "storm no chain");
+  eq(weaponMods("rail", 1).pierce, 0, "rail no pierce");
+  eq(weaponMods("rail", 1).charge, 0, "rail no charge");
+  eq(weaponMods("saw", 1).bounces, 0, "saw no bounce");
+  eq(weaponMods("aurora", 1).pattern, "stream", "aurora flame");
+  for (let gi = 0; gi < GUN_ORDER.length; gi++) {
+    const gm = weaponMods(GUN_ORDER[gi], 1);
+    if (gm.pattern !== "stream") fails.push("not flame " + gm.id);
+    if (gm.rate < 10) fails.push("slow gun " + gm.id);
+  }
   eq(GUN_ORDER.length, 12, "12 guns");
   eq(laneOf(-3), "LEFT", "lane left");
   eq(laneOf(-1.51), "LEFT", "lane left edge");
@@ -2066,7 +2068,7 @@ export function selfTestRules() {
   eq(ENEMY[2].tall, 2.6, "hauler tall");
   eq(ENEMY[4].tall, 1.8, "spit tall");
   eq(weaponMods("flame", 4).gold, 1, "gold");
-  eq(Math.round(weaponMods("burst", 4).rate * 100), 210, "burst t4 rate");
+  eq(Math.round(weaponMods("burst", 4).rate * 10), 140, "burst t4 rate");
   eq(migrateGun("bow"), "rail", "migrate bow");
   eq(migrateGun("smg"), "burst", "migrate smg");
   eq(migrateGun("gerald"), "mini", "migrate gerald");

@@ -1,0 +1,10 @@
+br20 flame guns. Self-test fails []. Soldier 536, bober 548, boss 512. No gun-tris warning.
+
+Phone still at 390x844: docs/br20/flame.png. Incisor Torch, 20 red bobers, orange tongue, +4 and +1 banners. Boss stills copied from br19 (meshes unchanged).
+
+Human bot, hold and step 0.05:
+1-1 win n 35 at d 1040. Gates 3, 7, 14, 28, 36. Baron costs 1.
+1-2 win n 31 at d 1020. Gates 3, 8, 16, 32, 39. Tub costs 8.
+1-4 was already a win at n 22 before the last tongue pass.
+
+Clean 1-1 math stays 36. A center stand takes the left banner.

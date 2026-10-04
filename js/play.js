@@ -71,7 +71,7 @@ import {
   CHARGE_LEAD,
   PINCH_BLOB,
   volleyPlan,
-} from "./rules.js?v=br19";
+} from "./rules.js?v=br20";
 import {
   animToon,
   attachOutline,
@@ -91,7 +91,7 @@ import {
   writeLog,
   writeQuat,
   writeTRS,
-} from "./mats.js?v=br19";
+} from "./mats.js?v=br20";
 import {
   arrowGeo,
   buildBaron,
@@ -116,7 +116,7 @@ import {
   sawDiscGeo,
   streakGeo,
   streamGeo,
-} from "./build.js?v=br19";
+} from "./build.js?v=br20";
 
 const STRIDE = 320;
 const CAPS = [320, 320, 320, 120, 120, 120, 120];
@@ -582,10 +582,11 @@ export function createPlay(scene, camera, audio) {
   const flameMat = new THREE.ShaderMaterial({
     transparent: true,
     depthWrite: false,
+    toneMapped: false,
     side: THREE.DoubleSide,
     uniforms: { uTime: { value: 0 } },
     vertexShader: "varying vec2 vUv; void main(){ vUv=uv; gl_Position=projectionMatrix*modelViewMatrix*vec4(position,1.0); }",
-    fragmentShader: "uniform float uTime; varying vec2 vUv; void main(){ float f=fract(vUv.y-uTime*1.4); float a=smoothstep(0.0,0.2,vUv.y)*(1.0-vUv.y); vec3 col=mix(vec3(1.0,0.82,0.25), vec3(0.85,0.22,0.05), f); gl_FragColor=vec4(col,a*0.8); }",
+    fragmentShader: "uniform float uTime; varying vec2 vUv; void main(){ float along=vUv.y; float flick=0.78+0.22*sin(uTime*26.0+vUv.x*16.0+along*8.0); float fade=smoothstep(0.02,0.28,along)*flick; vec3 col=mix(vec3(0.55,0.05,0.01), vec3(1.0,0.32,0.04), smoothstep(0.0,0.38,along)); col=mix(col, vec3(1.0,0.72,0.12), smoothstep(0.28,0.7,along)); col=mix(col, vec3(1.0,0.96,0.82), smoothstep(0.62,1.0,along)); float a=fade*(0.28+0.62*along); gl_FragColor=vec4(col,a); }",
   });
   const flames = [];
   for (let i = 0; i < 6; i++) {
@@ -1100,8 +1101,8 @@ export function createPlay(scene, camera, audio) {
   const RIVER_W = [1, 2, 3, 2, 2, 1, 1];
 
   const view = {
-    n: 3, weaponId: "burst", tier: 1, weaponName: "Incisor Rifle", tierName: "Wood",
-    family: "BULLETS", color: "#F5C400", gold: 0, spin: 0, wave: 0,
+    n: 3, weaponId: "burst", tier: 1, weaponName: "Incisor Torch", tierName: "Wood",
+    family: "FLAME", color: "#FF8A2A", gold: 0, spin: 0, wave: 0,
     dist: 0, arena: 0, bar: 0, barText: "", enemies: 0, counts,
     bossHp: 3000, bossMax: 3000, bossX: 0, flash: "", half: DECK_HALF,
     squadX: 0, squadZ: 0, radius: 0.8, bannerY: 2.7, ended: "", running: 0,
@@ -1729,9 +1730,9 @@ export function createPlay(scene, camera, audio) {
     const anchors = [{ cx: 0, cz: zFront, lane: 1 }];
     if (room <= 0) return { spots, anchors };
     const rng = waveRand((salt * 997 + room * 13 + 17) >>> 0);
-    const cols = room < 8 ? Math.max(1, room) : 7;
-    const xGap = (CROWD_X * 2) / 6;
-    const zGap = 1.12 * (stretch || 1);
+    const cols = room < 8 ? Math.max(1, room) : 8;
+    const xGap = (CROWD_X * 2) / 7;
+    const zGap = 0.78 * (stretch || 1);
     for (let i = 0; i < room; i++) {
       const row = (i / cols) | 0;
       const nCols = Math.min(cols, room - row * cols);
@@ -2956,7 +2957,7 @@ export function createPlay(scene, camera, audio) {
               audio.pop();
             }
           } else {
-            const pierce = railShot || (kind === "arrow" && s.extra[i] > 0) ? 1 : 0;
+            const pierce = railShot || s.pat[i] === PAT_FLAME || (kind === "arrow" && s.extra[i] > 0) ? 1 : 0;
             const bossDmg = s.pat[i] === PAT_RAIL && tier >= 4 ? s.dmg[i] * 1.5 : s.dmg[i];
             hurtBoss(bossDmg, crit > 0 ? 1 : 0, 0, pierce, s.x[i], s.y[i], s.z[i]);
             if (pierce && !railShot) s.dmg[i] *= 0.85;
@@ -3394,6 +3395,7 @@ export function createPlay(scene, camera, audio) {
         p.burnD[slot] = Math.max(p.burnD[slot], (mods.burn || 4) * (shotMul || 1) * 0.5);
         p.stagT[slot] = Math.max(p.stagT[slot], 0.3);
       }
+      if (s.extra[i] >= 8) puff(x, 1.15, z, 10, 3, 1.6, 0.26, 0.42);
       s.extra[i]--;
       return s.extra[i] <= 0 ? 1 : 0;
     }
@@ -3596,14 +3598,20 @@ export function createPlay(scene, camera, audio) {
         }
       }
     } else if (pat === "stream") {
-      const ang = base + (rnd() * 2 - 1) * (mods.spread || 0.2);
-      const reach = mods.range || 10;
-      const id = fly(embers, sx, sy, sz - 0.2, ang, 0, 14, dmg, reach / 14, tier >= 4 && rnd() < 0.22 ? 2 : 5, PAT_FLAME, 2, 0);
-      if (id >= 0) {
-        embers.y[id] = 0.9;
-        embers.vy[id] = 0.22;
+      const reach = mods.range || 11;
+      const spread = mods.spread || 0.18;
+      const speed = 36;
+      const life = reach / speed;
+      for (let p = 0; p < 3; p++) {
+        const ang = base + (p - 1) * spread * 0.55 + (rnd() * 2 - 1) * spread * 0.12;
+        const wing = p !== 1;
+        const id = fly(embers, sx, sy, sz - 0.15, ang, 0, speed, wing ? dmg * 0.55 : dmg, life, tier >= 4 && !wing ? 2 : 5, PAT_FLAME, wing ? 1 : 8, 0);
+        if (id >= 0) {
+          embers.y[id] = 0.78 + rnd() * 0.28;
+          embers.vy[id] = 0.35;
+        }
       }
-      if (tier >= 4 && rnd() < 0.08) dropPuddle(sx + (rnd() * 2 - 1), sz - 2 - rnd() * 4, 0.7, mods.burn || 4);
+      if (tier >= 4 && rnd() < 0.06) dropPuddle(sx + (rnd() * 2 - 1), sz - 2 - rnd() * 4, 0.7, mods.burn || 4);
     } else if (pat === "spike") {
       fly(ices, sx, sy, sz - 0.3, base, pitch * 0.4, 42, dmg, life28(42), 8, PAT_SPIKE, mods.splash || 1.7, mods.slow || 2.4);
     } else if (pat === "salvo") {
@@ -5726,24 +5734,20 @@ export function createPlay(scene, camera, audio) {
     chillMesh.count = chills;
     chillMesh.visible = chills > 0;
     if (chills) chillMesh.instanceMatrix.needsUpdate = true;
-    const coneOn = false;
-    const streamOn = mods.pattern === "stream" && running && !ended && shown > 0;
+    const streamOn = mods.pattern === "stream" && running && !ended && shown > 0 && !holdFire;
     const origins = Math.max(1, Math.ceil(Math.max(1, shown) / 10));
+    const reach = Math.max(6, mods.range || 11);
+    const halfAng = (mods.spread || 0.18) * 0.5;
+    const wide = Math.max(0.85, Math.tan(halfAng) * reach);
     for (let i = 0; i < 6; i++) {
       const s = Math.min(shown - 1, i * 10);
-      const on = coneOn && i < origins;
+      const on = streamOn && i < origins;
       flames[i].visible = !!on;
       if (on) {
-        const rad = Math.tan(mods.spread * 0.5) * 11;
-        flames[i].position.set(squadX + (fx[s] || 0), 1.05, -dist + (fz[s] || 0));
-        flames[i].scale.set(rad, rad, 11);
+        flames[i].position.set(squadX + (fx[s] || 0), 0.95, -dist + (fz[s] || 0));
+        flames[i].scale.set(wide, wide * 0.62, reach);
       }
-      const onS = streamOn && i < origins;
-      saps[i].visible = !!onS;
-      if (onS) {
-        saps[i].position.set(squadX + (fx[s] || 0), 1.0, -dist + (fz[s] || 0));
-        saps[i].scale.set(1, 1, 20);
-      }
+      saps[i].visible = false;
     }
 
     cam.updateMatrixWorld();
@@ -5968,7 +5972,7 @@ export function createPlay(scene, camera, audio) {
 
   function flameAge(s, i) {
     const hero = s.dmg[i] <= 0;
-    const maxL = hero ? 0.85 : Math.max(0.25, (mods.range || 10) / 14);
+    const maxL = hero ? 0.85 : Math.max(0.2, (mods.range || 11) / 36);
     return { hero, u: 1 - clamp(s.life[i] / maxL, 0, 1) };
   }
 

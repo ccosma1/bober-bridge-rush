@@ -389,11 +389,48 @@ export function makeSign() {
   return { canvas, ctx, tex };
 }
 
+const FLAME_ICON = {
+  mini: "#F5C400",
+  dambust: "#E86A1A",
+  burst: "#FF8A2A",
+  saw: "#E07030",
+  rail: "#FFB020",
+  beam: "#FF3A1A",
+  storm: "#FF5A2A",
+  flame: "#FF6A1A",
+  glacier: "#FFE08A",
+  barrage: "#FF4A2A",
+  cone: "#F08A28",
+  aurora: "#FFC14A",
+};
+
+function paintFlame(ctx, s, fill) {
+  ctx.fillStyle = fill;
+  ctx.beginPath();
+  ctx.moveTo(0, -s * 0.42);
+  ctx.quadraticCurveTo(s * 0.34, -s * 0.02, s * 0.16, s * 0.22);
+  ctx.quadraticCurveTo(s * 0.04, s * 0.08, 0, s * 0.38);
+  ctx.quadraticCurveTo(-s * 0.04, s * 0.08, -s * 0.16, s * 0.22);
+  ctx.quadraticCurveTo(-s * 0.34, -s * 0.02, 0, -s * 0.42);
+  ctx.fill();
+  ctx.fillStyle = "#FFF6C8";
+  ctx.beginPath();
+  ctx.moveTo(0, -s * 0.16);
+  ctx.quadraticCurveTo(s * 0.12, s * 0.02, 0, s * 0.2);
+  ctx.quadraticCurveTo(-s * 0.12, s * 0.02, 0, -s * 0.16);
+  ctx.fill();
+}
+
 export function drawWeaponIcon(ctx, id, cx, cy, s) {
   ctx.save();
   ctx.translate(cx, cy);
   ctx.lineCap = "round";
   ctx.lineJoin = "round";
+  if (FLAME_ICON[id]) {
+    paintFlame(ctx, s, FLAME_ICON[id]);
+    ctx.restore();
+    return;
+  }
   if (id === "long") {
     ctx.strokeStyle = "#F7F7FF";
     ctx.lineWidth = Math.max(3, s * 0.08);

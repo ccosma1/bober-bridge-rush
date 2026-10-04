@@ -1,11 +1,11 @@
 import * as THREE from "three";
-import { BUILD, GUN_COST, GUN_ORDER, WEAPONS, highestPlayable, isUnlockedLevel, rhythmText } from "./rules.js?v=br19";
-import { createWorld } from "./world.js?v=br19";
-import { createPlay } from "./play.js?v=br19";
-import { createAudio } from "./audio.js?v=br19";
-import { loadSave, rememberWin, rememberGun, writeSave, buyGun } from "./save.js?v=br19";
-import { drawWeaponIcon, setTime } from "./mats.js?v=br19";
-import { loadGame, CREDIT_LINES } from "./assets.js?v=br19";
+import { BUILD, GUN_COST, GUN_ORDER, WEAPONS, highestPlayable, isUnlockedLevel, rhythmText } from "./rules.js?v=br20";
+import { createWorld } from "./world.js?v=br20";
+import { createPlay } from "./play.js?v=br20";
+import { createAudio } from "./audio.js?v=br20";
+import { loadSave, rememberWin, rememberGun, writeSave, buyGun } from "./save.js?v=br20";
+import { drawWeaponIcon, setTime } from "./mats.js?v=br20";
+import { loadGame, CREDIT_LINES } from "./assets.js?v=br20";
 
 const save = loadSave();
 const canvas = document.getElementById("c");

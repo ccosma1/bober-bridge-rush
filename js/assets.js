@@ -2,9 +2,9 @@ import * as THREE from "three";
 import { GLTFLoader } from "three/addons/loaders/GLTFLoader.js";
 import { MeshoptDecoder } from "three/addons/libs/meshopt_decoder.module.js";
 import { RGBELoader } from "three/addons/loaders/RGBELoader.js";
-import { bakeCrowd, staticMerge, mountRig, boxGeo } from "./vat.js?v=br19";
+import { bakeCrowd, staticMerge, mountRig, boxGeo } from "./vat.js?v=br20";
 
-const V = "br19";
+const V = "br20";
 const warned = {};
 
 function url(path) {
@@ -359,133 +359,48 @@ function plainParts() {
   return parts;
 }
 
+const HOT = new THREE.Color("#FFE08A");
+
+function addCan(parts, col, r, x) {
+  const tank = new THREE.CylinderGeometry(r, r * 0.92, 0.18, 6);
+  tank.translate(x, 0.11, 0.14);
+  addP(parts, tank, col);
+}
+
+function flameRig(col, barrels, flare, tankR) {
+  const parts = [];
+  const n = barrels || 1;
+  const span = n > 1 ? 0.08 : 0;
+  for (let i = 0; i < n; i++) {
+    const x = (i - (n - 1) / 2) * span;
+    const mouth = new THREE.ConeGeometry(0.05 + flare, 0.2, 6);
+    mouth.rotateX(Math.PI / 2);
+    mouth.translate(x, 0.07, -0.4);
+    addP(parts, mouth, HOT);
+    addP(parts, tubeGeo(0.03, 0.22, 5, x, 0.07, -0.22, true), col);
+  }
+  addBoxP(parts, Math.max(0.1, 0.08 + span * (n - 1)), 0.07, 0.16, 0, 0.05, -0.06, col);
+  if (tankR) addCan(parts, col, tankR, n > 1 ? 0.02 : 0);
+  addGrip(parts, 0, -0.07, 0.02);
+  addBand(parts, 0.05 + flare, 0, 0.07, -0.16);
+  return parts;
+}
+
 function gunParts(shape) {
   const body = GUN_BODY[shape] || STEEL;
-  const parts = [];
-  if (shape === "mini") {
-    for (let i = 0; i < 6; i++) {
-      const a = (i / 6) * Math.PI * 2;
-      addP(parts, tubeGeo(0.03, 0.32, 5, Math.cos(a) * 0.055, 0.07 + Math.sin(a) * 0.055, -0.36, true), body);
-    }
-    addP(parts, tubeGeo(0.09, 0.14, 8, 0, 0.07, -0.14, false), body);
-    addBoxP(parts, 0.1, 0.08, 0.12, 0, 0.04, -0.02, body);
-    addGrip(parts, 0, -0.08, 0.02);
-    addBand(parts, 0.078, 0, 0.07, -0.22);
-  } else if (shape === "dambust") {
-    const muzzle = new THREE.ConeGeometry(0.12, 0.34, 8);
-    muzzle.rotateX(Math.PI / 2);
-    muzzle.translate(0, 0.07, -0.46);
-    addP(parts, muzzle, body);
-    addP(parts, tubeGeo(0.02, 0.28, 6, 0, 0.07, -0.28, true), body);
-    addBoxP(parts, 0.1, 0.055, 0.14, 0, 0.02, -0.2, body);
-    addBoxP(parts, 0.1, 0.1, 0.16, 0, 0.05, -0.02, body);
-    addBoxP(parts, 0.06, 0.08, 0.22, 0, 0.08, 0.16, GRIP_C);
-    addGrip(parts, 0, -0.08, 0.0);
-    addBand(parts, 0.072, 0, 0.07, -0.12);
-  } else if (shape === "burst") {
-    addP(parts, tubeGeo(0.046, 0.46, 7, 0, 0.08, -0.38, true), body);
-    addBoxP(parts, 0.07, 0.08, 0.22, 0, 0.06, -0.06, body);
-    addP(parts, tubeGeo(0.02, 0.12, 6, 0, 0.14, -0.14, false), BRASS);
-    addBoxP(parts, 0.02, 0.04, 0.04, 0, 0.11, -0.14, BRASS);
-    const mag = new THREE.TorusGeometry(0.078, 0.018, 3, 6, Math.PI * 0.85);
-    mag.rotateY(Math.PI / 2);
-    mag.rotateZ(-0.9);
-    mag.translate(0, -0.02, 0.02);
-    addP(parts, mag, body);
-    addBoxP(parts, 0.04, 0.06, 0.18, 0, 0.07, 0.16, GRIP_C);
-    addGrip(parts, 0, -0.06, 0.02);
-    addBand(parts, 0.045, 0, 0.08, -0.24);
-  } else if (shape === "saw") {
-    addBoxP(parts, 0.16, 0.1, 0.34, 0, 0.05, -0.12, body);
-    addBoxP(parts, 0.18, 0.08, 0.1, 0, 0.06, -0.32, body);
-    const disc = new THREE.CylinderGeometry(0.15, 0.15, 0.028, 10, 1, false);
-    disc.translate(0, 0.16, -0.14);
-    addP(parts, disc, LENS);
-    addBoxP(parts, 0.08, 0.06, 0.08, 0, 0.02, 0.08, body);
-    addGrip(parts, 0, -0.08, 0.02);
-    addBand(parts, 0.09, 0, 0.06, -0.22);
-  } else if (shape === "rail") {
-    addBoxP(parts, 0.035, 0.035, 0.72, -0.05, 0.1, -0.36, body);
-    addBoxP(parts, 0.035, 0.035, 0.72, 0.05, 0.1, -0.36, body);
-    addP(parts, tubeGeo(0.055, 0.1, 8, 0, 0.1, -0.34, false), BRASS);
-    addBoxP(parts, 0.1, 0.08, 0.2, 0, 0.04, -0.02, body);
-    addBoxP(parts, 0.06, 0.05, 0.14, 0, 0.06, 0.14, body);
-    addGrip(parts, 0, -0.08, 0.02);
-    addBand(parts, 0.06, 0, 0.08, -0.12);
-  } else if (shape === "beam") {
-    addBoxP(parts, 0.1, 0.08, 0.2, 0, 0.05, -0.06, body);
-    addBoxP(parts, 0.08, 0.08, 0.1, 0, 0.05, -0.18, body);
-    addP(parts, tubeGeo(0.085, 0.06, 8, 0, 0.05, -0.28, false), LENS);
-    addBoxP(parts, 0.016, 0.12, 0.16, 0.08, 0.09, -0.08, body);
-    addBoxP(parts, 0.016, 0.12, 0.16, -0.08, 0.09, -0.08, body);
-    addGrip(parts, 0, -0.08, 0.0);
-    addBand(parts, 0.055, 0, 0.05, -0.14);
-  } else if (shape === "storm") {
-    addP(parts, tubeGeo(0.028, 0.62, 6, 0, 0.09, -0.22, false), body);
-    const coil = new THREE.TorusGeometry(0.07, 0.016, 4, 8);
-    coil.translate(0, 0.09, -0.28);
-    addP(parts, coil, BRASS);
-    const orb = new THREE.IcosahedronGeometry(0.09, 0);
-    orb.translate(0, 0.09, -0.62);
-    addP(parts, orb, ORB);
-    addBoxP(parts, 0.04, 0.04, 0.05, 0, 0.09, 0.1, body);
-    addGrip(parts, 0, -0.02, 0.04);
-    addBand(parts, 0.04, 0, 0.09, -0.16);
-  } else if (shape === "flame") {
-    const nozzle = new THREE.ConeGeometry(0.09, 0.24, 8, 1, false);
-    nozzle.rotateX(Math.PI / 2);
-    nozzle.translate(0, 0.06, -0.4);
-    addP(parts, nozzle, LENS);
-    addBoxP(parts, 0.1, 0.09, 0.18, 0, 0.05, -0.1, body);
-    addBoxP(parts, 0.03, 0.03, 0.16, -0.08, 0.08, 0.04, body);
-    const tank = new THREE.CylinderGeometry(0.09, 0.09, 0.22, 8, 1, false);
-    tank.translate(-0.02, 0.1, 0.16);
-    addP(parts, tank, LENS);
-    addBoxP(parts, 0.02, 0.02, 0.2, -0.08, 0.16, 0.08, body);
-    addBoxP(parts, 0.02, 0.02, 0.2, 0.06, 0.16, 0.08, body);
-    addGrip(parts, 0, -0.08, -0.04);
-    addBand(parts, 0.055, 0, 0.06, -0.26);
-  } else if (shape === "glacier") {
-    addP(parts, tubeGeo(0.09, 0.5, 7, 0, 0.08, -0.34, false), body);
-    addBoxP(parts, 0.12, 0.1, 0.16, 0, 0.06, -0.02, GRIP_C);
-    addBoxP(parts, 0.05, 0.04, 0.08, 0, 0.14, -0.08, body);
-    addBoxP(parts, 0.07, 0.08, 0.16, 0, 0.07, 0.14, GRIP_C);
-    addGrip(parts, 0, -0.08, 0.02);
-    addBand(parts, 0.085, 0, 0.07, -0.14);
-  } else if (shape === "barrage") {
-    for (let row = 0; row < 2; row++) {
-      for (let col = 0; col < 3; col++) {
-        addP(parts, tubeGeo(0.028, 0.4, 5, (col - 1) * 0.07, 0.05 + row * 0.06, -0.28, true), LENS);
-      }
-    }
-    addBoxP(parts, 0.24, 0.16, 0.1, 0, 0.08, -0.06, GRIP_C);
-    addBoxP(parts, 0.22, 0.03, 0.08, 0, 0.0, -0.2, body);
-    addGrip(parts, 0, -0.08, 0.0);
-    addBand(parts, 0.13, 0, 0.08, -0.14);
-  } else if (shape === "cone") {
-    addP(parts, tubeGeo(0.09, 0.16, 10, 0, 0.06, -0.16, false), GRIP_C);
-    addP(parts, tubeGeo(0.045, 0.2, 6, 0, 0.06, -0.32, false), body);
-    addBoxP(parts, 0.08, 0.08, 0.12, 0, 0.04, -0.02, GRIP_C);
-    addBoxP(parts, 0.03, 0.06, 0.04, 0, 0.12, -0.02, BRASS);
-    for (let i = 0; i < 6; i++) {
-      const a = (i / 6) * Math.PI * 2;
-      addBoxP(parts, 0.028, 0.028, 0.03, Math.cos(a) * 0.055, 0.06 + Math.sin(a) * 0.055, -0.22, BRASS);
-    }
-    addGrip(parts, 0, -0.08, 0.02);
-    addBand(parts, 0.07, 0, 0.06, -0.08);
-  } else if (shape === "aurora") {
-    addP(parts, tubeGeo(0.07, 0.34, 8, 0, 0.07, -0.36, false), body);
-    addP(parts, tubeGeo(0.11, 0.08, 8, 0, 0.07, -0.16, false), ORB);
-    const corners = [[-0.1, 0.14], [0.1, 0.14], [-0.1, 0.0], [0.1, 0.0]];
-    for (let i = 0; i < 4; i++) addBoxP(parts, 0.016, 0.016, 0.22, corners[i][0], corners[i][1], -0.12, body);
-    addP(parts, tubeGeo(0.13, 0.03, 8, 0, 0.07, -0.5, true), ORB);
-    addBoxP(parts, 0.12, 0.1, 0.1, 0, 0.05, 0.02, body);
-    addGrip(parts, 0, -0.08, 0.02);
-    addBand(parts, 0.08, 0, 0.07, -0.26);
-  } else {
-    return plainParts();
-  }
-  return parts;
+  if (shape === "mini") return flameRig(body, 3, 0, 0.07);
+  if (shape === "dambust") return flameRig(body, 1, 0.07, 0.1);
+  if (shape === "burst") return flameRig(body, 1, 0.02, 0.075);
+  if (shape === "saw") return flameRig(body, 1, 0.045, 0.09);
+  if (shape === "rail") return flameRig(body, 1, 0.01, 0.08);
+  if (shape === "beam") return flameRig(body, 1, 0.05, 0);
+  if (shape === "storm") return flameRig(body, 2, 0.02, 0.07);
+  if (shape === "flame") return flameRig(body, 1, 0.04, 0.11);
+  if (shape === "glacier") return flameRig(body, 1, 0.025, 0.08);
+  if (shape === "barrage") return flameRig(body, 3, 0.03, 0.08);
+  if (shape === "cone") return flameRig(body, 1, 0.08, 0.11);
+  if (shape === "aurora") return flameRig(body, 1, 0.035, 0.1);
+  return plainParts();
 }
 
 function mergeGun(parts) {
