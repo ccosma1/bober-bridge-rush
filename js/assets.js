@@ -2,9 +2,9 @@ import * as THREE from "three";
 import { GLTFLoader } from "three/addons/loaders/GLTFLoader.js";
 import { MeshoptDecoder } from "three/addons/libs/meshopt_decoder.module.js";
 import { RGBELoader } from "three/addons/loaders/RGBELoader.js";
-import { bakeCrowd, staticMerge, mountRig, boxGeo } from "./vat.js?v=br20";
+import { bakeCrowd, staticMerge, mountRig, boxGeo } from "./vat.js?v=br21";
 
-const V = "br20";
+const V = "br21";
 const warned = {};
 
 function url(path) {
@@ -386,20 +386,102 @@ function flameRig(col, barrels, flare, tankR) {
   return parts;
 }
 
+function coneFwd(r, len, seg, x, y, z, col, parts) {
+  const g = new THREE.ConeGeometry(r, len, seg);
+  g.rotateX(-Math.PI / 2);
+  g.translate(x, y, z);
+  addP(parts, g, col);
+}
+
+function ballAt(r, w, h, x, y, z, col, parts) {
+  const g = new THREE.SphereGeometry(r, w, h);
+  g.translate(x, y, z);
+  addP(parts, g, col);
+}
+
+function discAt(r, tube, x, y, z, col, parts) {
+  const g = new THREE.TorusGeometry(r, tube, 4, 8);
+  g.translate(x, y, z);
+  addP(parts, g, col);
+}
+
 function gunParts(shape) {
   const body = GUN_BODY[shape] || STEEL;
-  if (shape === "mini") return flameRig(body, 3, 0, 0.07);
-  if (shape === "dambust") return flameRig(body, 1, 0.07, 0.1);
-  if (shape === "burst") return flameRig(body, 1, 0.02, 0.075);
-  if (shape === "saw") return flameRig(body, 1, 0.045, 0.09);
-  if (shape === "rail") return flameRig(body, 1, 0.01, 0.08);
-  if (shape === "beam") return flameRig(body, 1, 0.05, 0);
-  if (shape === "storm") return flameRig(body, 2, 0.02, 0.07);
+  const parts = [];
   if (shape === "flame") return flameRig(body, 1, 0.04, 0.11);
-  if (shape === "glacier") return flameRig(body, 1, 0.025, 0.08);
-  if (shape === "barrage") return flameRig(body, 3, 0.03, 0.08);
-  if (shape === "cone") return flameRig(body, 1, 0.08, 0.11);
-  if (shape === "aurora") return flameRig(body, 1, 0.035, 0.1);
+  if (shape === "mini") {
+    for (let i = 0; i < 3; i++) addP(parts, tubeGeo(0.018, 0.28, 5, (i - 1) * 0.045, 0.07, -0.28, true), body);
+    addBoxP(parts, 0.14, 0.06, 0.12, 0, 0.06, -0.08, body);
+    addGrip(parts, 0, -0.06, 0.02);
+    return parts;
+  }
+  if (shape === "dambust") {
+    addBoxP(parts, 0.22, 0.08, 0.16, 0, 0.07, -0.16, body);
+    addP(parts, tubeGeo(0.07, 0.12, 6, 0, 0.07, -0.32, true), body);
+    addBoxP(parts, 0.16, 0.04, 0.04, 0, 0.07, -0.4, HOT);
+    addGrip(parts, 0, -0.06, 0.02);
+    return parts;
+  }
+  if (shape === "burst") {
+    addBoxP(parts, 0.08, 0.06, 0.22, 0, 0.07, -0.18, body);
+    addBoxP(parts, 0.02, 0.035, 0.08, -0.03, 0.1, -0.32, STEEL);
+    addBoxP(parts, 0.02, 0.045, 0.1, 0, 0.1, -0.34, STEEL);
+    addBoxP(parts, 0.02, 0.035, 0.08, 0.03, 0.1, -0.32, STEEL);
+    addGrip(parts, 0, -0.06, 0.02);
+    return parts;
+  }
+  if (shape === "saw") {
+    discAt(0.11, 0.018, 0, 0.08, -0.28, body, parts);
+    addBoxP(parts, 0.04, 0.04, 0.16, 0, 0.06, -0.12, STEEL);
+    addGrip(parts, 0, -0.06, 0.02);
+    return parts;
+  }
+  if (shape === "rail") {
+    addBoxP(parts, 0.045, 0.045, 0.62, 0, 0.08, -0.36, body);
+    addP(parts, tubeGeo(0.02, 0.16, 5, 0, 0.11, -0.2, true), STEEL);
+    addBoxP(parts, 0.02, 0.04, 0.08, 0, 0.12, -0.08, STEEL);
+    addGrip(parts, 0, -0.05, 0.02);
+    return parts;
+  }
+  if (shape === "beam") {
+    addBoxP(parts, 0.07, 0.06, 0.28, 0, 0.07, -0.2, body);
+    ballAt(0.045, 8, 6, 0, 0.07, -0.4, LENS, parts);
+    addGrip(parts, 0, -0.06, 0.02);
+    return parts;
+  }
+  if (shape === "storm") {
+    addP(parts, tubeGeo(0.02, 0.26, 5, -0.04, 0.09, -0.26, true), body);
+    addP(parts, tubeGeo(0.02, 0.26, 5, 0.04, 0.09, -0.26, true), body);
+    addBoxP(parts, 0.12, 0.05, 0.12, 0, 0.06, -0.08, STEEL);
+    ballAt(0.035, 6, 5, 0, 0.12, -0.16, body, parts);
+    addGrip(parts, 0, -0.06, 0.02);
+    return parts;
+  }
+  if (shape === "glacier") {
+    coneFwd(0.035, 0.22, 5, -0.03, 0.08, -0.32, body, parts);
+    coneFwd(0.028, 0.16, 5, 0.04, 0.07, -0.24, new THREE.Color("#E8FBFF"), parts);
+    addBoxP(parts, 0.08, 0.05, 0.14, 0, 0.06, -0.08, STEEL);
+    addGrip(parts, 0, -0.06, 0.02);
+    return parts;
+  }
+  if (shape === "barrage") {
+    for (let i = 0; i < 3; i++) coneFwd(0.028, 0.2, 5, (i - 1) * 0.05, 0.09, -0.3, body, parts);
+    addBoxP(parts, 0.16, 0.05, 0.12, 0, 0.05, -0.1, STEEL);
+    addGrip(parts, 0, -0.06, 0.02);
+    return parts;
+  }
+  if (shape === "cone") {
+    coneFwd(0.09, 0.2, 6, 0, 0.08, -0.28, body, parts);
+    addBoxP(parts, 0.08, 0.06, 0.12, 0, 0.06, -0.08, STEEL);
+    addGrip(parts, 0, -0.06, 0.04);
+    return parts;
+  }
+  if (shape === "aurora") {
+    ballAt(0.07, 8, 6, 0, 0.09, -0.28, body, parts);
+    addBoxP(parts, 0.06, 0.05, 0.14, 0, 0.05, -0.1, STEEL);
+    addGrip(parts, 0, -0.06, 0.02);
+    return parts;
+  }
   return plainParts();
 }
 

@@ -71,7 +71,8 @@ import {
   CHARGE_LEAD,
   PINCH_BLOB,
   volleyPlan,
-} from "./rules.js?v=br20";
+  LEVEL_IDS,
+} from "./rules.js?v=br21";
 import {
   animToon,
   attachOutline,
@@ -91,7 +92,7 @@ import {
   writeLog,
   writeQuat,
   writeTRS,
-} from "./mats.js?v=br20";
+} from "./mats.js?v=br21";
 import {
   arrowGeo,
   buildBaron,
@@ -101,10 +102,14 @@ import {
   buildDuck,
   buildGateFrame,
   buildGrunk,
+  buildHairball,
+  buildHauler,
   buildLeaf,
   buildPedestal,
   buildRedSoldier,
   buildSoldier,
+  buildSpitter,
+  buildSuds,
   buildWrench,
   bulletGeo,
   buildGrenade,
@@ -116,7 +121,7 @@ import {
   sawDiscGeo,
   streakGeo,
   streamGeo,
-} from "./build.js?v=br20";
+} from "./build.js?v=br21";
 
 const STRIDE = 320;
 const CAPS = [320, 320, 320, 120, 120, 120, 120];
@@ -157,10 +162,15 @@ export function createPlay(scene, camera, audio) {
   const soldierBuilt = buildSoldier();
   const boberBuilt = buildBober();
   const redBuilt = buildRedSoldier();
+  const sudsBuilt = buildSuds();
+  const haulBuilt = buildHauler();
+  const hairBuilt = buildHairball();
+  const spitBuilt = buildSpitter();
   const duckBuilt = buildDuck();
   const leafBuilt = buildLeaf();
-  const builtE = [];
-  for (let ei = 0; ei < TYPES; ei++) builtE.push({ geo: redBuilt.geo.clone(), tris: redBuilt.tris });
+  const builtE = [redBuilt, sudsBuilt, haulBuilt, hairBuilt, spitBuilt, leafBuilt, duckBuilt].map(function (b) {
+    return { geo: b.geo.clone(), tris: b.tris };
+  });
   const baronBuilt = buildBaron();
   const tubBuilt = buildBigTub();
   const grunkBuilt = buildGrunk();
@@ -1101,8 +1111,8 @@ export function createPlay(scene, camera, audio) {
   const RIVER_W = [1, 2, 3, 2, 2, 1, 1];
 
   const view = {
-    n: 3, weaponId: "burst", tier: 1, weaponName: "Incisor Torch", tierName: "Wood",
-    family: "FLAME", color: "#FF8A2A", gold: 0, spin: 0, wave: 0,
+    n: 3, weaponId: "burst", tier: 1, weaponName: "Incisors", tierName: "Wood",
+    family: "BULLETS", color: "#F4E6C3", gold: 0, spin: 0, wave: 0,
     dist: 0, arena: 0, bar: 0, barText: "", enemies: 0, counts,
     bossHp: 3000, bossMax: 3000, bossX: 0, flash: "", half: DECK_HALF,
     squadX: 0, squadZ: 0, radius: 0.8, bannerY: 2.7, ended: "", running: 0,
@@ -1662,9 +1672,9 @@ export function createPlay(scene, camera, audio) {
   }
 
   function bossRank() {
-    const order = ["1-1", "1-2", "1-3", "1-4", "1-5", "1-6", "1-7", "1-8", "1-9", "1-10"];
-    const i = order.indexOf(level.id);
-    return i < 0 ? 0 : i;
+    const i = LEVEL_IDS.indexOf(level.id);
+    if (i < 0) return 0;
+    return Math.min(9, (i % 10) + ((i / 10) | 0));
   }
 
   function dump(type, count, z, per) {
@@ -2957,7 +2967,7 @@ export function createPlay(scene, camera, audio) {
               audio.pop();
             }
           } else {
-            const pierce = railShot || s.pat[i] === PAT_FLAME || (kind === "arrow" && s.extra[i] > 0) ? 1 : 0;
+            const pierce = railShot || (kind === "arrow" && s.extra[i] > 0) ? 1 : 0;
             const bossDmg = s.pat[i] === PAT_RAIL && tier >= 4 ? s.dmg[i] * 1.5 : s.dmg[i];
             hurtBoss(bossDmg, crit > 0 ? 1 : 0, 0, pierce, s.x[i], s.y[i], s.z[i]);
             if (pierce && !railShot) s.dmg[i] *= 0.85;
@@ -3386,6 +3396,7 @@ export function createPlay(scene, camera, audio) {
         burstOrb(s, i);
         return 1;
       }
+      damageEnemy(type, slot, s.dmg[i] * 0.55, x, y, z, 0, 0, 0, s.tag[i]);
       return 0;
     }
     if (pat === PAT_FLAME) {
@@ -3648,7 +3659,7 @@ export function createPlay(scene, camera, audio) {
       } else toss(0, dmg, 0);
       camShake = Math.max(camShake, 0.1);
     } else if (pat === "orb") {
-      fly(party, sx, sy + 0.25, sz - 0.3, base, 0, 9, dmg, 2.05, 12, PAT_ORB, mods.splash || 2.4, 0);
+      fly(party, sx, sy + 0.25, sz - 0.3, base, 0, 18, dmg, 1.1, 12, PAT_ORB, mods.splash || 2.4, 0);
       camShake = Math.max(camShake, 0.1);
     }
     markShot();
@@ -4872,11 +4883,12 @@ export function createPlay(scene, camera, audio) {
         } else if (bossKind === "tub" && bossState.cool <= 0) {
           bossState.cool = 7;
           const rank = bossRank();
-          // A narrow squad fits inside the old paper. Late tubs give a
-          // shorter pack and a step that still clears the circle.
+          // A narrow squad fits inside the old paper. The first tubs send a
+          // short pack. Late tubs keep that pack and a step that clears the circle.
           const late = rank >= 7;
-          dump(0, late ? 8 : 8 + rank * 2, bossState.z + 2.2, 6);
-          armHazard(squadX, -dist, late ? 1.55 : 2.1, late ? 0.6 : 0.45, late ? 2 + rank * 2 : 2 + rank * 6);
+          const young = rank <= 2;
+          dump(0, late ? 8 : young ? 4 : 8 + rank * 2, bossState.z + 2.2, 6);
+          armHazard(squadX, -dist, late ? 1.55 : 2.1, late ? 0.6 : 0.45, late ? 2 + rank * 2 : young ? 3 : 2 + rank * 6);
         } else if (bossKind === "grunk") {
           if (!bossState.taxed && bossSec > 4.5 && bossRank() === 5) {
             bossState.taxed = 1;
@@ -5180,7 +5192,7 @@ export function createPlay(scene, camera, audio) {
       view.barText = level.bossName;
     } else {
       view.bar = level.len > 0 ? dist / level.len : 0;
-      view.barText = (counts[0] + counts[1] + counts[2] + counts[3] + counts[4]) > 0 ? "Reds" : "";
+      view.barText = (counts[0] + counts[1] + counts[2] + counts[3] + counts[4]) > 0 ? "Horde" : "";
     }
   }
 
@@ -6550,6 +6562,7 @@ export function createPlay(scene, camera, audio) {
     snap.stuck = stuckN;
     snap.duckKills = duckKills;
     snap.level = level.id;
+    snap.theme = level.theme || 0;
     snap.bark = barkText;
     snap.riverFill = riverFill;
     snap.riverStage = riverStage;
@@ -6948,7 +6961,7 @@ export function createPlay(scene, camera, audio) {
 
     bench = 0;
     reset();
-    return { fails, soldier: tris.soldier, bober: tris.bober, boss: tris.boss };
+    return { fails, soldier: tris.soldier, bober: tris.bober, boss: tris.boss, enemies: builtE.map(function (b) { return b.tris; }) };
   }
 
   function killAll() {

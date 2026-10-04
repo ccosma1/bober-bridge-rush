@@ -460,9 +460,9 @@ export function buildSpitter() {
 }
 
 export function buildLeaf() {
-  const body = organ(0.08, 16, 12, 0.18);
-  const wing = organ(0.07, 12, 8, 0.22);
-  const eye = sph(0.016, 8, 6);
+  const body = organ(0.08, 8, 6, 0.18);
+  const wing = organ(0.07, 6, 4, 0.22);
+  const eye = sph(0.016, 5, 4);
   const parts = [];
   const greens = ["#B6E25A", "#7CB342", "#E4F58A", "#5C9A38", "#C6EE6A", "#9AD44A", "#6AAA40"];
   for (let i = 0; i < 7; i++) {
@@ -522,88 +522,126 @@ export function buildDuck() {
 export function buildBaron() {
   const fur = "#C42828";
   const furD = "#8E1A1C";
-  const headY = 1.78;
-  const eye = sph(0.055, 5, 3);
-  const pupil = sph(0.026, 4, 3);
-  const spike = cone(0.07, 0.28, 4);
+  const belly = "#F6D7C4";
+  const cape = "#3A1020";
+  const headY = 1.86;
+  const eye = sph(0.06, 8, 6);
+  const pupil = sph(0.028, 6, 4);
+  const fang = cone(0.035, 0.16, 5);
+  const spike = cone(0.055, 0.22, 5);
   return done([
-    place(box(0.22, 0.12, 0.32), furD, 0, null, -0.22, 0.08, 0.02),
-    place(box(0.22, 0.12, 0.32), furD, 0, null, 0.22, 0.08, 0.02),
-    place(cyl(0.11, 0.1, 0.48, 5), furD, 0, null, -0.2, 0.36, 0),
-    place(cyl(0.11, 0.1, 0.48, 5), furD, 0, null, 0.2, 0.36, 0),
-    place(sph(0.52, 7, 5), fur, 0, null, 0, 1.02, 0.02, 1.05, 0.95, 0.9),
-    place(box(0.78, 0.9, 0.12), "#4A1020", 0, null, 0, 1.05, 0.42),
-    place(sph(0.16, 5, 3), furD, 0, null, 0, 0.72, 0.46, 0.7, 0.45, 1.1),
-    place(cyl(0.09, 0.08, 0.42, 5), fur, 0, null, -0.62, 1.05, -0.08, 1, 1, 1, 0, 0.5),
-    place(cyl(0.09, 0.08, 0.42, 5), fur, 0, null, 0.62, 1.05, -0.08, 1, 1, 1, 0, -0.5),
-    place(sph(0.36, 7, 5), fur, 0, null, 0, headY, -0.06),
-    place(sph(0.13, 6, 4), "#F6D7C4", 0, null, 0, headY - 0.08, -0.28, 1.15, 0.72, 0.8),
-    place(box(0.05, 0.08, 0.04), TOOTH, 0, null, -0.04, headY - 0.16, -0.38),
-    place(box(0.05, 0.08, 0.04), TOOTH, 0, null, 0.04, headY - 0.16, -0.38),
-    place(sph(0.07, 5, 3), furD, 0, null, -0.22, headY + 0.28, 0, 0.7, 1.25, 0.55),
-    place(sph(0.07, 5, 3), furD, 0, null, 0.22, headY + 0.28, 0, 0.7, 1.25, 0.55),
-    place(eye, "#FFFFFF", 0, null, -0.12, headY + 0.04, -0.32),
-    place(eye, "#FFFFFF", 0, null, 0.12, headY + 0.04, -0.32),
-    place(pupil, "#1A1C22", 0, null, -0.12, headY + 0.03, -0.36),
-    place(pupil, "#1A1C22", 0, null, 0.12, headY + 0.03, -0.36),
-    place(cyl(0.28, 0.3, 0.1, 6), GOLD, 0, null, 0, headY + 0.34, -0.02),
-    place(spike, GOLD, 0, null, 0, headY + 0.52, -0.02),
-    place(spike, GOLD, 0, null, -0.18, headY + 0.44, 0.02),
-    place(spike, GOLD, 0, null, 0.18, headY + 0.44, 0.02),
-    place(cyl(0.045, 0.045, 0.7, 5), "#8B5A2B", 0, null, 0.78, 0.95, -0.28),
-    place(cyl(0.16, 0.2, 0.12, 6), "#E23B32", 0, null, 0.78, 0.58, -0.28),
-  ], new THREE.Vector3(0, headY + 0.66, -0.02));
+    place(box(0.28, 0.1, 0.4), furD, 0, null, -0.28, 0.06, 0.04),
+    place(box(0.28, 0.1, 0.4), furD, 0, null, 0.28, 0.06, 0.04),
+    place(cyl(0.13, 0.11, 0.42, 7), furD, 0, null, -0.24, 0.32, 0.02),
+    place(cyl(0.13, 0.11, 0.42, 7), furD, 0, null, 0.24, 0.32, 0.02),
+    place(organ(0.58, 16, 12, 0.08), fur, 0, null, 0, 1.05, 0.02, 1.15, 1.05, 0.95),
+    place(organ(0.32, 12, 10, 0.06), belly, 0, null, 0, 0.92, -0.38, 0.9, 0.85, 0.45),
+    place(box(0.95, 1.15, 0.08), cape, 0, null, 0, 1.12, 0.48),
+    place(box(0.18, 0.9, 0.1), cape, 0, null, -0.48, 0.95, 0.28),
+    place(box(0.18, 0.9, 0.1), cape, 0, null, 0.48, 0.95, 0.28),
+    place(cyl(0.5, 0.5, 0.08, 10), "#C9A15A", 0, null, 0, 0.72, 0.02, 1, 1, 0.85),
+    place(box(0.16, 0.14, 0.06), "#F5C400", 0, null, 0, 0.72, -0.42),
+    place(cyl(0.1, 0.08, 0.5, 6), fur, 0, null, -0.72, 1.08, -0.06, 1, 1, 1, 0, 0.55),
+    place(cyl(0.1, 0.08, 0.5, 6), fur, 0, null, 0.72, 1.08, -0.06, 1, 1, 1, 0, -0.55),
+    place(sph(0.11, 6, 5), furD, 0, null, -0.92, 0.82, -0.16),
+    place(sph(0.11, 6, 5), furD, 0, null, 0.92, 0.82, -0.16),
+    place(cyl(0.04, 0.04, 0.85, 5), "#8B5A2B", 0, null, 0.95, 1.05, -0.35),
+    place(cyl(0.18, 0.2, 0.1, 8), "#E23B32", 0, null, 0.95, 0.62, -0.35),
+    place(organ(0.38, 14, 11, 0.07), fur, 0, null, 0, headY, -0.04),
+    place(organ(0.16, 10, 8, 0.05), belly, 0, null, 0, headY - 0.08, -0.32, 1.15, 0.75, 0.85),
+    place(sph(0.045, 6, 4), "#3A241C", 0, null, 0, headY - 0.02, -0.46),
+    place(fang, TOOTH, 0, null, -0.07, headY - 0.2, -0.4, 1, 1, 1, 0, 0.3),
+    place(fang, TOOTH, 0, null, 0.07, headY - 0.2, -0.4, 1, 1, 1, 0, -0.3),
+    place(box(0.04, 0.06, 0.03), TOOTH, 0, null, -0.03, headY - 0.16, -0.44),
+    place(box(0.04, 0.06, 0.03), TOOTH, 0, null, 0.03, headY - 0.16, -0.44),
+    place(organ(0.09, 8, 6, 0.08), furD, 0, null, -0.26, headY + 0.28, 0.02, 0.7, 1.35, 0.5),
+    place(organ(0.09, 8, 6, 0.08), furD, 0, null, 0.26, headY + 0.28, 0.02, 0.7, 1.35, 0.5),
+    place(eye, "#FFFFFF", 0, null, -0.14, headY + 0.04, -0.32),
+    place(eye, "#FFFFFF", 0, null, 0.14, headY + 0.04, -0.32),
+    place(pupil, "#1A1C22", 0, null, -0.14, headY + 0.03, -0.37),
+    place(pupil, "#1A1C22", 0, null, 0.14, headY + 0.03, -0.37),
+    place(box(0.12, 0.03, 0.04), furD, 0, null, -0.14, headY + 0.12, -0.34),
+    place(box(0.12, 0.03, 0.04), furD, 0, null, 0.14, headY + 0.12, -0.34),
+    place(cyl(0.3, 0.32, 0.1, 8), "#F5C400", 0, null, 0, headY + 0.36, -0.02),
+    place(spike, "#F5C400", 0, null, 0, headY + 0.52, -0.02),
+    place(spike, "#F5C400", 0, null, -0.18, headY + 0.46, 0.04, 0.85, 0.85, 0.85),
+    place(spike, "#F5C400", 0, null, 0.18, headY + 0.46, 0.04, 0.85, 0.85, 0.85),
+    place(spike, "#E9A23B", 0, null, -0.1, headY + 0.5, 0.12, 0.7, 0.7, 0.7),
+    place(spike, "#E9A23B", 0, null, 0.1, headY + 0.5, 0.12, 0.7, 0.7, 0.7),
+    place(sph(0.05, 6, 4), "#E23B32", 0, null, 0, headY + 0.4, -0.28),
+    place(sph(0.12, 6, 5), furD, 0, null, 0, 0.85, 0.55, 0.8, 0.6, 1.3),
+  ], new THREE.Vector3(0, headY + 0.68, -0.02));
 }
 
 export function buildBigTub() {
-  const eye = sph(0.06, 5, 3);
-  const pupil = sph(0.028, 4, 3);
+  const eye = sph(0.07, 8, 6);
+  const pupil = sph(0.03, 6, 4);
   return done([
-    place(box(0.28, 0.1, 0.36), "#C9864A", 0, null, -0.28, 0.08, 0.08),
-    place(box(0.28, 0.1, 0.36), "#C9864A", 0, null, 0.28, 0.08, 0.08),
-    place(sph(0.72, 8, 6), "#2F8F8A", 0, null, 0, 0.92, 0.04, 1.12, 0.96, 1.02),
-    place(sph(0.4, 7, 5), "#F4E6C3", 0, null, 0, 0.88, -0.28, 0.95, 0.8, 0.55),
-    place(sph(0.28, 6, 5), "#E0A15C", 0, null, 0, 1.72, -0.08),
-    place(eye, "#FFFFFF", 0, null, -0.1, 1.78, -0.28),
-    place(eye, "#FFFFFF", 0, null, 0.1, 1.78, -0.28),
-    place(pupil, "#1A1C22", 0, null, -0.1, 1.77, -0.33),
-    place(pupil, "#1A1C22", 0, null, 0.1, 1.77, -0.33),
-    place(cyl(0.08, 0.07, 0.28, 5), "#E0A15C", 0, null, -0.78, 0.95, -0.05, 1, 1, 1, 0, 0.7),
-    place(cyl(0.08, 0.07, 0.28, 5), "#E0A15C", 0, null, 0.78, 0.95, -0.05, 1, 1, 1, 0, -0.7),
-    place(sph(0.16, 6, 4), GOLD, 0, null, 0, 2.12, -0.06, 1.05, 0.85, 1.1),
-    place(cone(0.05, 0.14, 5), "#E86A1A", 0, null, 0, 2.1, -0.24, 1, 0.7, 1, 0, -Math.PI / 2),
-  ], new THREE.Vector3(0, 2.22, -0.1));
+    place(box(0.34, 0.1, 0.42), "#C9864A", 0, null, -0.34, 0.06, 0.1),
+    place(box(0.34, 0.1, 0.42), "#C9864A", 0, null, 0.34, 0.06, 0.1),
+    place(organ(0.78, 18, 14, 0.07), "#1F7A74", 0, null, 0, 0.95, 0.06, 1.2, 0.92, 1.05),
+    place(organ(0.42, 14, 11, 0.05), "#F4E6C3", 0, null, 0, 0.88, -0.42, 1.05, 0.85, 0.5),
+    place(organ(0.16, 8, 6, 0.12), "#F7FBFA", 0, null, -0.55, 1.15, 0.15, 1, 0.7, 0.8),
+    place(organ(0.14, 8, 6, 0.12), "#E7F3F6", 0, null, 0.6, 0.7, 0.35, 0.9, 0.6, 0.7),
+    place(organ(0.12, 8, 6, 0.1), "#F7FBFA", 0, null, 0.2, 1.35, 0.35),
+    place(cyl(0.09, 0.08, 0.36, 6), "#E0A15C", 0, null, -0.92, 0.95, -0.08, 1, 1, 1, 0, 0.8),
+    place(cyl(0.09, 0.08, 0.36, 6), "#E0A15C", 0, null, 0.92, 0.95, -0.08, 1, 1, 1, 0, -0.8),
+    place(sph(0.1, 6, 5), "#E0A15C", 0, null, -1.08, 0.82, -0.16),
+    place(sph(0.1, 6, 5), "#E0A15C", 0, null, 1.08, 0.82, -0.16),
+    place(organ(0.32, 14, 11, 0.06), "#E8B56A", 0, null, 0, 1.78, -0.06),
+    place(eye, "#FFFFFF", 0, null, -0.12, 1.84, -0.28),
+    place(eye, "#FFFFFF", 0, null, 0.12, 1.84, -0.28),
+    place(pupil, "#1A1C22", 0, null, -0.12, 1.83, -0.34),
+    place(pupil, "#1A1C22", 0, null, 0.12, 1.83, -0.34),
+    place(box(0.08, 0.03, 0.04), "#8E5A28", 0, null, -0.12, 1.94, -0.3),
+    place(box(0.08, 0.03, 0.04), "#8E5A28", 0, null, 0.12, 1.94, -0.3),
+    place(organ(0.16, 10, 8, 0.06), "#F5C400", 0, null, 0, 2.22, -0.02, 1.15, 0.85, 1.15),
+    place(sph(0.045, 6, 4), "#FFFFFF", 0, null, -0.06, 2.28, -0.12),
+    place(sph(0.02, 5, 4), "#1A1C22", 0, null, -0.07, 2.28, -0.16),
+    place(cone(0.04, 0.12, 5), "#E86A1A", 0, null, 0.02, 2.2, -0.2, 1, 0.6, 1.2, 0, -Math.PI / 2),
+    place(box(0.14, 0.04, 0.1), "#E8A020", 0, null, -0.16, 2.18, 0.02),
+    place(box(0.14, 0.04, 0.1), "#E8A020", 0, null, 0.16, 2.18, 0.02),
+    place(box(0.1, 0.03, 0.03), "#C45A3A", 0, null, 0, 1.66, -0.34),
+  ], new THREE.Vector3(0, 2.42, -0.04));
 }
 
 export function buildGrunk() {
-  const headY = 2.15;
-  const eye = sph(0.05, 5, 3);
-  const pupil = sph(0.024, 4, 3);
+  const headY = 2.28;
+  const eye = sph(0.055, 8, 6);
+  const pupil = sph(0.026, 6, 4);
   return done([
-    place(box(0.22, 0.12, 0.34), "#1E2A18", 0, null, -0.16, 0.08, 0.04),
-    place(box(0.22, 0.12, 0.34), "#1E2A18", 0, null, 0.16, 0.08, 0.04),
-    place(cyl(0.08, 0.09, 0.85, 5), "#2C5A34", 0, null, -0.16, 0.52, 0),
-    place(cyl(0.08, 0.09, 0.85, 5), "#2C5A34", 0, null, 0.16, 0.52, 0),
-    place(sph(0.36, 7, 5), "#3E7A45", 0, null, 0, 1.22, 0, 0.85, 1.25, 0.72),
-    place(box(0.42, 0.7, 0.1), "#2F5FA8", 0, null, 0, 1.18, -0.28),
-    place(box(0.08, 0.55, 0.08), "#2F5FA8", 0, null, -0.16, 1.55, -0.16),
-    place(box(0.08, 0.55, 0.08), "#2F5FA8", 0, null, 0.16, 1.55, -0.16),
-    place(cyl(0.07, 0.06, 0.7, 5), "#3E7A45", 0, null, -0.48, 1.35, -0.05, 1, 1, 1, 0, 0.9),
-    place(cyl(0.07, 0.06, 0.7, 5), "#3E7A45", 0, null, 0.48, 1.35, -0.05, 1, 1, 1, 0, -0.9),
-    place(sph(0.28, 7, 5), "#3E7A45", 0, null, 0, headY, -0.04),
-    place(sph(0.1, 6, 4), "#F6D7C4", 0, null, 0, headY - 0.04, -0.22, 1.1, 0.7, 0.75),
-    place(sph(0.06, 5, 3), "#2C5A34", 0, null, -0.16, headY + 0.26, 0, 0.65, 1.45, 0.5),
-    place(sph(0.06, 5, 3), "#2C5A34", 0, null, 0.16, headY + 0.26, 0, 0.65, 1.45, 0.5),
-    place(eye, "#FFFFFF", 0, null, -0.09, headY + 0.02, -0.24),
-    place(eye, "#FFFFFF", 0, null, 0.09, headY + 0.02, -0.24),
-    place(pupil, "#1A1C22", 0, null, -0.09, headY + 0.01, -0.28),
-    place(pupil, "#1A1C22", 0, null, 0.09, headY + 0.01, -0.28),
-    place(box(0.08, 0.08, 0.72), "#9AA3AE", 0, null, 0.34, 1.28, -0.42),
-    place(box(0.28, 0.12, 0.16), "#C5CED6", 0, null, 0.62, 1.28, -0.42),
-    place(box(0.08, 0.12, 0.12), "#9AA3AE", 0, null, 0.74, 1.36, -0.42),
-    place(box(0.08, 0.12, 0.12), "#9AA3AE", 0, null, 0.74, 1.2, -0.42),
-  ], new THREE.Vector3(0, headY + 0.08, -0.3));
+    place(box(0.26, 0.1, 0.4), "#1E2A18", 0, null, -0.18, 0.06, 0.04),
+    place(box(0.26, 0.1, 0.4), "#1E2A18", 0, null, 0.18, 0.06, 0.04),
+    place(cyl(0.09, 0.1, 0.95, 7), "#2C5A34", 0, null, -0.18, 0.55, 0),
+    place(cyl(0.09, 0.1, 0.95, 7), "#2C5A34", 0, null, 0.18, 0.55, 0),
+    place(organ(0.34, 14, 12, 0.06), "#3E7A45", 0, null, 0, 1.35, 0, 0.78, 1.35, 0.7),
+    place(box(0.48, 0.85, 0.12), "#2F5FA8", 0, null, 0, 1.22, -0.28),
+    place(box(0.1, 0.62, 0.08), "#2F5FA8", 0, null, -0.16, 1.62, -0.16),
+    place(box(0.1, 0.62, 0.08), "#2F5FA8", 0, null, 0.16, 1.62, -0.16),
+    place(box(0.08, 0.08, 0.04), "#F5C400", 0, null, 0, 1.05, -0.36),
+    place(cyl(0.07, 0.06, 0.78, 6), "#3E7A45", 0, null, -0.5, 1.48, -0.04, 1, 1, 1, 0, 0.85),
+    place(cyl(0.07, 0.06, 0.78, 6), "#3E7A45", 0, null, 0.5, 1.42, -0.02, 1, 1, 1, 0, -0.7),
+    place(sph(0.08, 6, 5), "#2C5A34", 0, null, -0.78, 1.12, -0.12),
+    place(sph(0.08, 6, 5), "#2C5A34", 0, null, 0.82, 1.08, -0.18),
+    place(box(0.06, 0.06, 0.7), "#9AA3AE", 0, null, 0.95, 1.15, -0.42),
+    place(box(0.22, 0.08, 0.12), "#C5CED6", 0, null, 1.18, 1.15, -0.42),
+    place(box(0.05, 0.08, 0.08), "#9AA3AE", 0, null, 1.26, 1.22, -0.42),
+    place(box(0.05, 0.08, 0.08), "#9AA3AE", 0, null, 1.26, 1.08, -0.42),
+    place(organ(0.3, 14, 11, 0.06), "#3E7A45", 0, null, 0, headY, -0.02),
+    place(organ(0.11, 8, 6, 0.05), "#F6D7C4", 0, null, 0, headY - 0.04, -0.24, 1.1, 0.7, 0.8),
+    place(organ(0.07, 7, 5, 0.08), "#2C5A34", 0, null, -0.18, headY + 0.26, 0.02, 0.6, 1.5, 0.45),
+    place(organ(0.07, 7, 5, 0.08), "#2C5A34", 0, null, 0.18, headY + 0.26, 0.02, 0.6, 1.5, 0.45),
+    place(eye, "#FFFFFF", 0, null, -0.1, headY + 0.02, -0.24),
+    place(eye, "#FFFFFF", 0, null, 0.1, headY + 0.02, -0.24),
+    place(pupil, "#1A1C22", 0, null, -0.1, headY + 0.01, -0.29),
+    place(pupil, "#1A1C22", 0, null, 0.1, headY + 0.01, -0.29),
+    place(box(0.1, 0.025, 0.03), "#1E2A18", 0, null, -0.1, headY + 0.1, -0.26),
+    place(box(0.1, 0.025, 0.03), "#1E2A18", 0, null, 0.1, headY + 0.1, -0.26),
+    place(cyl(0.22, 0.24, 0.08, 8), "#1E3A5F", 0, null, 0, headY + 0.28, -0.02),
+    place(box(0.28, 0.04, 0.16), "#1E3A5F", 0, null, 0, headY + 0.24, -0.16),
+  ], new THREE.Vector3(0, headY + 0.36, -0.04));
 }
+
 
 export function buildWrench() {
   const handle = box(0.16, 0.16, 1.5);

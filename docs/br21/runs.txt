@@ -1,0 +1,9 @@
+br21 distinct guns, fights between the gates, forty levels. Self-test fails []. Soldier 536, bober 548, boss 2014. Enemies [512, 5352, 120, 2448, 3640, 1484, 2360] = red, suds, hauler, hair, spit, leaf, duck. No gun-tris warning.
+
+Phone stills at 390x844: fight.png, baron.png, fight-2.png, tub.png, levels.png, levels-night.png, grunk.png.
+
+Human bot, hold and step:
+1-1 win n 33, entered the baron at 36, weapon dambust, theme 0, kills 68, dist 514.
+2-1 win n 5, entered the tub at 11, weapon barrage, theme 1, kills 89, dist 514.
+
+Maple Flamer is the only stream. Gate rows are 120 m apart. Four spans, 1-1 through 4-10. Grunk still is a pose on 3-1, not a full win.

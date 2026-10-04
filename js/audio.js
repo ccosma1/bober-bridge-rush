@@ -9,19 +9,19 @@ export function createAudio() {
   const fireAt = [];
   const voiceUntil = [];
   const FIRE = {
-    mini: { f: 120, d: 0.045, type: "sawtooth", g: 0.04, slide: 0.55, n: 420, ng: 0.07 },
-    dambust: { f: 78, d: 0.06, type: "sawtooth", g: 0.05, slide: 0.4, n: 260, ng: 0.09 },
-    burst: { f: 96, d: 0.05, type: "sawtooth", g: 0.045, slide: 0.5, n: 360, ng: 0.07 },
-    saw: { f: 88, d: 0.05, type: "sawtooth", g: 0.045, slide: 0.48, n: 340, ng: 0.075 },
-    rail: { f: 70, d: 0.055, type: "sawtooth", g: 0.04, slide: 0.42, n: 240, ng: 0.08 },
-    beam: { f: 140, d: 0.04, type: "sawtooth", g: 0.04, slide: 0.62, n: 520, ng: 0.06 },
-    storm: { f: 110, d: 0.05, type: "sawtooth", g: 0.045, slide: 0.52, n: 400, ng: 0.07 },
-    flame: { f: 90, d: 0.055, type: "sawtooth", g: 0.05, slide: 0.5, n: 380, ng: 0.08 },
-    glacier: { f: 150, d: 0.04, type: "sawtooth", g: 0.035, slide: 0.6, n: 560, ng: 0.055 },
-    barrage: { f: 84, d: 0.05, type: "sawtooth", g: 0.05, slide: 0.45, n: 300, ng: 0.085 },
-    cone: { f: 74, d: 0.06, type: "sawtooth", g: 0.05, slide: 0.4, n: 250, ng: 0.09 },
-    aurora: { f: 100, d: 0.05, type: "sawtooth", g: 0.045, slide: 0.5, n: 440, ng: 0.065 },
-    tick: { f: 130, d: 0.04, type: "sawtooth", g: 0.04, slide: 0.55, n: 480, ng: 0.06 },
+    mini: { f: 180, d: 0.04, type: "square", g: 0.035, slide: 0.7, n: 240, ng: 0.02 },
+    dambust: { f: 90, d: 0.07, type: "sawtooth", g: 0.05, slide: 0.35, n: 280, ng: 0.04 },
+    burst: { f: 220, d: 0.035, type: "square", g: 0.04, slide: 0.62, n: 220, ng: 0.015 },
+    saw: { f: 140, d: 0.08, type: "sawtooth", g: 0.04, slide: 0.85, n: 300, ng: 0.03 },
+    rail: { f: 70, d: 0.09, type: "triangle", g: 0.05, slide: 0.25, n: 200, ng: 0.02 },
+    beam: { f: 520, d: 0.03, type: "square", g: 0.03, slide: 0.8, n: 240, ng: 0.01 },
+    storm: { f: 260, d: 0.05, type: "sawtooth", g: 0.04, slide: 1.6, n: 360, ng: 0.025 },
+    flame: { f: 90, d: 0.08, type: "sawtooth", g: 0.05, slide: 0.55, n: 420, ng: 0.06 },
+    glacier: { f: 640, d: 0.05, type: "triangle", g: 0.03, slide: 0.45, n: 260, ng: 0.015 },
+    barrage: { f: 110, d: 0.07, type: "square", g: 0.05, slide: 0.3, n: 240, ng: 0.035 },
+    cone: { f: 160, d: 0.09, type: "triangle", g: 0.045, slide: 0.4, n: 220, ng: 0.03 },
+    aurora: { f: 330, d: 0.08, type: "sine", g: 0.04, slide: 1.2, n: 200, ng: 0.012 },
+    tick: { f: 130, d: 0.04, type: "square", g: 0.04, slide: 0.55, n: 280, ng: 0.02 },
   };
 
   function ac() {

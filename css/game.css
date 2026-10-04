@@ -423,6 +423,14 @@ button {
   overflow: visible;
 }
 
+.chapter-label {
+  grid-column: 1 / -1;
+  margin: 10px 0 2px;
+  font: 800 13px/1.2 "Segoe UI", Arial, sans-serif;
+  letter-spacing: 0.08em;
+  color: var(--cream);
+}
+
 .level-tile {
   width: 100%;
   min-width: 0;

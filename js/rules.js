@@ -2,7 +2,7 @@
 // br3 gun table. Lab may multiply a tier's DMG; the comment block at the
 // bottom of weaponMods records the numbers that passed the gun lab.
 
-export const BUILD = "br20";
+export const BUILD = "br21";
 export const SIM_CAP = 300;
 export const RENDER_CAP = 60;
 export const LIVE_CAP = 320;
@@ -50,138 +50,139 @@ export function migrateGun(id) {
 
 export const WEAPONS = {
   mini: {
-    id: "mini", name: "Gnasher Jet", family: "FLAME", pattern: "stream",
-    color: "#F5C400", pellets: 1, spread: 5 * DEG, shove: 0, range: 14, len: 1.1, thick: 0.22, heavy: 0,
-    line: "A tight tongue. It keeps chewing.",
+    id: "mini", name: "Gnasher", family: "BULLETS", pattern: "spin",
+    color: "#F5C400", pellets: 1, spread: 6 * DEG, shove: 0, range: 18, len: 1.1, thick: 0.16, heavy: 0, spinUp: 0.45,
+    line: "It spins up and chews one lane.",
     tiers: [
-      { dmg: 1.35, rate: 16, burn: 3.2, range: 14 },
-      { dmg: 1.7, rate: 17, burn: 3.8, range: 14 },
-      { dmg: 2.1, rate: 17, burn: 4.2, range: 15 },
-      { dmg: 2.6, rate: 18, burn: 4.8, range: 16 },
+      { dmg: 1.15, rate: 12, rateMax: 18, range: 18 },
+      { dmg: 1.45, rate: 13, rateMax: 19, range: 18 },
+      { dmg: 1.8, rate: 13, rateMax: 20, range: 19 },
+      { dmg: 2.2, rate: 14, rateMax: 21, range: 20 },
     ],
   },
   dambust: {
-    id: "dambust", name: "Dam Wash", family: "FLAME", pattern: "stream",
-    color: "#E86A1A", pellets: 1, spread: 28 * DEG, shove: 0, range: 8, len: 0.9, thick: 0.4, heavy: 0,
-    line: "A wide wash. Short, and hot.",
+    id: "dambust", name: "Dam Bust", family: "BULLETS", pattern: "fan",
+    color: "#E86A1A", pellets: 7, spread: 26 * DEG, shove: 1.1, range: 11, len: 0.9, thick: 0.22, heavy: 0,
+    line: "A wide fan of chips. It clears the front rank.",
     tiers: [
-      { dmg: 1.5, rate: 11, burn: 3.4, range: 8 },
-      { dmg: 1.9, rate: 12, burn: 4, range: 8 },
-      { dmg: 2.4, rate: 12, burn: 4.4, range: 9 },
-      { dmg: 2.9, rate: 13, burn: 5, range: 10 },
+      { dmg: 1.25, rate: 7, range: 11, pellets: 7 },
+      { dmg: 1.6, rate: 8, range: 11, pellets: 8 },
+      { dmg: 2, rate: 8, range: 12, pellets: 8 },
+      { dmg: 2.5, rate: 9, range: 13, pellets: 9 },
     ],
   },
   burst: {
-    id: "burst", name: "Incisor Torch", family: "FLAME", pattern: "stream",
-    color: "#FF8A2A", pellets: 1, spread: 9 * DEG, shove: 0, range: 11, len: 1, thick: 0.28, heavy: 0,
-    line: "The starter torch. Fast fire down the deck.",
+    id: "burst", name: "Incisors", family: "BULLETS", pattern: "burst",
+    color: "#F4E6C3", pellets: 3, spread: 4 * DEG, shove: 0, range: 16, len: 0.85, thick: 0.14, heavy: 0,
+    line: "Three fast bites. The gun you start with.",
     tiers: [
-      { dmg: 1.7, rate: 12, burn: 3.2, range: 11 },
-      { dmg: 2.1, rate: 13, burn: 3.8, range: 11 },
-      { dmg: 2.6, rate: 13, burn: 4.2, range: 12 },
-      { dmg: 3.2, rate: 14, burn: 4.8, range: 13 },
+      { dmg: 2.2, rate: 8, range: 16, pellets: 3 },
+      { dmg: 2.8, rate: 9, range: 16, pellets: 3 },
+      { dmg: 3.4, rate: 9, range: 17, pellets: 3 },
+      { dmg: 4.2, rate: 10, range: 18, pellets: 4 },
     ],
   },
   saw: {
-    id: "saw", name: "Ring Fire", family: "FLAME", pattern: "stream",
-    color: "#E07030", pellets: 1, spread: 16 * DEG, shove: 0, range: 9, len: 0.85, thick: 0.34, heavy: 0,
-    line: "A broad ring of flame.",
+    id: "saw", name: "Ring Saw", family: "BLADES", pattern: "disc",
+    color: "#D8DDE6", pellets: 1, spread: 0, shove: 0.4, range: 14, len: 0.7, thick: 0.2, heavy: 0, bounces: 4,
+    line: "A saw that skips across the pack.",
     tiers: [
-      { dmg: 1.6, rate: 13, burn: 3.4, range: 9 },
-      { dmg: 2, rate: 14, burn: 4, range: 9 },
-      { dmg: 2.5, rate: 14, burn: 4.4, range: 10 },
-      { dmg: 3, rate: 15, burn: 5, range: 11 },
+      { dmg: 3.4, rate: 6, range: 14, bounces: 4 },
+      { dmg: 4.2, rate: 7, range: 14, bounces: 5 },
+      { dmg: 5.1, rate: 7, range: 15, bounces: 5 },
+      { dmg: 6.2, rate: 8, range: 16, bounces: 6 },
     ],
   },
   rail: {
-    id: "rail", name: "Pine Torch", family: "FLAME", pattern: "stream",
-    color: "#FFB020", pellets: 1, spread: 4 * DEG, shove: 0, range: 15, len: 1.3, thick: 0.24, heavy: 0,
-    line: "The long tongue. It reaches the back row.",
+    id: "rail", name: "Pine Rail", family: "BULLETS", pattern: "rail",
+    color: "#C9864A", pellets: 1, spread: 1 * DEG, shove: 1.2, range: 22, len: 1.4, thick: 0.12, heavy: 0,
+    line: "One long shot. It goes through the line.",
     tiers: [
-      { dmg: 2.4, rate: 11, burn: 3.6, range: 15 },
-      { dmg: 2.9, rate: 12, burn: 4.2, range: 15 },
-      { dmg: 3.5, rate: 12, burn: 4.6, range: 16 },
-      { dmg: 4.1, rate: 13, burn: 5.2, range: 17 },
+      { dmg: 5.2, rate: 5, range: 22, pierce: 8 },
+      { dmg: 6.4, rate: 5, range: 23, pierce: 10 },
+      { dmg: 7.8, rate: 6, range: 24, pierce: 12 },
+      { dmg: 9.4, rate: 6, range: 26, pierce: 14 },
     ],
   },
   beam: {
-    id: "beam", name: "Red Rush", family: "FLAME", pattern: "stream",
-    color: "#FF3A1A", pellets: 1, spread: 7 * DEG, shove: 0, range: 12, len: 1, thick: 0.26, heavy: 0,
-    line: "The fastest mouth on the bridge.",
+    id: "beam", name: "Red Dart", family: "ENERGY", pattern: "bolt",
+    color: "#FF3A1A", pellets: 1, spread: 5 * DEG, shove: 0, range: 16, len: 0.9, thick: 0.12, heavy: 0,
+    line: "Fast red darts. They snap.",
     tiers: [
-      { dmg: 1.45, rate: 16, burn: 3, range: 12 },
-      { dmg: 1.8, rate: 17, burn: 3.6, range: 12 },
-      { dmg: 2.2, rate: 17, burn: 4, range: 13 },
-      { dmg: 2.7, rate: 18, burn: 4.6, range: 14 },
+      { dmg: 1.7, rate: 13, range: 16 },
+      { dmg: 2.1, rate: 14, range: 16 },
+      { dmg: 2.6, rate: 14, range: 17 },
+      { dmg: 3.2, rate: 15, range: 18 },
     ],
   },
   storm: {
-    id: "storm", name: "Storm Jet", family: "FLAME", pattern: "stream",
-    color: "#FF5A2A", pellets: 1, spread: 12 * DEG, shove: 0, range: 11, len: 1, thick: 0.3, heavy: 0,
-    line: "A roaring jet. It stays on them.",
+    id: "storm", name: "Storm Arc", family: "ENERGY", pattern: "spark",
+    color: "#4FC3FF", pellets: 1, spread: 8 * DEG, shove: 0, range: 14, len: 0.8, thick: 0.14, heavy: 0, chain: 3,
+    line: "A bolt that jumps to the next body.",
     tiers: [
-      { dmg: 1.6, rate: 14, burn: 3.4, range: 11 },
-      { dmg: 2, rate: 15, burn: 4, range: 11 },
-      { dmg: 2.5, rate: 15, burn: 4.4, range: 12 },
-      { dmg: 3.1, rate: 16, burn: 5, range: 13 },
+      { dmg: 2.6, rate: 8, range: 14, chain: 3 },
+      { dmg: 3.2, rate: 8, range: 15, chain: 4 },
+      { dmg: 3.9, rate: 9, range: 15, chain: 4 },
+      { dmg: 4.8, rate: 9, range: 16, chain: 5 },
     ],
   },
   flame: {
-    id: "flame", name: "Maple Flamer", family: "FLAME", pattern: "stream",
-    color: "#FF6A1A", pellets: 1, spread: 11 * DEG, shove: 0, range: 12, len: 1.05, thick: 0.3, heavy: 0,
-    line: "The full flamer. It sticks and burns.",
+    id: "flame", name: "Maple Flamer", family: "ELEMENT", pattern: "stream",
+    color: "#FF6A1A", pellets: 1, spread: 12 * DEG, shove: 0, range: 11, len: 1.05, thick: 0.3, heavy: 0,
+    line: "The one flamethrower. It sticks.",
     tiers: [
-      { dmg: 1.8, rate: 14, burn: 4.2, range: 12 },
-      { dmg: 2.2, rate: 15, burn: 4.8, range: 12 },
-      { dmg: 2.8, rate: 15, burn: 5.4, range: 13 },
-      { dmg: 3.4, rate: 16, burn: 6, range: 14 },
+      { dmg: 1.6, rate: 12, burn: 4.2, range: 11 },
+      { dmg: 2, rate: 13, burn: 4.8, range: 12 },
+      { dmg: 2.5, rate: 13, burn: 5.4, range: 12 },
+      { dmg: 3.1, rate: 14, burn: 6, range: 13 },
     ],
   },
   glacier: {
-    id: "glacier", name: "White Heat", family: "FLAME", pattern: "stream",
-    color: "#FFE08A", pellets: 1, spread: 8 * DEG, shove: 0, range: 12, len: 1, thick: 0.26, heavy: 0,
-    line: "White-hot. The core eats armor.",
+    id: "glacier", name: "White Spike", family: "ELEMENT", pattern: "spike",
+    color: "#7DEBFF", pellets: 1, spread: 6 * DEG, shove: 0.6, range: 14, len: 0.9, thick: 0.16, heavy: 0,
+    line: "Ice that slows the front rank.",
     tiers: [
-      { dmg: 1.7, rate: 15, burn: 3.6, range: 12 },
-      { dmg: 2.1, rate: 16, burn: 4.2, range: 12 },
-      { dmg: 2.6, rate: 16, burn: 4.6, range: 13 },
-      { dmg: 3.2, rate: 17, burn: 5.2, range: 14 },
+      { dmg: 2.8, rate: 8, range: 14, slow: 2.2, splash: 1.5 },
+      { dmg: 3.4, rate: 8, range: 15, slow: 2.4, splash: 1.6 },
+      { dmg: 4.2, rate: 9, range: 15, slow: 2.6, splash: 1.7 },
+      { dmg: 5, rate: 9, range: 16, slow: 2.8, splash: 1.9 },
     ],
   },
   barrage: {
-    id: "barrage", name: "Lodge Jets", family: "FLAME", pattern: "stream",
-    color: "#FF4A2A", pellets: 1, spread: 20 * DEG, shove: 0, range: 10, len: 0.95, thick: 0.36, heavy: 0,
-    line: "Three mouths. The deck fills with fire.",
+    id: "barrage", name: "Lodge Rockets", family: "EXPLOSIVE", pattern: "salvo",
+    color: "#FF2E63", pellets: 4, spread: 6 * DEG, shove: 1, range: 16, len: 0.95, thick: 0.18, heavy: 0, splash: 1.15,
+    line: "A rack of rockets down the deck.",
     tiers: [
-      { dmg: 1.4, rate: 12, burn: 3.2, range: 10 },
-      { dmg: 1.8, rate: 13, burn: 3.8, range: 10 },
-      { dmg: 2.2, rate: 13, burn: 4.2, range: 11 },
-      { dmg: 2.7, rate: 14, burn: 4.8, range: 12 },
+      { dmg: 2.4, rate: 6, range: 16, pellets: 4, splash: 1.15 },
+      { dmg: 3, rate: 6, range: 17, pellets: 5, splash: 1.25 },
+      { dmg: 3.7, rate: 7, range: 17, pellets: 5, splash: 1.35 },
+      { dmg: 4.5, rate: 7, range: 18, pellets: 6, splash: 1.5 },
     ],
   },
   cone: {
-    id: "cone", name: "Bell Mouth", family: "FLAME", pattern: "stream",
-    color: "#F08A28", pellets: 1, spread: 18 * DEG, shove: 0, range: 9, len: 0.9, thick: 0.38, heavy: 0,
-    line: "A fat bell of flame.",
+    id: "cone", name: "Bell Lob", family: "EXPLOSIVE", pattern: "grenade",
+    color: "#6BCB3D", pellets: 1, spread: 8 * DEG, shove: 1.2, range: 13, len: 0.8, thick: 0.22, heavy: 0, splash: 1.8,
+    line: "A lobbed bell. It pops in the pack.",
     tiers: [
-      { dmg: 1.9, rate: 13, burn: 3.6, range: 9 },
-      { dmg: 2.4, rate: 14, burn: 4.2, range: 9 },
-      { dmg: 2.9, rate: 14, burn: 4.6, range: 10 },
-      { dmg: 3.5, rate: 15, burn: 5.2, range: 11 },
+      { dmg: 3.6, rate: 6, range: 13, splash: 1.8 },
+      { dmg: 4.4, rate: 6, range: 14, splash: 2 },
+      { dmg: 5.4, rate: 7, range: 14, splash: 2.2 },
+      { dmg: 6.6, rate: 7, range: 15, splash: 2.4 },
     ],
   },
   aurora: {
-    id: "aurora", name: "Gold Roar", family: "FLAME", pattern: "stream",
-    color: "#FFC14A", pellets: 1, spread: 14 * DEG, shove: 0, range: 13, len: 1.15, thick: 0.32, heavy: 0,
-    line: "A long gold roar down the bridge.",
+    id: "aurora", name: "Gold Orb", family: "ENERGY", pattern: "orb",
+    color: "#F5C400", pellets: 1, spread: 4 * DEG, shove: 0.4, range: 16, len: 0.7, thick: 0.24, heavy: 0, splash: 2.2,
+    line: "A gold orb. It chips a line, then bursts on a big body.",
     tiers: [
-      { dmg: 2, rate: 12, burn: 3.8, range: 13 },
-      { dmg: 2.5, rate: 13, burn: 4.4, range: 13 },
-      { dmg: 3.1, rate: 13, burn: 4.8, range: 14 },
-      { dmg: 3.7, rate: 14, burn: 5.4, range: 15 },
+      { dmg: 3.8, rate: 6, range: 16, splash: 2.2 },
+      { dmg: 4.6, rate: 6, range: 17, splash: 2.4 },
+      { dmg: 5.6, rate: 7, range: 17, splash: 2.6 },
+      { dmg: 6.8, rate: 7, range: 18, splash: 2.8 },
     ],
   },
 };
+
 
 export const TIER_TTK = [0, 4.0, 3.0, 2.25, 1.7];
 
@@ -223,1048 +224,165 @@ export const BOSS_TALL = { baron: 5, tub: 5.5, grunk: 6 };
 
 const CRATE_MUL = { weapon: 1, volunteer: 0.6, tier: 1.2, mystery: 1, duck: 0.5, forged: 0.8 };
 
-export const LEVELS = {
-  "1-1": {
-    id: "1-1",
-    name: "1-1 PINE BRIDGE",
-    chapter: "THE DAM RUNS DRY",
-    intro: "The river is three inches lower than yesterday.",
-    len: 700,
-    river: 0,
-    dam: 1,
-    theme: 0,
-    hpMul: 1,
-    baseHp: 480,
-    vol: 8,
-    starN: 30,
-    starSec: 20,
-    boss: "baron",
-    bossHp: 800,
-    bossName: "LORD DRIP",
-    win: "BRIDGE HELD!",
-    events: [
-      { at: 24, kind: "gate", side: 1, op: "add", k: 5 },
-      { at: 52, kind: "gate", side: 0, op: "add", k: 5 },
-      { at: 72, kind: "crate", layout: "row", items: [
-        { type: "volunteer", hp: 14, x: -3 },
-        { type: "volunteer", hp: 14, x: -3.6 },
-        { type: "volunteer", hp: 14, x: 3 },
-      ] },
-      { at: 94, kind: "gate", side: 0, op: "mul", k: 2 },
-      { at: 124, kind: "wave", clog: 32, spd: 1 },
-      { at: 128, kind: "crate", layout: "row", items: [
-        { type: "volunteer", hp: 12, x: -3 },
-        { type: "volunteer", hp: 12, x: 3.6 },
-        { type: "volunteer", hp: 12, x: 3 },
-      ] },
-      { at: 150, kind: "crate", layout: "single", items: [{ type: "weapon", gun: "dambust", hp: 12, x: -3.6 }] },
-      { at: 190, kind: "gate", side: 1, op: "add", k: 8 },
-      { at: 214, kind: "crate", layout: "row", items: [
-        { type: "volunteer", hp: 12, x: -3 },
-        { type: "volunteer", hp: 12, x: 3.6 },
-        { type: "volunteer", hp: 12, x: 3 },
-      ] },
-      { at: 236, kind: "crate", layout: "single", items: [{ type: "weapon", gun: "mini", hp: 12, x: -3 }] },
-      { at: 248, kind: "wave", clog: 44, suds: 8, spd: 1 },
-      { at: 300, kind: "crate", layout: "row", items: [
-        { type: "volunteer", hp: 12, x: -3 },
-        { type: "volunteer", hp: 12, x: -3.6 },
-        { type: "volunteer", hp: 12, x: 3 },
-      ] },
-      { at: 340, kind: "gate", side: 0, op: "add", k: 6 },
-      { at: 366, kind: "crate", layout: "single", items: [{ type: "weapon", gun: "beam", hp: 12, x: 3 }] },
-      { at: 392, kind: "gate", side: 1, op: "sub", k: 3 },
-      { at: 428, kind: "wave", clog: 40, suds: 6, duck: 1, spd: 1 },
-      { at: 456, kind: "crate", layout: "row", items: [
-        { type: "tier", hp: 10, x: -3 },
-        { type: "tier", hp: 10, x: 3.6 },
-        { type: "tier", hp: 10, x: 3 },
-      ] },
-      { at: 520, kind: "gate", side: 0, op: "add", k: 10 },
-      { at: 560, kind: "gate", side: 1, op: "add", k: 8 },
-      { at: 600, kind: "gate", side: 0, op: "sub", k: 2 },
-      { at: 640, kind: "gate", side: 1, op: "add", k: 6 },
-      { at: 672, kind: "gate", side: 0, op: "add", k: 4 },
-      { at: 700, kind: "boss" },
-    ],
-  },
-  "1-2": {
-    id: "1-2",
-    name: "1-2 SPILLWAY BRIDGE",
-    chapter: "THE DAM RUNS DRY",
-    intro: "Something is pulling the plug.",
-    len: 780,
-    river: -0.3,
-    dam: 1.35,
-    theme: 1,
-    hpMul: 1.09,
-    baseHp: 700,
-    vol: 8,
-    starN: 35,
-    starSec: 25,
-    boss: "tub",
-    bossHp: 2800,
-    bossName: "BIG TUB",
-    win: "BRIDGE HELD!",
-    events: [
-      { at: 26, kind: "gate", side: 1, op: "add", k: 6 },
-      { at: 54, kind: "gate", side: 0, op: "add", k: 5 },
-      { at: 74, kind: "crate", layout: "row", items: [
-        { type: "volunteer", hp: 10, x: -3 },
-        { type: "volunteer", hp: 10, x: -3.6 },
-        { type: "volunteer", hp: 10, x: 3 },
-      ] },
-      { at: 96, kind: "gate", side: 0, op: "mul", k: 2 },
-      { at: 140, kind: "crate", layout: "row", items: [
-        { type: "weapon", gun: "rail", hp: 12, x: -3 },
-        { type: "weapon", gun: "rail", hp: 12, x: 3.6 },
-        { type: "weapon", gun: "rail", hp: 12, x: 3 },
-      ] },
-      { at: 122, kind: "wave", clog: 20, spd: 1 },
-      { at: 200, kind: "gate", side: 1, op: "add", k: 6 },
-      { at: 224, kind: "crate", layout: "row", items: [
-        { type: "weapon", gun: "glacier", hp: 12, x: -3 },
-        { type: "weapon", gun: "glacier", hp: 12, x: -3.6 },
-        { type: "weapon", gun: "glacier", hp: 12, x: 3 },
-      ] },
-      { at: 248, kind: "gate", side: 0, op: "add", k: 6 },
-      { at: 270, kind: "wave", clog: 28, suds: 4, spd: 1 },
-      { at: 360, kind: "crate", layout: "row", items: [
-        { type: "volunteer", hp: 19, x: -3 },
-        { type: "volunteer", hp: 14, x: 3.6 },
-        { type: "volunteer", hp: 14, x: 3 },
-      ] },
-      { at: 400, kind: "crate", layout: "row", items: [
-        { type: "weapon", gun: "barrage", hp: 12, x: -3 },
-        { type: "weapon", gun: "barrage", hp: 12, x: -3.6 },
-        { type: "weapon", gun: "barrage", hp: 12, x: 3 },
-      ] },
-      { at: 430, kind: "gate", side: 1, op: "sub", k: 4 },
-      { at: 470, kind: "wave", clog: 30, suds: 4, duck: 1, spd: 1 },
-      { at: 560, kind: "crate", layout: "row", items: [
-        { type: "volunteer", hp: 19, x: -3 },
-        { type: "volunteer", hp: 14, x: 3.6 },
-        { type: "volunteer", hp: 14, x: 3 },
-      ] },
-      { at: 588, kind: "crate", layout: "row", items: [
-        { type: "tier", hp: 10, x: -3 },
-        { type: "tier", hp: 10, x: -3.6 },
-        { type: "tier", hp: 10, x: 3 },
-      ] },
-      { at: 620, kind: "crate", layout: "row", items: [
-        { type: "volunteer", hp: 19, x: -3 },
-        { type: "volunteer", hp: 14, x: 3.6 },
-        { type: "volunteer", hp: 14, x: 3 },
-      ] },
-      { at: 660, kind: "gate", side: 0, op: "sub", k: 3 },
-      { at: 700, kind: "crate", layout: "row", items: [
-        { type: "volunteer", hp: 3, x: -3 },
-        { type: "volunteer", hp: 3, x: -3.6 },
-        { type: "volunteer", hp: 3, x: 3 },
-      ] },
-      { at: 740, kind: "crate", layout: "row", items: [
-        { type: "volunteer", hp: 3, x: -3 },
-        { type: "volunteer", hp: 3, x: 3.6 },
-        { type: "volunteer", hp: 3, x: 3 },
-      ] },
-      { at: 780, kind: "boss" },
-    ],
-  },
-  "1-3": {
-    id: "1-3",
-    name: "1-3 DAM FACE",
-    chapter: "THE DAM RUNS DRY",
-    intro: "Somebody is unbolting the dam.",
-    len: 860,
-    river: -0.6,
-    dam: 1.75,
-    theme: 2,
-    hpMul: 1.18,
-    baseHp: 1000,
-    vol: 12,
-    starN: 50,
-    starSec: 35,
-    boss: "grunk",
-    bossHp: 3200,
-    bossName: "GRUNK THE PLUMBER",
-    win: "DAM HELD!",
-    events: [
-      { at: 28, kind: "gate", side: 1, op: "add", k: 6 },
-      { at: 56, kind: "gate", side: 0, op: "add", k: 5 },
-      { at: 76, kind: "crate", layout: "row", items: [
-        { type: "volunteer", hp: 8, x: -3 },
-        { type: "volunteer", hp: 8, x: -3.6 },
-        { type: "volunteer", hp: 8, x: 3 },
-      ] },
-      { at: 96, kind: "gate", side: 0, op: "mul", k: 2 },
-      { at: 118, kind: "wave", clog: 16, leafN: 1, spd: 1.05 },
-      { at: 200, kind: "gate", side: 1, op: "add", k: 6 },
-      { at: 236, kind: "crate", layout: "row", items: [
-        { type: "weapon", gun: "burst", hp: 12, x: -3 },
-        { type: "weapon", gun: "burst", hp: 12, x: 3.6 },
-        { type: "weapon", gun: "burst", hp: 12, x: 3 },
-      ] },
-      { at: 320, kind: "crate", layout: "row", items: [
-        { type: "weapon", gun: "storm", hp: 12, x: -3 },
-        { type: "weapon", gun: "storm", hp: 12, x: -3.6 },
-        { type: "weapon", gun: "storm", hp: 12, x: 3 },
-      ] },
-      { at: 278, kind: "wave", clog: 24, suds: 4, leaf: 1, duck: 1, spd: 1.05 },
-      { at: 370, kind: "crate", layout: "row", items: [
-        { type: "volunteer", hp: 8, x: -3 },
-        { type: "volunteer", hp: 2, x: 3.6 },
-        { type: "volunteer", hp: 2, x: 3 },
-      ] },
-      { at: 400, kind: "crate", layout: "row", items: [
-        { type: "tier", hp: 10, x: -3 },
-        { type: "tier", hp: 10, x: -3.6 },
-        { type: "tier", hp: 10, x: 3 },
-      ] },
-      { at: 430, kind: "gate", side: 1, op: "sub", k: 5 },
-      { at: 492, kind: "wave", clog: 24, suds: 4, spit: 1, hair: 1, leaf: 1, spd: 1.05 },
-      { at: 580, kind: "crate", layout: "row", items: [
-        { type: "volunteer", hp: 8, x: -3 },
-        { type: "volunteer", hp: 2, x: 3.6 },
-        { type: "volunteer", hp: 2, x: 3 },
-      ] },
-      { at: 610, kind: "crate", layout: "row", items: [
-        { type: "volunteer", hp: 11, x: -3 },
-        { type: "volunteer", hp: 5, x: -3.6 },
-        { type: "volunteer", hp: 5, x: 3 },
-      ] },
-      { at: 640, kind: "crate", layout: "row", items: [
-        { type: "volunteer", hp: 6, x: -3 },
-        { type: "volunteer", hp: 2, x: 3.6 },
-        { type: "volunteer", hp: 2, x: 3 },
-      ] },
-      { at: 670, kind: "crate", layout: "row", items: [
-        { type: "volunteer", hp: 5, x: -3 },
-        { type: "volunteer", hp: 5, x: -3.6 },
-        { type: "volunteer", hp: 5, x: 3 },
-      ] },
-      { at: 700, kind: "gate", side: 1, op: "sub", k: 6 },
-      { at: 730, kind: "crate", layout: "row", items: [
-        { type: "volunteer", hp: 5, x: -3 },
-        { type: "volunteer", hp: 5, x: 3.6 },
-        { type: "volunteer", hp: 5, x: 3 },
-      ] },
-      { at: 760, kind: "crate", layout: "row", items: [
-        { type: "volunteer", hp: 2, x: -3 },
-        { type: "volunteer", hp: 2, x: -3.6 },
-        { type: "volunteer", hp: 2, x: 3 },
-      ] },
-      { at: 790, kind: "crate", layout: "row", items: [
-        { type: "volunteer", hp: 4, x: -3 },
-        { type: "volunteer", hp: 4, x: 3.6 },
-        { type: "volunteer", hp: 4, x: 3 },
-      ] },
-      { at: 820, kind: "crate", layout: "row", items: [
-        { type: "volunteer", hp: 2, x: -3 },
-        { type: "volunteer", hp: 2, x: -3.6 },
-        { type: "volunteer", hp: 2, x: 3 },
-      ] },
-      { at: 860, kind: "boss" },
-    ],
-  },
-  "1-4": {
-    id: "1-4",
-    name: "1-4 LOW WATER MARK",
-    chapter: "THE DAM RUNS DRY",
-    intro: "The gauge just lied. The water did not.",
-    len: 900,
-    river: -0.75,
-    dam: 1.9,
-    theme: 0,
-    hpMul: 1.25,
-    baseHp: 1100,
-    vol: 12,
-    starN: 55,
-    starSec: 38,
-    boss: "baron",
-    bossHp: 2300,
-    bossName: "BARON CLOG",
-    win: "BRIDGE HELD!",
-    events: [
-      { at: 26, kind: "gate", side: 1, op: "add", k: 6 },
-      { at: 54, kind: "gate", side: 0, op: "add", k: 5 },
-      { at: 74, kind: "crate", layout: "row", items: [
-        { type: "volunteer", hp: 8, x: -3 },
-        { type: "volunteer", hp: 8, x: 3.6 },
-        { type: "volunteer", hp: 8, x: 3 },
-      ] },
-      { at: 96, kind: "gate", side: 0, op: "mul", k: 2 },
-      { at: 124, kind: "wave", clog: 56, spd: 1.05 },
-      { at: 210, kind: "crate", layout: "single", items: [{ type: "volunteer", hp: 1, x: -3.6 }] },
-      { at: 230, kind: "crate", layout: "row", items: [
-        { type: "weapon", gun: "mini", hp: 12, x: -3 },
-        { type: "weapon", gun: "mini", hp: 12, x: 3.6 },
-        { type: "weapon", gun: "mini", hp: 12, x: 3 },
-      ] },
-      { at: 250, kind: "crate", layout: "row", items: [
-        { type: "volunteer", hp: 6, x: -3 },
-        { type: "volunteer", hp: 2, x: -3.6 },
-        { type: "volunteer", hp: 9, x: 3 },
-      ] },
-      { at: 290, kind: "crate", layout: "row", items: [
-        { type: "volunteer", hp: 7, x: -3 },
-        { type: "volunteer", hp: 3, x: 3.6 },
-        { type: "volunteer", hp: 9, x: 3 },
-      ] },
-      { at: 340, kind: "wave", clog: 64, suds: 12, spd: 1.05 },
-      { at: 430, kind: "crate", layout: "row", items: [
-        { type: "volunteer", hp: 7, x: -3 },
-        { type: "volunteer", hp: 3, x: -3.6 },
-        { type: "volunteer", hp: 9, x: 3 },
-      ] },
-      { at: 455, kind: "crate", layout: "row", items: [
-        { type: "volunteer", hp: 6, x: -3 },
-        { type: "volunteer", hp: 2, x: 3.6 },
-        { type: "volunteer", hp: 6, x: 3 },
-      ] },
-      { at: 480, kind: "crate", layout: "single", items: [{ type: "volunteer", hp: 1, x: -3.6 }] },
-      { at: 520, kind: "crate", layout: "row", items: [
-        { type: "weapon", gun: "beam", hp: 12, x: -3 },
-        { type: "weapon", gun: "beam", hp: 12, x: 3.6 },
-        { type: "weapon", gun: "beam", hp: 12, x: 3 },
-      ] },
-      { at: 580, kind: "wave", clog: 72, suds: 14, spit: 1, duck: 1, spd: 1.05 },
-      { at: 670, kind: "crate", layout: "row", items: [
-        { type: "volunteer", hp: 5, x: -3 },
-        { type: "volunteer", hp: 3, x: -3.6 },
-        { type: "volunteer", hp: 3, x: 3 },
-      ] },
-      { at: 695, kind: "crate", layout: "row", items: [
-        { type: "weapon", gun: "storm", hp: 12, x: -3 },
-        { type: "weapon", gun: "storm", hp: 12, x: 3.6 },
-        { type: "weapon", gun: "storm", hp: 12, x: 3 },
-      ] },
-      { at: 720, kind: "crate", layout: "row", items: [
-        { type: "volunteer", hp: 3, x: -3 },
-        { type: "volunteer", hp: 3, x: -3.6 },
-        { type: "volunteer", hp: 3, x: 3 },
-      ] },
-      { at: 745, kind: "crate", layout: "row", items: [
-        { type: "tier", hp: 10, x: -3 },
-        { type: "tier", hp: 10, x: 3.6 },
-        { type: "tier", hp: 10, x: 3 },
-      ] },
-      { at: 770, kind: "crate", layout: "row", items: [
-        { type: "volunteer", hp: 3, x: -3 },
-        { type: "volunteer", hp: 3, x: -3.6 },
-        { type: "volunteer", hp: 3, x: 3 },
-      ] },
-      { at: 800, kind: "crate", layout: "row", items: [
-        { type: "volunteer", hp: 5, x: -3 },
-        { type: "volunteer", hp: 5, x: 3.6 },
-        { type: "volunteer", hp: 5, x: 3 },
-      ] },
-      { at: 830, kind: "gate", side: 1, op: "sub", k: 4 },
-      { at: 855, kind: "crate", layout: "row", items: [
-        { type: "volunteer", hp: 4, x: -3 },
-        { type: "volunteer", hp: 4, x: -3.6 },
-        { type: "volunteer", hp: 4, x: 3 },
-      ] },
-      { at: 880, kind: "crate", layout: "row", items: [
-        { type: "volunteer", hp: 3, x: -3 },
-        { type: "volunteer", hp: 3, x: 3.6 },
-        { type: "volunteer", hp: 3, x: 3 },
-      ] },
-      { at: 900, kind: "boss" },
-    ],
-  },
-  "1-5": {
-    id: "1-5",
-    name: "1-5 SLUICE RUN",
-    chapter: "THE DAM RUNS DRY",
-    intro: "Every sluice is open. None of them asked us.",
-    len: 940,
-    river: -0.9,
-    dam: 2.05,
-    theme: 1,
-    hpMul: 1.32,
-    baseHp: 1200,
-    vol: 12,
-    starN: 60,
-    starSec: 40,
-    boss: "tub",
-    bossHp: 5000,
-    bossName: "BIG TUB",
-    win: "BRIDGE HELD!",
-    events: [
-      { at: 26, kind: "gate", side: 1, op: "add", k: 6 },
-      { at: 54, kind: "gate", side: 0, op: "add", k: 5 },
-      { at: 74, kind: "crate", layout: "row", items: [
-        { type: "volunteer", hp: 10, x: -3 },
-        { type: "volunteer", hp: 10, x: -3.6 },
-        { type: "volunteer", hp: 10, x: 3 },
-      ] },
-      { at: 96, kind: "gate", side: 0, op: "mul", k: 2 },
-      { at: 128, kind: "wave", clog: 36, spd: 1.1 },
-      { at: 214, kind: "crate", layout: "single", items: [{ type: "volunteer", hp: 1, x: 3.6 }] },
-      { at: 256, kind: "crate", layout: "row", items: [
-        { type: "volunteer", hp: 12, x: -3 },
-        { type: "volunteer", hp: 7, x: -3.6 },
-        { type: "volunteer", hp: 12, x: 3 },
-      ] },
-      { at: 300, kind: "crate", layout: "row", items: [
-        { type: "volunteer", hp: 14, x: -3 },
-        { type: "volunteer", hp: 7, x: 3.6 },
-        { type: "volunteer", hp: 6, x: 3 },
-      ] },
-      { at: 360, kind: "wave", clog: 48, suds: 8, hair: 1, spd: 1.1 },
-      { at: 450, kind: "crate", layout: "row", items: [
-        { type: "volunteer", hp: 14, x: -3 },
-        { type: "volunteer", hp: 6, x: -3.6 },
-        { type: "volunteer", hp: 6, x: 3 },
-      ] },
-      { at: 475, kind: "crate", layout: "row", items: [
-        { type: "weapon", gun: "flame", hp: 12, x: -3 },
-        { type: "weapon", gun: "flame", hp: 12, x: 3.6 },
-        { type: "weapon", gun: "flame", hp: 12, x: 3 },
-      ] },
-      { at: 500, kind: "crate", layout: "row", items: [
-        { type: "volunteer", hp: 2, x: -3 },
-        { type: "volunteer", hp: 2, x: -3.6 },
-        { type: "volunteer", hp: 6, x: 3 },
-      ] },
-      { at: 545, kind: "crate", layout: "row", items: [
-        { type: "weapon", gun: "glacier", hp: 12, x: -3 },
-        { type: "weapon", gun: "glacier", hp: 12, x: 3.6 },
-        { type: "weapon", gun: "glacier", hp: 12, x: 3 },
-      ] },
-      { at: 610, kind: "wave", clog: 52, suds: 10, spd: 1.1 },
-      { at: 700, kind: "crate", layout: "row", items: [
-        { type: "volunteer", hp: 2, x: -3 },
-        { type: "volunteer", hp: 2, x: -3.6 },
-        { type: "volunteer", hp: 2, x: 3 },
-      ] },
-      { at: 725, kind: "crate", layout: "row", items: [
-        { type: "weapon", gun: "rail", hp: 12, x: -3 },
-        { type: "weapon", gun: "rail", hp: 12, x: 3.6 },
-        { type: "weapon", gun: "rail", hp: 12, x: 3 },
-      ] },
-      { at: 750, kind: "crate", layout: "row", items: [
-        { type: "volunteer", hp: 2, x: -3 },
-        { type: "volunteer", hp: 2, x: -3.6 },
-        { type: "volunteer", hp: 2, x: 3 },
-      ] },
-      { at: 780, kind: "crate", layout: "row", items: [
-        { type: "volunteer", hp: 8, x: -3 },
-        { type: "volunteer", hp: 8, x: 3.6 },
-        { type: "volunteer", hp: 8, x: 3 },
-      ] },
-      { at: 810, kind: "crate", layout: "row", items: [
-        { type: "volunteer", hp: 2, x: -3 },
-        { type: "volunteer", hp: 2, x: -3.6 },
-        { type: "volunteer", hp: 2, x: 3 },
-      ] },
-      { at: 840, kind: "crate", layout: "row", items: [
-        { type: "tier", hp: 10, x: -3 },
-        { type: "tier", hp: 10, x: 3.6 },
-        { type: "tier", hp: 10, x: 3 },
-      ] },
-      { at: 870, kind: "crate", layout: "row", items: [
-        { type: "volunteer", hp: 2, x: -3 },
-        { type: "volunteer", hp: 2, x: -3.6 },
-        { type: "volunteer", hp: 2, x: 3 },
-      ] },
-      { at: 895, kind: "crate", layout: "row", items: [
-        { type: "volunteer", hp: 8, x: -3 },
-        { type: "volunteer", hp: 8, x: 3.6 },
-        { type: "volunteer", hp: 8, x: 3 },
-      ] },
-      { at: 920, kind: "crate", layout: "row", items: [
-        { type: "volunteer", hp: 2, x: -3 },
-        { type: "volunteer", hp: 2, x: -3.6 },
-        { type: "volunteer", hp: 2, x: 3 },
-      ] },
-      { at: 940, kind: "boss" },
-    ],
-  },
-  "1-6": {
-    id: "1-6",
-    name: "1-6 RUST BOLTS",
-    chapter: "THE DAM RUNS DRY",
-    intro: "The bolts are singing. That is not a good song.",
-    len: 980,
-    river: -1.05,
-    dam: 2.2,
-    theme: 2,
-    hpMul: 1.4,
-    baseHp: 1350,
-    vol: 14,
-    starN: 65,
-    starSec: 42,
-    boss: "grunk",
-    bossHp: 6500,
-    bossName: "GRUNK THE PLUMBER",
-    win: "DAM HELD!",
-    events: [
-      { at: 26, kind: "gate", side: 1, op: "add", k: 6 },
-      { at: 54, kind: "gate", side: 0, op: "add", k: 5 },
-      { at: 74, kind: "crate", layout: "row", items: [
-        { type: "volunteer", hp: 9, x: -3 },
-        { type: "volunteer", hp: 9, x: 3.6 },
-        { type: "volunteer", hp: 9, x: 3 },
-      ] },
-      { at: 96, kind: "gate", side: 0, op: "mul", k: 2 },
-      { at: 132, kind: "wave", clog: 40, leafN: 3, spd: 1.1 },
-      { at: 222, kind: "crate", layout: "single", items: [{ type: "volunteer", hp: 13, x: -3 }] },
-      { at: 268, kind: "crate", layout: "row", items: [
-        { type: "volunteer", hp: 11, x: -3 },
-        { type: "volunteer", hp: 7, x: -3.6 },
-        { type: "volunteer", hp: 2, x: 3 },
-      ] },
-      { at: 316, kind: "crate", layout: "row", items: [
-        { type: "volunteer", hp: 11, x: -3 },
-        { type: "volunteer", hp: 7, x: 3.6 },
-        { type: "volunteer", hp: 2, x: 3 },
-      ] },
-      { at: 370, kind: "wave", clog: 52, suds: 8, leaf: 1, spd: 1.1 },
-      { at: 460, kind: "crate", layout: "row", items: [
-        { type: "volunteer", hp: 12, x: -3 },
-        { type: "volunteer", hp: 7, x: -3.6 },
-        { type: "volunteer", hp: 2, x: 3 },
-      ] },
-      { at: 485, kind: "crate", layout: "row", items: [
-        { type: "volunteer", hp: 13, x: -3 },
-        { type: "volunteer", hp: 10, x: 3.6 },
-        { type: "volunteer", hp: 1, x: 3 },
-      ] },
-      { at: 510, kind: "crate", layout: "row", items: [
-        { type: "volunteer", hp: 10, x: -3 },
-        { type: "volunteer", hp: 8, x: -3.6 },
-        { type: "volunteer", hp: 2, x: 3 },
-      ] },
-      { at: 535, kind: "crate", layout: "row", items: [
-        { type: "weapon", gun: "saw", hp: 12, x: -3 },
-        { type: "weapon", gun: "saw", hp: 12, x: 3.6 },
-        { type: "weapon", gun: "saw", hp: 12, x: 3 },
-      ] },
-      { at: 575, kind: "crate", layout: "row", items: [
-        { type: "weapon", gun: "cone", hp: 12, x: -3 },
-        { type: "weapon", gun: "cone", hp: 12, x: -3.6 },
-        { type: "weapon", gun: "cone", hp: 12, x: 3 },
-      ] },
-      { at: 640, kind: "wave", clog: 56, suds: 10, leaf: 1, spd: 1.1 },
-      { at: 730, kind: "crate", layout: "row", items: [
-        { type: "volunteer", hp: 2, x: -3 },
-        { type: "volunteer", hp: 2, x: 3.6 },
-        { type: "volunteer", hp: 2, x: 3 },
-      ] },
-      { at: 760, kind: "crate", layout: "row", items: [
-        { type: "weapon", gun: "barrage", hp: 12, x: -3 },
-        { type: "weapon", gun: "barrage", hp: 12, x: -3.6 },
-        { type: "weapon", gun: "barrage", hp: 12, x: 3 },
-      ] },
-      { at: 790, kind: "crate", layout: "row", items: [
-        { type: "volunteer", hp: 2, x: -3 },
-        { type: "volunteer", hp: 2, x: 3.6 },
-        { type: "volunteer", hp: 2, x: 3 },
-      ] },
-      { at: 820, kind: "crate", layout: "row", items: [
-        { type: "tier", hp: 10, x: -3 },
-        { type: "tier", hp: 10, x: -3.6 },
-        { type: "tier", hp: 10, x: 3 },
-      ] },
-      { at: 850, kind: "crate", layout: "row", items: [
-        { type: "volunteer", hp: 2, x: -3 },
-        { type: "volunteer", hp: 2, x: 3.6 },
-        { type: "volunteer", hp: 2, x: 3 },
-      ] },
-      { at: 880, kind: "crate", layout: "row", items: [
-        { type: "volunteer", hp: 6, x: -3 },
-        { type: "volunteer", hp: 6, x: -3.6 },
-        { type: "volunteer", hp: 6, x: 3 },
-      ] },
-      { at: 910, kind: "crate", layout: "row", items: [
-        { type: "volunteer", hp: 2, x: -3 },
-        { type: "volunteer", hp: 2, x: 3.6 },
-        { type: "volunteer", hp: 2, x: 3 },
-      ] },
-      { at: 935, kind: "crate", layout: "row", items: [
-        { type: "volunteer", hp: 6, x: -3 },
-        { type: "volunteer", hp: 6, x: -3.6 },
-        { type: "volunteer", hp: 6, x: 3 },
-      ] },
-      { at: 960, kind: "crate", layout: "row", items: [
-        { type: "volunteer", hp: 2, x: -3 },
-        { type: "volunteer", hp: 2, x: 3.6 },
-        { type: "volunteer", hp: 2, x: 3 },
-      ] },
-      { at: 980, kind: "boss" },
-    ],
-  },
-  "1-7": {
-    id: "1-7",
-    name: "1-7 DRY BED",
-    chapter: "THE DAM RUNS DRY",
-    intro: "Fish are walking. We are not celebrating.",
-    len: 1020,
-    river: -1.2,
-    dam: 2.35,
-    theme: 0,
-    hpMul: 1.48,
-    baseHp: 1450,
-    vol: 14,
-    starN: 70,
-    starSec: 45,
-    boss: "baron",
-    bossHp: 6400,
-    bossName: "BARON CLOG",
-    win: "BRIDGE HELD!",
-    events: [
-      { at: 26, kind: "gate", side: 1, op: "add", k: 6 },
-      { at: 54, kind: "gate", side: 0, op: "add", k: 5 },
-      { at: 74, kind: "crate", layout: "row", items: [
-        { type: "volunteer", hp: 5, x: -3 },
-        { type: "volunteer", hp: 5, x: -3.6 },
-        { type: "volunteer", hp: 5, x: 3 },
-      ] },
-      { at: 96, kind: "gate", side: 0, op: "mul", k: 2 },
-      { at: 136, kind: "wave", clog: 42, spd: 1.15 },
-      { at: 224, kind: "crate", layout: "row", items: [
-        { type: "volunteer", hp: 5, x: -3 },
-        { type: "volunteer", hp: 11, x: 3.6 },
-        { type: "volunteer", hp: 4, x: 3 },
-      ] },
-      { at: 270, kind: "crate", layout: "row", items: [
-        { type: "volunteer", hp: 5, x: -3 },
-        { type: "volunteer", hp: 11, x: -3.6 },
-        { type: "volunteer", hp: 9, x: 3 },
-      ] },
-      { at: 318, kind: "crate", layout: "row", items: [
-        { type: "volunteer", hp: 5, x: -3 },
-        { type: "volunteer", hp: 7, x: 3.6 },
-        { type: "volunteer", hp: 9, x: 3 },
-      ] },
-      { at: 380, kind: "wave", clog: 56, suds: 8, spd: 1.15 },
-      { at: 470, kind: "crate", layout: "row", items: [
-        { type: "volunteer", hp: 5, x: -3 },
-        { type: "volunteer", hp: 5, x: -3.6 },
-        { type: "volunteer", hp: 4, x: 3 },
-      ] },
-      { at: 495, kind: "crate", layout: "row", items: [
-        { type: "volunteer", hp: 5, x: -3 },
-        { type: "volunteer", hp: 6, x: 3.6 },
-        { type: "volunteer", hp: 4, x: 3 },
-      ] },
-      { at: 520, kind: "crate", layout: "row", items: [
-        { type: "volunteer", hp: 7, x: -3 },
-        { type: "volunteer", hp: 5, x: -3.6 },
-        { type: "volunteer", hp: 9, x: 3 },
-      ] },
-      { at: 548, kind: "crate", layout: "row", items: [
-        { type: "weapon", gun: "aurora", hp: 12, x: -3 },
-        { type: "weapon", gun: "aurora", hp: 12, x: 3.6 },
-        { type: "weapon", gun: "aurora", hp: 12, x: 3 },
-      ] },
-      { at: 588, kind: "crate", layout: "row", items: [
-        { type: "weapon", gun: "storm", hp: 12, x: -3 },
-        { type: "weapon", gun: "storm", hp: 12, x: -3.6 },
-        { type: "weapon", gun: "storm", hp: 12, x: 3 },
-      ] },
-      { at: 650, kind: "wave", clog: 60, suds: 10, spd: 1.15 },
-      { at: 740, kind: "crate", layout: "row", items: [
-        { type: "volunteer", hp: 2, x: -3 },
-        { type: "volunteer", hp: 2, x: 3.6 },
-        { type: "volunteer", hp: 2, x: 3 },
-      ] },
-      { at: 770, kind: "crate", layout: "row", items: [
-        { type: "weapon", gun: "dambust", hp: 12, x: -3 },
-        { type: "weapon", gun: "dambust", hp: 12, x: -3.6 },
-        { type: "weapon", gun: "dambust", hp: 12, x: 3 },
-      ] },
-      { at: 800, kind: "crate", layout: "row", items: [
-        { type: "volunteer", hp: 2, x: -3 },
-        { type: "volunteer", hp: 2, x: 3.6 },
-        { type: "volunteer", hp: 2, x: 3 },
-      ] },
-      { at: 830, kind: "crate", layout: "row", items: [
-        { type: "tier", hp: 10, x: -3 },
-        { type: "tier", hp: 10, x: -3.6 },
-        { type: "tier", hp: 10, x: 3 },
-      ] },
-      { at: 880, kind: "wave", clog: 36, spd: 1.15 },
-      { at: 960, kind: "crate", layout: "row", items: [
-        { type: "volunteer", hp: 2, x: -3 },
-        { type: "volunteer", hp: 2, x: 3.6 },
-        { type: "volunteer", hp: 2, x: 3 },
-      ] },
-      { at: 990, kind: "crate", layout: "row", items: [
-        { type: "volunteer", hp: 5, x: -3 },
-        { type: "volunteer", hp: 5, x: -3.6 },
-        { type: "volunteer", hp: 5, x: 3 },
-      ] },
-      { at: 1020, kind: "boss" },
-    ],
-  },
-  "1-8": {
-    id: "1-8",
-    name: "1-8 PIPE WORKS",
-    chapter: "THE DAM RUNS DRY",
-    intro: "Someone re-threaded the valley. Badly.",
-    len: 1060,
-    river: -1.35,
-    dam: 2.5,
-    theme: 1,
-    hpMul: 1.56,
-    baseHp: 1550,
-    vol: 16,
-    starN: 75,
-    starSec: 48,
-    boss: "tub",
-    bossHp: 5800,
-    bossName: "BIG TUB",
-    win: "BRIDGE HELD!",
-    events: [
-      { at: 26, kind: "gate", side: 1, op: "add", k: 6 },
-      { at: 54, kind: "gate", side: 0, op: "add", k: 5 },
-      { at: 74, kind: "crate", layout: "row", items: [
-        { type: "volunteer", hp: 12, x: -3 },
-        { type: "volunteer", hp: 1, x: 3.6 },
-        { type: "volunteer", hp: 12, x: 3 },
-      ] },
-      { at: 96, kind: "gate", side: 0, op: "mul", k: 2 },
-      { at: 140, kind: "wave", clog: 44, suds: 8, spit: 1, spd: 1.15 },
-      { at: 230, kind: "crate", layout: "row", items: [
-        { type: "volunteer", hp: 2, x: -3 },
-        { type: "volunteer", hp: 1, x: -3.6 },
-        { type: "volunteer", hp: 2, x: 3 },
-      ] },
-      { at: 276, kind: "crate", layout: "row", items: [
-        { type: "volunteer", hp: 2, x: -3 },
-        { type: "volunteer", hp: 1, x: 3.6 },
-        { type: "volunteer", hp: 2, x: 3 },
-      ] },
-      { at: 305, kind: "crate", layout: "row", items: [
-        { type: "volunteer", hp: 5, x: -3 },
-        { type: "volunteer", hp: 1, x: -3.6 },
-        { type: "volunteer", hp: 5, x: 3 },
-      ] },
-      { at: 330, kind: "crate", layout: "row", items: [
-        { type: "volunteer", hp: 2, x: -3 },
-        { type: "volunteer", hp: 1, x: 3.6 },
-        { type: "volunteer", hp: 2, x: 3 },
-      ] },
-      { at: 400, kind: "wave", clog: 48, suds: 8, spit: 1, spd: 1.15 },
-      { at: 490, kind: "crate", layout: "row", items: [
-        { type: "volunteer", hp: 2, x: -3 },
-        { type: "volunteer", hp: 1, x: -3.6 },
-        { type: "volunteer", hp: 2, x: 3 },
-      ] },
-      { at: 518, kind: "crate", layout: "row", items: [
-        { type: "weapon", gun: "mini", hp: 12, x: -3 },
-        { type: "weapon", gun: "mini", hp: 12, x: 3.6 },
-        { type: "weapon", gun: "mini", hp: 12, x: 3 },
-      ] },
-      { at: 545, kind: "crate", layout: "row", items: [
-        { type: "volunteer", hp: 2, x: -3 },
-        { type: "volunteer", hp: 1, x: -3.6 },
-        { type: "volunteer", hp: 2, x: 3 },
-      ] },
-      { at: 572, kind: "crate", layout: "row", items: [
-        { type: "weapon", gun: "barrage", hp: 12, x: -3 },
-        { type: "weapon", gun: "barrage", hp: 12, x: 3.6 },
-        { type: "weapon", gun: "barrage", hp: 12, x: 3 },
-      ] },
-      { at: 600, kind: "crate", layout: "row", items: [
-        { type: "volunteer", hp: 2, x: -3 },
-        { type: "volunteer", hp: 2, x: -3.6 },
-        { type: "volunteer", hp: 2, x: 3 },
-      ] },
-      { at: 635, kind: "crate", layout: "row", items: [
-        { type: "weapon", gun: "cone", hp: 12, x: -3 },
-        { type: "weapon", gun: "cone", hp: 12, x: 3.6 },
-        { type: "weapon", gun: "cone", hp: 12, x: 3 },
-      ] },
-      { at: 680, kind: "wave", clog: 52, suds: 10, spd: 1.15 },
-      { at: 770, kind: "crate", layout: "row", items: [
-        { type: "volunteer", hp: 2, x: -3 },
-        { type: "volunteer", hp: 2, x: -3.6 },
-        { type: "volunteer", hp: 2, x: 3 },
-      ] },
-      { at: 800, kind: "crate", layout: "row", items: [
-        { type: "tier", hp: 10, x: -3 },
-        { type: "tier", hp: 10, x: 3.6 },
-        { type: "tier", hp: 10, x: 3 },
-      ] },
-      { at: 830, kind: "crate", layout: "row", items: [
-        { type: "volunteer", hp: 2, x: -3 },
-        { type: "volunteer", hp: 2, x: -3.6 },
-        { type: "volunteer", hp: 2, x: 3 },
-      ] },
-      { at: 870, kind: "crate", layout: "row", items: [
-        { type: "volunteer", hp: 5, x: -3 },
-        { type: "volunteer", hp: 5, x: 3.6 },
-        { type: "volunteer", hp: 5, x: 3 },
-      ] },
-      { at: 920, kind: "wave", clog: 40, suds: 8, spd: 1.15 },
-      { at: 1008, kind: "crate", layout: "row", items: [
-        { type: "volunteer", hp: 2, x: -3 },
-        { type: "volunteer", hp: 2, x: -3.6 },
-        { type: "volunteer", hp: 2, x: 3 },
-      ] },
-      { at: 1034, kind: "crate", layout: "row", items: [
-        { type: "volunteer", hp: 5, x: -3 },
-        { type: "volunteer", hp: 5, x: 3.6 },
-        { type: "volunteer", hp: 5, x: 3 },
-      ] },
-      { at: 1060, kind: "boss" },
-    ],
-  },
-  "1-9": {
-    id: "1-9",
-    name: "1-9 CRACKED APRON",
-    chapter: "THE DAM RUNS DRY",
-    intro: "The apron cracked. The plan did not.",
-    len: 1100,
-    river: -1.5,
-    dam: 2.65,
-    theme: 2,
-    hpMul: 1.65,
-    baseHp: 1700,
-    vol: 16,
-    starN: 80,
-    starSec: 50,
-    boss: "baron",
-    bossHp: 7200,
-    bossName: "BARON CLOG",
-    win: "BRIDGE HELD!",
-    events: [
-      { at: 26, kind: "gate", side: 1, op: "add", k: 6 },
-      { at: 54, kind: "gate", side: 0, op: "add", k: 5 },
-      { at: 74, kind: "crate", layout: "row", items: [
-        { type: "volunteer", hp: 14, x: -3 },
-        { type: "volunteer", hp: 6, x: -3.6 },
-        { type: "volunteer", hp: 12, x: 3 },
-      ] },
-      { at: 96, kind: "crate", layout: "single", items: [{ type: "volunteer", hp: 4, x: 3.6 }] },
-      { at: 148, kind: "wave", clog: 36, hair: 1, spd: 1.2 },
-      { at: 236, kind: "crate", layout: "row", items: [
-        { type: "volunteer", hp: 14, x: -3 },
-        { type: "volunteer", hp: 6, x: -3.6 },
-        { type: "volunteer", hp: 8, x: 3 },
-      ] },
-      { at: 282, kind: "crate", layout: "row", items: [
-        { type: "volunteer", hp: 16, x: -3 },
-        { type: "volunteer", hp: 6, x: 3.6 },
-        { type: "volunteer", hp: 6, x: 3 },
-      ] },
-      { at: 313, kind: "crate", layout: "row", items: [
-        { type: "volunteer", hp: 14, x: -3 },
-        { type: "volunteer", hp: 6, x: -3.6 },
-        { type: "volunteer", hp: 6, x: 3 },
-      ] },
-      { at: 340, kind: "crate", layout: "row", items: [
-        { type: "volunteer", hp: 3, x: -3 },
-        { type: "volunteer", hp: 6, x: 3.6 },
-        { type: "volunteer", hp: 5, x: 3 },
-      ] },
-      { at: 370, kind: "crate", layout: "row", items: [
-        { type: "volunteer", hp: 1, x: -3 },
-        { type: "volunteer", hp: 6, x: -3.6 },
-        { type: "volunteer", hp: 5, x: 3 },
-      ] },
-      { at: 420, kind: "wave", clog: 44, suds: 6, hair: 1, spd: 1.2 },
-      { at: 510, kind: "crate", layout: "row", items: [
-        { type: "volunteer", hp: 1, x: -3 },
-        { type: "volunteer", hp: 6, x: 3.6 },
-        { type: "volunteer", hp: 5, x: 3 },
-      ] },
-      { at: 535, kind: "crate", layout: "row", items: [
-        { type: "weapon", gun: "rail", hp: 12, x: -3 },
-        { type: "weapon", gun: "rail", hp: 12, x: -3.6 },
-        { type: "weapon", gun: "rail", hp: 12, x: 3 },
-      ] },
-      { at: 560, kind: "crate", layout: "row", items: [
-        { type: "volunteer", hp: 2, x: -3 },
-        { type: "volunteer", hp: 2, x: 3.6 },
-        { type: "volunteer", hp: 2, x: 3 },
-      ] },
-      { at: 590, kind: "crate", layout: "row", items: [
-        { type: "weapon", gun: "aurora", hp: 12, x: -3 },
-        { type: "weapon", gun: "aurora", hp: 12, x: -3.6 },
-        { type: "weapon", gun: "aurora", hp: 12, x: 3 },
-      ] },
-      { at: 620, kind: "crate", layout: "row", items: [
-        { type: "volunteer", hp: 2, x: -3 },
-        { type: "volunteer", hp: 2, x: 3.6 },
-        { type: "volunteer", hp: 2, x: 3 },
-      ] },
-      { at: 655, kind: "crate", layout: "row", items: [
-        { type: "weapon", gun: "beam", hp: 12, x: -3 },
-        { type: "weapon", gun: "beam", hp: 12, x: -3.6 },
-        { type: "weapon", gun: "beam", hp: 12, x: 3 },
-      ] },
-      { at: 710, kind: "wave", clog: 48, suds: 8, hair: 1, spd: 1.2 },
-      { at: 800, kind: "crate", layout: "row", items: [
-        { type: "volunteer", hp: 2, x: -3 },
-        { type: "volunteer", hp: 2, x: 3.6 },
-        { type: "volunteer", hp: 2, x: 3 },
-      ] },
-      { at: 830, kind: "crate", layout: "row", items: [
-        { type: "tier", hp: 10, x: -3 },
-        { type: "tier", hp: 10, x: -3.6 },
-        { type: "tier", hp: 10, x: 3 },
-      ] },
-      { at: 860, kind: "crate", layout: "row", items: [
-        { type: "volunteer", hp: 2, x: -3 },
-        { type: "volunteer", hp: 2, x: 3.6 },
-        { type: "volunteer", hp: 2, x: 3 },
-      ] },
-      { at: 900, kind: "crate", layout: "row", items: [
-        { type: "volunteer", hp: 3, x: -3 },
-        { type: "volunteer", hp: 3, x: -3.6 },
-        { type: "volunteer", hp: 3, x: 3 },
-      ] },
-      { at: 960, kind: "wave", clog: 40, hair: 1, spd: 1.2 },
-      { at: 1048, kind: "crate", layout: "row", items: [
-        { type: "volunteer", hp: 2, x: -3 },
-        { type: "volunteer", hp: 2, x: 3.6 },
-        { type: "volunteer", hp: 2, x: 3 },
-      ] },
-      { at: 1074, kind: "crate", layout: "row", items: [
-        { type: "volunteer", hp: 3, x: -3 },
-        { type: "volunteer", hp: 3, x: -3.6 },
-        { type: "volunteer", hp: 3, x: 3 },
-      ] },
-      { at: 1100, kind: "boss" },
-    ],
-  },
-  "1-10": {
-    id: "1-10",
-    name: "1-10 LAST GASKET",
-    chapter: "THE DAM RUNS DRY",
-    intro: "One gasket left. Grunk brought a bigger wrench.",
-    len: 1160,
-    river: -1.7,
-    dam: 2.85,
-    theme: 2,
-    hpMul: 1.75,
-    baseHp: 1850,
-    vol: 18,
-    starN: 90,
-    starSec: 55,
-    boss: "grunk",
-    bossHp: 3600,
-    bossName: "GRUNK THE PLUMBER",
-    win: "DAM HELD!",
-    events: [
-      { at: 26, kind: "gate", side: 1, op: "add", k: 6 },
-      { at: 54, kind: "gate", side: 0, op: "add", k: 5 },
-      { at: 74, kind: "crate", layout: "row", items: [
-        { type: "volunteer", hp: 10, x: -3 },
-        { type: "volunteer", hp: 3, x: 3.6 },
-        { type: "volunteer", hp: 18, x: 3 },
-      ] },
-      { at: 96, kind: "crate", layout: "single", items: [{ type: "volunteer", hp: 1, x: -3.6 }] },
-      { at: 118, kind: "crate", layout: "row", items: [
-        { type: "volunteer", hp: 8, x: -3 },
-        { type: "volunteer", hp: 3, x: 3.6 },
-        { type: "volunteer", hp: 11, x: 3 },
-      ] },
-      { at: 156, kind: "wave", clog: 40, suds: 6, spd: 1.25 },
-      { at: 246, kind: "crate", layout: "row", items: [
-        { type: "volunteer", hp: 8, x: -3 },
-        { type: "volunteer", hp: 3, x: -3.6 },
-        { type: "volunteer", hp: 8, x: 3 },
-      ] },
-      { at: 271, kind: "crate", layout: "row", items: [
-        { type: "volunteer", hp: 6, x: -3 },
-        { type: "volunteer", hp: 2, x: 3.6 },
-        { type: "volunteer", hp: 11, x: 3 },
-      ] },
-      { at: 296, kind: "crate", layout: "row", items: [
-        { type: "volunteer", hp: 6, x: -3 },
-        { type: "volunteer", hp: 2, x: -3.6 },
-        { type: "volunteer", hp: 6, x: 3 },
-      ] },
-      { at: 326, kind: "crate", layout: "row", items: [
-        { type: "weapon", gun: "saw", hp: 12, x: -3 },
-        { type: "weapon", gun: "saw", hp: 12, x: 3.6 },
-        { type: "weapon", gun: "saw", hp: 12, x: 3 },
-      ] },
-      { at: 356, kind: "crate", layout: "row", items: [
-        { type: "volunteer", hp: 4, x: -3 },
-        { type: "volunteer", hp: 2, x: -3.6 },
-        { type: "volunteer", hp: 4, x: 3 },
-      ] },
-      { at: 388, kind: "crate", layout: "row", items: [
-        { type: "volunteer", hp: 4, x: -3 },
-        { type: "volunteer", hp: 2, x: 3.6 },
-        { type: "volunteer", hp: 4, x: 3 },
-      ] },
-      { at: 440, kind: "wave", clog: 48, suds: 8, spd: 1.25 },
-      { at: 530, kind: "crate", layout: "row", items: [
-        { type: "volunteer", hp: 2, x: -3 },
-        { type: "volunteer", hp: 2, x: -3.6 },
-        { type: "volunteer", hp: 2, x: 3 },
-      ] },
-      { at: 555, kind: "crate", layout: "single", items: [{ type: "volunteer", hp: 2, x: 3.6 }] },
-      { at: 580, kind: "crate", layout: "row", items: [
-        { type: "volunteer", hp: 2, x: -3 },
-        { type: "volunteer", hp: 2, x: -3.6 },
-        { type: "volunteer", hp: 2, x: 3 },
-      ] },
-      { at: 610, kind: "crate", layout: "row", items: [
-        { type: "weapon", gun: "glacier", hp: 12, x: -3 },
-        { type: "weapon", gun: "glacier", hp: 12, x: 3.6 },
-        { type: "weapon", gun: "glacier", hp: 12, x: 3 },
-      ] },
-      { at: 640, kind: "crate", layout: "row", items: [
-        { type: "volunteer", hp: 2, x: -3 },
-        { type: "volunteer", hp: 2, x: -3.6 },
-        { type: "volunteer", hp: 2, x: 3 },
-      ] },
-      { at: 680, kind: "crate", layout: "row", items: [
-        { type: "weapon", gun: "storm", hp: 12, x: -3 },
-        { type: "weapon", gun: "storm", hp: 12, x: 3.6 },
-        { type: "weapon", gun: "storm", hp: 12, x: 3 },
-      ] },
-      { at: 740, kind: "wave", clog: 52, suds: 8, hair: 1, spd: 1.25 },
-      { at: 832, kind: "crate", layout: "row", items: [
-        { type: "volunteer", hp: 2, x: -3 },
-        { type: "volunteer", hp: 2, x: -3.6 },
-        { type: "volunteer", hp: 2, x: 3 },
-      ] },
-      { at: 861, kind: "crate", layout: "row", items: [
-        { type: "volunteer", hp: 3, x: -3 },
-        { type: "volunteer", hp: 3, x: 3.6 },
-        { type: "volunteer", hp: 3, x: 3 },
-      ] },
-      { at: 890, kind: "crate", layout: "row", items: [
-        { type: "volunteer", hp: 2, x: -3 },
-        { type: "volunteer", hp: 2, x: -3.6 },
-        { type: "volunteer", hp: 2, x: 3 },
-      ] },
-      { at: 935, kind: "crate", layout: "row", items: [
-        { type: "volunteer", hp: 3, x: -3 },
-        { type: "volunteer", hp: 3, x: 3.6 },
-        { type: "volunteer", hp: 3, x: 3 },
-      ] },
-      { at: 1000, kind: "wave", clog: 48, suds: 8, hair: 1, spd: 1.25 },
-      { at: 1090, kind: "crate", layout: "row", items: [
-        { type: "volunteer", hp: 2, x: -3 },
-        { type: "volunteer", hp: 2, x: -3.6 },
-        { type: "volunteer", hp: 2, x: 3 },
-      ] },
-      { at: 1115, kind: "crate", layout: "row", items: [
-        { type: "tier", hp: 10, x: -3 },
-        { type: "tier", hp: 10, x: 3.6 },
-        { type: "tier", hp: 10, x: 3 },
-      ] },
-      { at: 1140, kind: "crate", layout: "row", items: [
-        { type: "volunteer", hp: 2, x: -3 },
-        { type: "volunteer", hp: 2, x: -3.6 },
-        { type: "volunteer", hp: 2, x: 3 },
-      ] },
-      { at: 1160, kind: "boss" },
-    ],
-  },
+export const LEVELS = {};
+export const LEVEL_IDS = [];
+
+const SPAN_CHAPTER = [
+  { title: "THE PINE SPAN", theme: 0, intro: "Red bobers hold this span. Shoot the pack, then stand nearer the banner you want." },
+  { title: "THE SPILLWAY", theme: 1, intro: "Suds knights and spitters plug the wet span. The banners still pay the toll." },
+  { title: "THE CANOPY CUT", theme: 2, intro: "Ducks, leaves, and hairballs drop in from the trees. Keep moving." },
+  { title: "THE NIGHT GATE", theme: 3, intro: "Haulers walk the night span. Last through them and face the keeper." },
+];
+
+const SPAN_NAMES = [
+  ["PINE BRIDGE", "FIRST TOLL", "ROPE WALK", "LOW WATER", "SLUICE", "RUST BOLTS", "DRY BED", "PIPE WORKS", "CRACKED ARCH", "LAST GASKET"],
+  ["WET GATE", "FOAM LINE", "DRAIN BEND", "KNIGHT ROW", "SPITTER ARCH", "GREEN WATER", "BROKEN LIP", "SECOND TOLL", "FLOOD STEP", "TUB REACH"],
+  ["LEAF GATE", "DUCK DRIFT", "HAIR TURN", "CANOPY", "NEST ARCH", "GREEN ROPE", "BARK SPAN", "THIRD TOLL", "THICKET", "GRUNK CUT"],
+  ["NIGHT GATE", "GOLD CABLE", "HAULER ROW", "DARK ARCH", "QUIET TOLL", "BLACK WATER", "FOURTH SPAN", "CROWN WALK", "LAST TOLL", "DAM KEEP"],
+];
+
+const KEEPER_NAME = {
+  baron: ["LORD DRIP", "BARON CLOG", "CROWN PLUNGER", "RED KEEP"],
+  tub: ["BIG TUB", "FOAM TUB", "DUCK TUB", "NIGHT TUB"],
+  grunk: ["GRUNK", "WRENCH GRUNK", "TALL GRUNK", "GATE GRUNK"],
 };
 
-export const LEVEL_IDS = ["1-1", "1-2", "1-3", "1-4", "1-5", "1-6", "1-7", "1-8", "1-9", "1-10"];
+function gateAt(at, x, op, k) {
+  return { at, kind: "gate", x, op, k, side: x < 0 ? 0 : 1 };
+}
+
+function gunAt(at, gun) {
+  return { at, kind: "crate", layout: "single", items: [{ type: "weapon", gun, hp: 8, x: 0 }] };
+}
+
+function pushWave(evs, at, mix) {
+  const ev = { at, kind: "wave", clog: mix.clog, spd: mix.spd || 1 };
+  if (mix.suds) ev.suds = mix.suds;
+  if (mix.hauler) ev.hauler = mix.hauler;
+  if (mix.hair) ev.hair = mix.hair;
+  if (mix.spit) ev.spit = mix.spit;
+  if (mix.duck) ev.duck = mix.duck;
+  if (mix.leaf) ev.leaf = mix.leaf;
+  evs.push(ev);
+}
+
+function waveMix(ch, st, kind) {
+  const heat = ch * 2 + ((st / 3) | 0);
+  let clog = kind === "open" ? 8 + Math.min(4, st) : kind === "gate" ? 10 + Math.min(6, heat) : 7 + Math.min(5, heat);
+  const ev = { clog, spd: +(1 + ch * 0.03).toFixed(2) };
+  if (ch === 0 && st >= 3 && kind === "mid") ev.duck = 1;
+  if (ch === 0 && st >= 6 && kind === "gate") ev.suds = 1;
+  if (ch === 1) {
+    ev.suds = st < 2 ? (kind === "open" ? 0 : 1) : (kind === "open" ? 1 : 2);
+    if (kind !== "open" && st >= 2) ev.spit = 1 + (st > 6 ? 1 : 0);
+    ev.clog = Math.max(6, clog - (st < 2 ? 0 : 2));
+  }
+  if (ch === 2) {
+    ev.duck = kind === "open" ? 1 : 2;
+    if (kind !== "open") ev.leaf = 1;
+    if (kind === "mid" && st >= 2) ev.hair = 1;
+    ev.clog = Math.max(6, clog - 3);
+  }
+  if (ch === 3) {
+    ev.suds = 1 + (kind === "gate" ? 1 : 0);
+    if (st >= 2) ev.spit = 1;
+    if ((kind === "gate" || kind === "mid") && st >= 3) ev.hauler = 1;
+    if (kind === "gate" && st >= 8) ev.hauler = 2;
+  }
+  return ev;
+}
+
+function rowOps(index, row) {
+  if (index === 0) {
+    return [
+      ["add", 4, "add", 1],
+      ["add", 6, "mul", 2],
+      ["sub", 3, "mul", 2],
+      ["add", 8, "add", 2],
+    ][row];
+  }
+  const st = index % 10;
+  const ch = (index / 10) | 0;
+  const add = 3 + (st % 3);
+  const sub = 2 + Math.min(5, ch + (st > 6 ? 2 : 0));
+  if (st === 9 && row === 3) return ["sub", 3 + ch, "add", 2];
+  return [
+    ["add", add, "add", 1],
+    ["sub", sub, "mul", 2],
+    ["sub", sub + 1, "mul", 2],
+    ["add", add, "sub", Math.max(2, sub - 1)],
+  ][row];
+}
+
+function spanGuns(index) {
+  if (index === 0) return ["dambust", "mini", "beam"];
+  const pairs = [
+    ["saw", "rail"],
+    ["storm", "flame"],
+    ["glacier", "barrage"],
+    ["cone", "aurora"],
+    ["burst", "mini"],
+    ["dambust", "beam"],
+    ["rail", "storm"],
+    ["flame", "saw"],
+    ["aurora", "glacier"],
+    ["barrage", "cone"],
+  ];
+  return pairs[(index - 1) % pairs.length];
+}
+
+function spanRoad(index) {
+  const ch = (index / 10) | 0;
+  const st = index % 10;
+  const guns = spanGuns(index);
+  const gap = 120;
+  const gates = [78, 78 + gap, 78 + gap * 2, 78 + gap * 3];
+  const evs = [];
+  pushWave(evs, 36, waveMix(ch, st, "open"));
+  for (let r = 0; r < gates.length; r++) {
+    const g = gates[r];
+    pushWave(evs, g - 12, waveMix(ch, st, "gate"));
+    const ops = rowOps(index, r);
+    evs.push(gateAt(g, -2.45, ops[0], ops[1]));
+    evs.push(gateAt(g, 2.45, ops[2], ops[3]));
+    if (r < guns.length) evs.push(gunAt(g + 44, guns[r]));
+    if (r < gates.length - 1) pushWave(evs, g + 70, waveMix(ch, st, "mid"));
+  }
+  const bossAt = gates[3] + 76;
+  pushWave(evs, gates[3] + 40, waveMix(ch, st, "mid"));
+  evs.push({ at: bossAt, kind: "boss" });
+  return evs;
+}
+
+for (let i = 0; i < 40; i++) {
+  const ch = (i / 10) | 0;
+  const st = i % 10;
+  const id = (ch + 1) + "-" + (st + 1);
+  const chapter = SPAN_CHAPTER[ch];
+  const boss = ["baron", "tub", "grunk"][(ch + st) % 3];
+  const events = spanRoad(i);
+  LEVEL_IDS.push(id);
+  LEVELS[id] = {
+    id,
+    name: id + " " + SPAN_NAMES[ch][st],
+    chapter: chapter.title,
+    intro: chapter.intro,
+    len: events[events.length - 1].at,
+    river: 0,
+    dam: 1,
+    theme: chapter.theme,
+    hpMul: +(1 + ch * 0.08 + st * 0.012).toFixed(3),
+    baseHp: 8 + ch * 2,
+    vol: 6,
+    starN: 18 + ch * 4,
+    starSec: 28,
+    boss,
+    bossHp: 640 + ch * 380 + st * 50,
+    bossName: KEEPER_NAME[boss][ch],
+    win: "SPAN HELD!",
+    events,
+  };
+}
 
 export function levelOf(id) {
   return LEVELS[id] || LEVELS["1-1"];
@@ -1280,7 +398,7 @@ export function highestPlayable(cleared) {
   for (let i = 0; i < LEVEL_IDS.length; i++) {
     if (!done[LEVEL_IDS[i]]) return LEVEL_IDS[i];
   }
-  return "1-10";
+  return "4-10";
 }
 
 export function isUnlockedLevel(id, cleared) {
@@ -1289,81 +407,6 @@ export function isUnlockedLevel(id, cleared) {
   return !!(cleared && cleared[LEVEL_IDS[i - 1]]);
 }
 
-function gateAt(at, x, op, k) {
-  return { at, kind: "gate", x, op, k, side: x < 0 ? 0 : 1 };
-}
-
-function gunAt(at, gun) {
-  return { at, kind: "crate", layout: "single", items: [{ type: "weapon", gun, hp: 8, x: 0 }] };
-}
-
-function waveAt(at, clog, suds, spd) {
-  const ev = { at, kind: "wave", clog, spd: spd || 1 };
-  if (suds) ev.suds = suds;
-  return ev;
-}
-
-function rushRoad(rank, guns) {
-  const addA = 4 + Math.min(4, rank);
-  const addB = Math.max(1, addA - 3);
-  const crowd = Math.max(20, 28 - Math.floor(rank / 2));
-  const opener = Math.max(12, 20 - Math.max(0, rank - 1));
-  const suds = rank >= 5 ? 2 : 0;
-  const bad = 3 + rank;
-  const pace = 1 + rank * 0.02;
-  const waveLead = 8;
-  const gap = 250;
-  const g1 = 110;
-  const g2 = g1 + gap;
-  const g3 = g2 + gap;
-  const g4 = g3 + gap;
-  const ev = [
-    waveAt(g1 - waveLead, opener, 0, pace),
-    gateAt(g1, -2.45, "add", addA),
-    gateAt(g1, 2.45, "add", addB),
-    waveAt(g2 - waveLead, crowd, suds, pace),
-    gateAt(g2, -2.45, rank >= 3 ? "sub" : "add", rank >= 3 ? bad : addA + 2),
-    gateAt(g2, 2.45, "mul", 2),
-    gunAt(g2 + 70, guns[0]),
-    waveAt(g3 - waveLead, crowd + 6, suds, pace),
-    gateAt(g3, -2.45, "sub", bad),
-    gateAt(g3, 2.45, "mul", 2),
-    gunAt(g3 + 70, guns[1]),
-  ];
-  if (guns[2]) {
-    ev.push(waveAt(g4 - waveLead, crowd + 4, suds, 1.05));
-    ev.push(gateAt(g4, -2.45, "add", addA + 4));
-    ev.push(gateAt(g4, 2.45, "add", 2));
-    ev.push(gunAt(g4 + 70, guns[2]));
-    ev.push({ at: g4 + 180, kind: "boss" });
-  } else {
-    ev.push(waveAt(g4 - waveLead, crowd + 8, suds, 1.05));
-    ev.push(gateAt(g4, -2.45, "add", addA + 2));
-    ev.push(gateAt(g4, 2.45, "sub", Math.max(2, bad - 1)));
-    ev.push({ at: g4 + 160, kind: "boss" });
-  }
-  return ev;
-}
-
-const RUSH_GUNS = {
-  "1-1": ["dambust", "mini", "beam"],
-  "1-2": ["saw", "rail"],
-  "1-3": ["storm", "flame"],
-  "1-4": ["glacier", "barrage"],
-  "1-5": ["cone", "aurora"],
-  "1-6": ["flame", "burst"],
-  "1-7": ["rail", "barrage"],
-  "1-8": ["glacier", "beam"],
-  "1-9": ["cone", "mini"],
-  "1-10": ["aurora", "dambust"],
-};
-
-for (let ri = 0; ri < LEVEL_IDS.length; ri++) {
-  const roadId = LEVEL_IDS[ri];
-  const road = rushRoad(ri, RUSH_GUNS[roadId]);
-  LEVELS[roadId].events = road;
-  LEVELS[roadId].len = road[road.length - 1].at;
-}
 
 export function crateHp(base, type, explicit) {
   if (explicit) return explicit;
@@ -1870,7 +913,7 @@ export function rhythmIssues() {
         if (waves[w].front < ats[i] && waves[w].end > ats[i]) held = 1;
       }
       if (!held) fails.push(id + " choice quiet " + ats[i]);
-      if (i > 0 && ats[i] - ats[i - 1] < 200) fails.push(id + " row gap " + ats[i - 1] + ".." + ats[i]);
+      if (i > 0 && ats[i] - ats[i - 1] < 100) fails.push(id + " row gap " + ats[i - 1] + ".." + ats[i]);
     }
     for (let i = 0; i < evs.length; i++) {
       if (evs[i].kind !== "crate") continue;
@@ -1922,7 +965,7 @@ export function rhythmText() {
   }
   const fails = rhythmIssues();
   lines.push(fails.length ? "RHYTHM FAIL" : "RHYTHM PASS");
-  lines.push("empty stretch: gates sit far apart, with a quiet run between fights");
+  lines.push("spans: a pack sits between the banners");
   lines.push("road clearance: every gate row is inside a live wave");
   for (let i = 0; i < fails.length; i++) lines.push(fails[i]);
   return lines.join("\n");
@@ -1987,27 +1030,32 @@ export function selfTestRules() {
   shootGate(div, 6 * 40);
   eq(div.k, 15, "div cap");
 
-  eq(weaponMods("burst", 1).dmg, 1.7, "t1 dmg");
-  eq(Math.round(weaponMods("burst", 1).rate * 10), 120, "t1 rate");
-  eq(weaponMods("burst", 1).pattern, "stream", "burst flame");
-  eq(weaponMods("dambust", 1).pattern, "stream", "wash flame");
-  eq(weaponMods("mini", 1).pattern, "stream", "mini flame");
-  eq(weaponMods("mini", 1).rate >= 16 ? 1 : 0, 1, "mini fast");
-  eq(weaponMods("beam", 1).pattern, "stream", "beam flame");
+  eq(weaponMods("burst", 1).dmg, 2.2, "t1 dmg");
+  eq(Math.round(weaponMods("burst", 1).rate * 10), 80, "t1 rate");
+  eq(weaponMods("burst", 1).pattern, "burst", "burst bites");
+  eq(weaponMods("dambust", 1).pattern, "fan", "bust fan");
+  eq(weaponMods("mini", 1).pattern, "spin", "mini spin");
+  eq(weaponMods("mini", 1).rate >= 12 ? 1 : 0, 1, "mini fast");
+  eq(weaponMods("beam", 1).pattern, "bolt", "beam dart");
   eq(weaponMods("beam", 1).pierce, 0, "beam no pierce");
-  eq(Math.round(weaponMods("flame", 1).dmg * 10), 18, "flame dmg");
+  eq(Math.round(weaponMods("flame", 1).dmg * 10), 16, "flame dmg");
   eq(weaponMods("flame", 1).pattern, "stream", "flame stream");
-  eq(weaponMods("glacier", 1).slow, 0, "glacier no freeze");
-  eq(weaponMods("storm", 1).chain, 0, "storm no chain");
-  eq(weaponMods("rail", 1).pierce, 0, "rail no pierce");
+  eq(Math.round(weaponMods("glacier", 1).slow * 10), 22, "glacier slow");
+  eq(weaponMods("storm", 1).chain, 3, "storm chain");
+  eq(weaponMods("rail", 1).pierce, 8, "rail pierce");
   eq(weaponMods("rail", 1).charge, 0, "rail no charge");
-  eq(weaponMods("saw", 1).bounces, 0, "saw no bounce");
-  eq(weaponMods("aurora", 1).pattern, "stream", "aurora flame");
+  eq(weaponMods("saw", 1).bounces, 4, "saw bounce");
+  eq(weaponMods("aurora", 1).pattern, "orb", "aurora orb");
+  const pats = {};
+  let streams = 0;
   for (let gi = 0; gi < GUN_ORDER.length; gi++) {
     const gm = weaponMods(GUN_ORDER[gi], 1);
-    if (gm.pattern !== "stream") fails.push("not flame " + gm.id);
-    if (gm.rate < 10) fails.push("slow gun " + gm.id);
+    pats[gm.pattern] = 1;
+    if (gm.pattern === "stream") streams++;
+    if (gm.rate < 5) fails.push("slow gun " + gm.id);
   }
+  if (Object.keys(pats).length < 8) fails.push("pattern kinds " + Object.keys(pats).length);
+  if (streams !== 1) fails.push("streams " + streams);
   eq(GUN_ORDER.length, 12, "12 guns");
   eq(laneOf(-3), "LEFT", "lane left");
   eq(laneOf(-1.51), "LEFT", "lane left edge");
@@ -2068,7 +1116,7 @@ export function selfTestRules() {
   eq(ENEMY[2].tall, 2.6, "hauler tall");
   eq(ENEMY[4].tall, 1.8, "spit tall");
   eq(weaponMods("flame", 4).gold, 1, "gold");
-  eq(Math.round(weaponMods("burst", 4).rate * 10), 140, "burst t4 rate");
+  eq(Math.round(weaponMods("burst", 4).rate * 10), 100, "burst t4 rate");
   eq(migrateGun("bow"), "rail", "migrate bow");
   eq(migrateGun("smg"), "burst", "migrate smg");
   eq(migrateGun("gerald"), "mini", "migrate gerald");
@@ -2118,13 +1166,15 @@ export function selfTestRules() {
   eq(plan.m, 5, "volley m");
   eq(plan.vis, 12, "volley vis");
   eq(expectedSquad(LEVELS["1-1"], 2000), 36, "choice squad");
-  eq(LEVEL_IDS.length, 10, "ten levels");
+  eq(LEVEL_IDS.length, 40, "forty levels");
   eq(nextLevel("1-3"), "1-4", "path 1-4");
-  eq(nextLevel("1-10"), "", "no chapter 2");
+  eq(nextLevel("1-10"), "2-1", "chapter 2");
+  eq(nextLevel("4-10"), "", "last span");
   eq(highestPlayable({}), "1-1", "highest fresh");
   eq(highestPlayable({ "1-1": true }), "1-2", "highest 2");
   eq(highestPlayable({ "1-1": true, "1-2": true, "1-3": true }), "1-4", "highest 4");
   eq(highestPlayable(Object.fromEntries(LEVEL_IDS.slice(0, 9).map(function (id) { return [id, true]; }))), "1-10", "highest 10");
+  eq(highestPlayable(Object.fromEntries(LEVEL_IDS.slice(0, 39).map(function (id) { return [id, true]; }))), "4-10", "highest 40");
   eq(isUnlockedLevel("1-10", { "1-9": true }), true, "unlock 10");
   eq(isUnlockedLevel("1-10", { "1-8": true }), false, "lock 10");
   const layout = layoutIssues();

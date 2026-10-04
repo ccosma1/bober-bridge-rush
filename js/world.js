@@ -1,6 +1,6 @@
 import * as THREE from "three";
-import { toon, pineTexture, skyTexture, goldenSkyTexture, writeTRS } from "./mats.js?v=br20";
-import { buildTile } from "./build.js?v=br20";
+import { toon, pineTexture, skyTexture, goldenSkyTexture, writeTRS } from "./mats.js?v=br21";
+import { buildTile } from "./build.js?v=br21";
 
 const TILE = 20;
 const TILES = 10;
@@ -35,7 +35,11 @@ export function createWorld(scene) {
   key.shadow.bias = -0.0008;
   scene.add(key, key.target, hemi);
 
-  const waterUniforms = { uTime: { value: 0 } };
+  const waterUniforms = {
+    uTime: { value: 0 },
+    uDeep: { value: new THREE.Vector3(0.12, 0.48, 0.82) },
+    uTeal: { value: new THREE.Vector3(0.28, 0.72, 0.95) },
+  };
   const water = new THREE.Mesh(
     new THREE.PlaneGeometry(80, 1700, 1, 1),
     new THREE.ShaderMaterial({
@@ -55,11 +59,13 @@ export function createWorld(scene) {
       `,
       fragmentShader: `
         uniform float uTime;
+        uniform vec3 uDeep;
+        uniform vec3 uTeal;
         varying vec3 vW;
         void main() {
           float n = sin(vW.x * 0.62 + uTime * 1.1) * sin(vW.z * 0.48 - uTime * 1.4);
-          vec3 deep = vec3(0.12, 0.48, 0.82);
-          vec3 teal = vec3(0.28, 0.72, 0.95);
+          vec3 deep = uDeep;
+          vec3 teal = uTeal;
           vec3 col = mix(deep, teal, n * 0.5 + 0.5);
           float rip = sin(vW.x * 1.15 + vW.z * 0.37 + uTime * 1.3);
           float rip2 = sin(vW.z * 0.83 - vW.x * 0.21 - uTime * 0.9);
@@ -286,6 +292,19 @@ export function createWorld(scene) {
     titleMood = on ? 1 : 0;
   }
 
+  const SPAN_LOOK = [
+    { deep: [0.12, 0.48, 0.82], teal: [0.28, 0.72, 0.95], sky: 0xffffff, bg: 0x9fd4f5, fog: 0xc5e4f5, fogN: 80, fogF: 320, key: 0xfff4e0, keyI: 2.6, hemi: 0xcfe6ff, ground: 0x8a9390, hemiI: 0.85, post: 0xE23B32, beam: 0xE23B32, cable: 0x6E1814, hang: 0x8A2420, tile: 0xffffff },
+    { deep: [0.05, 0.35, 0.42], teal: [0.20, 0.78, 0.72], sky: 0xd8fff4, bg: 0x7ec8c0, fog: 0xa8ddd4, fogN: 70, fogF: 280, key: 0xe8fff6, keyI: 2.3, hemi: 0xb7efe4, ground: 0x4a6a62, hemiI: 0.8, post: 0x1F6F66, beam: 0x2F8F8A, cable: 0x0E3E3A, hang: 0x145850, tile: 0xd8fff4 },
+    { deep: [0.08, 0.32, 0.28], teal: [0.25, 0.62, 0.38], sky: 0xd8f5c8, bg: 0x8ecf78, fog: 0xb7e6a8, fogN: 60, fogF: 260, key: 0xf4ffe0, keyI: 2.2, hemi: 0xd4f0c0, ground: 0x3e5a32, hemiI: 0.8, post: 0x2E6B32, beam: 0x3E7A45, cable: 0x1A3A1C, hang: 0x245028, tile: 0xe4f6d4 },
+    { deep: [0.04, 0.08, 0.22], teal: [0.18, 0.28, 0.55], sky: 0x6a78c8, bg: 0x1a2040, fog: 0x242848, fogN: 28, fogF: 160, key: 0xffe0a0, keyI: 1.5, hemi: 0x6a78c0, ground: 0x1a1428, hemiI: 0.55, post: 0xC9A15A, beam: 0xF5C400, cable: 0x6A5428, hang: 0x8A6A30, tile: 0xc8c0e0 },
+  ];
+  let spanTheme = -1;
+  function tintMesh(mesh, hex) {
+    const c = new THREE.Color(hex);
+    for (let i = 0; i < mesh.count; i++) mesh.setColorAt(i, c);
+    if (mesh.instanceColor) mesh.instanceColor.needsUpdate = true;
+  }
+
   function follow(x, z, half, time, river, damScale, theme, cam) {
     waterUniforms.uTime.value = time;
     deckFlowUniforms.uTime.value = time;
@@ -298,18 +317,32 @@ export function createWorld(scene) {
     sky.position.set(x, 8, z);
     titleMood;
     warmSky;
-    key.color.setHex(0xfff4e0);
-    key.intensity = 2.6;
+    const lookId = Math.max(0, Math.min(SPAN_LOOK.length - 1, theme | 0));
+    if (lookId !== spanTheme) {
+      spanTheme = lookId;
+      const look = SPAN_LOOK[lookId];
+      waterUniforms.uDeep.value.set(look.deep[0], look.deep[1], look.deep[2]);
+      waterUniforms.uTeal.value.set(look.teal[0], look.teal[1], look.teal[2]);
+      tintMesh(posts, look.post);
+      tintMesh(beams, look.beam);
+      tintMesh(cables, look.cable);
+      tintMesh(hangs, look.hang);
+      tile.material.color.setHex(look.tile);
+    }
+    const look = SPAN_LOOK[spanTheme];
+    sky.material.color.setHex(look.sky);
+    key.color.setHex(look.key);
+    key.intensity = look.keyI;
     key.position.set(x - 10, 24, z + 14);
     key.target.position.set(x, 0.5, z - 24);
-    hemi.color.setHex(0xcfe6ff);
-    hemi.groundColor.setHex(0x8a9390);
-    hemi.intensity = 0.85;
-    scene.background.setHex(0x9fd4f5);
+    hemi.color.setHex(look.hemi);
+    hemi.groundColor.setHex(look.ground);
+    hemi.intensity = look.hemiI;
+    scene.background.setHex(look.bg);
     if (scene.fog) {
-      scene.fog.color.setHex(0xc5e4f5);
-      scene.fog.near = 80;
-      scene.fog.far = 320;
+      scene.fog.color.setHex(look.fog);
+      scene.fog.near = look.fogN;
+      scene.fog.far = look.fogF;
     }
     if (sky.material.map !== runSky) sky.material.map = runSky;
     key.shadow.camera.left = -16;

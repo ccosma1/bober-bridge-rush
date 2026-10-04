@@ -1,6 +1,6 @@
 # Bober Bridge Rush
 
-Phone-first bridge crowd rush. Drag between far math gates and burn the red crowd with a fast flamethrower. Chapter 1, The Dam Runs Dry, runs 1-1 Pine Bridge through 1-10 Last Gasket.
+Phone-first bridge crowd rush. Shoot the packs between the toll banners, pick a side, and hold four spans of ten bridges each. Twelve guns, and one of them is a flamethrower. The road runs from 1-1 Pine Bridge to 4-10 Dam Keep.
 
 Fan game. Unofficial. The in-game currency is $BOBER. Nothing here is real money.
 
@@ -10,9 +10,9 @@ Open `index.html` through a static server. Three.js r170 loads from the jsDelivr
 START.bat
 ```
 
-That serves http://127.0.0.1:8792/?v=br20
+That serves http://127.0.0.1:8792/?v=br21
 
-Build tag: br20
+Build tag: br21
 
 ## Credits
 

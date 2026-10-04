@@ -1,11 +1,11 @@
 import * as THREE from "three";
-import { BUILD, GUN_COST, GUN_ORDER, WEAPONS, highestPlayable, isUnlockedLevel, rhythmText } from "./rules.js?v=br20";
-import { createWorld } from "./world.js?v=br20";
-import { createPlay } from "./play.js?v=br20";
-import { createAudio } from "./audio.js?v=br20";
-import { loadSave, rememberWin, rememberGun, writeSave, buyGun } from "./save.js?v=br20";
-import { drawWeaponIcon, setTime } from "./mats.js?v=br20";
-import { loadGame, CREDIT_LINES } from "./assets.js?v=br20";
+import { BUILD, GUN_COST, GUN_ORDER, LEVELS, LEVEL_IDS, WEAPONS, highestPlayable, isUnlockedLevel, rhythmText } from "./rules.js?v=br21";
+import { createWorld } from "./world.js?v=br21";
+import { createPlay } from "./play.js?v=br21";
+import { createAudio } from "./audio.js?v=br21";
+import { loadSave, rememberWin, rememberGun, writeSave, buyGun } from "./save.js?v=br21";
+import { drawWeaponIcon, setTime } from "./mats.js?v=br21";
+import { loadGame, CREDIT_LINES } from "./assets.js?v=br21";
 
 const save = loadSave();
 const canvas = document.getElementById("c");
@@ -82,7 +82,7 @@ const chipFamily = document.getElementById("chip-family");
 const wordEls = document.querySelectorAll("#words .word");
 const notesEl = document.getElementById("notes");
 const notesBtn = document.getElementById("btn-notes");
-const LEVEL_TILES = ["1-1", "1-2", "1-3", "1-4", "1-5", "1-6", "1-7", "1-8", "1-9", "1-10"];
+
 
 let mode = "title";
 let hold = false;
@@ -154,7 +154,7 @@ function showResult(won, info) {
       nextBtn.disabled = false;
       nextBtn.dataset.level = info.nextId;
     } else {
-      nextBtn.textContent = "Chapter 2 coming soon";
+      nextBtn.textContent = "Dam held";
       nextBtn.disabled = true;
       nextBtn.dataset.level = "";
     }
@@ -207,11 +207,39 @@ function starBits(n) {
   return "★★★".slice(0, count) + "☆☆☆".slice(0, 3 - count);
 }
 
+function buildLevelTiles() {
+  const row = document.getElementById("level-row");
+  if (!row) return;
+  row.innerHTML = "";
+  let chapter = "";
+  for (let i = 0; i < LEVEL_IDS.length; i++) {
+    const id = LEVEL_IDS[i];
+    const level = LEVELS[id];
+    if (level.chapter !== chapter) {
+      chapter = level.chapter;
+      const label = document.createElement("div");
+      label.className = "chapter-label";
+      label.textContent = chapter;
+      row.appendChild(label);
+    }
+    const btn = document.createElement("button");
+    btn.type = "button";
+    btn.className = "level-tile";
+    btn.id = "lv-" + id;
+    btn.dataset.level = id;
+    const name = String(level.name || id).replace(/^\d+-\d+\s+/, "");
+    btn.innerHTML = "<b></b><span></span><i class=\"lv-stars\"></i>";
+    btn.querySelector("b").textContent = id;
+    btn.querySelector("span").textContent = name;
+    row.appendChild(btn);
+  }
+}
+
 function paintLevels() {
-  for (let i = 0; i < LEVEL_TILES.length; i++) {
-    const id = LEVEL_TILES[i];
-    const btn = document.getElementById("lv-" + id);
-    if (!btn) continue;
+  const tiles = document.querySelectorAll("#level-row .level-tile");
+  for (let i = 0; i < tiles.length; i++) {
+    const btn = tiles[i];
+    const id = btn.dataset.level;
     const open = isUnlockedLevel(id, save.levelsCleared);
     btn.disabled = !open;
     btn.classList.toggle("lock", !open);
@@ -525,7 +553,7 @@ function frame(now) {
     camera.lookAt(camX, lookY, v.squadZ - ahead);
   }
   camera.updateMatrixWorld();
-  world.follow(v.squadX, v.squadZ, v.half, play.time, v.river, v.dam, v.theme, mode === "title" ? null : camera);
+  world.follow(v.squadX, v.squadZ, v.half, play.time, v.river, v.dam, mode === "title" ? 0 : v.theme, mode === "title" ? null : camera);
   setTime(play.time);
   play.sync(camera);
   if (mode === "title" && composer) {
@@ -773,6 +801,7 @@ window.addEventListener("blur", () => openPause());
 window.addEventListener("resize", resize);
 if (window.visualViewport) window.visualViewport.addEventListener("resize", resize);
 
+buildLevelTiles();
 paintLevels();
 resize();
 boot.classList.add("hidden");
