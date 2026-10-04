@@ -10,9 +10,9 @@ Open `index.html` through a static server. Three.js r170 loads from the jsDelivr
 START.bat
 ```
 
-That serves http://127.0.0.1:8792/?v=br18
+That serves http://127.0.0.1:8792/?v=br19
 
-Build tag: br18
+Build tag: br19
 
 ## Credits
 

@@ -71,7 +71,7 @@ import {
   CHARGE_LEAD,
   PINCH_BLOB,
   volleyPlan,
-} from "./rules.js?v=br18";
+} from "./rules.js?v=br19";
 import {
   animToon,
   attachOutline,
@@ -91,7 +91,7 @@ import {
   writeLog,
   writeQuat,
   writeTRS,
-} from "./mats.js?v=br18";
+} from "./mats.js?v=br19";
 import {
   arrowGeo,
   buildBaron,
@@ -116,7 +116,7 @@ import {
   sawDiscGeo,
   streakGeo,
   streamGeo,
-} from "./build.js?v=br18";
+} from "./build.js?v=br19";
 
 const STRIDE = 320;
 const CAPS = [320, 320, 320, 120, 120, 120, 120];
@@ -1158,6 +1158,7 @@ export function createPlay(scene, camera, audio) {
   let gateWaitI = -1;
   let gateSide = 1;
   let bitePool = 8;
+  let roadBiteCd = 0;
   let lostSquad = 0;
   let railCount = 0;
   let boltCount = 0;
@@ -4333,6 +4334,10 @@ export function createPlay(scene, camera, audio) {
     const line = contactZ();
     const poolCap = squadN > 90 ? 24 : 8;
     bitePool = Math.min(poolCap, bitePool + h * (squadN > 90 ? 5 : 2.5));
+    // A road pack used to spend the whole pool in one frame and erase a
+    // squad of 3 before the banner. One beaver, then 0.8 s. The arena
+    // keeps its own bite rate.
+    if (!arenaStarted) roadBiteCd = Math.max(0, roadBiteCd - h);
     for (let t = 0; t < TYPES; t++) {
       const p = pools[t];
       const k = ENEMY[t];
@@ -4362,6 +4367,19 @@ export function createPlay(scene, camera, audio) {
           p.side[i] *= -1;
           const len = Math.sqrt(dx * dx + dz * dz) || 0.001;
           p.x[i] = squadX + (dx / len) * (rr + 0.2);
+          continue;
+        }
+        if (!arenaStarted) {
+          if (roadBiteCd > 0) continue;
+          if (t === 2) {
+            p.biteAcc[i] += h;
+            if (p.biteAcc[i] < 1) continue;
+            p.biteAcc[i] -= 1;
+          }
+          roadBiteCd = 0.8;
+          hurtSquad(1);
+          if (t !== 2) killEnemy(t, i, true);
+          if (ended) return;
           continue;
         }
         if (bitePool < 1) continue;
@@ -4688,23 +4706,45 @@ export function createPlay(scene, camera, audio) {
       half = arenaStarted ? BOSS_HALF : DECK_HALF;
       const z = -dist;
       if (!arenaStarted) {
-        for (let i = 0; i < gates.length; i++) {
-          const g = gates[i];
-          if (!g || g.passed) continue;
-          if (!(prevZ > g.z && z <= g.z && prevZ - g.z < 20)) continue;
-          g.passed = 1;
-          const slop = PANEL_W * 0.5 + Math.max(0.35, lat * 0.35);
-          if (Math.abs(squadX - g.x) < slop) {
-            squadN = applyGate(squadN, g.op, g.k, g.tenths);
-            audio.gate();
-            word(g.label, squadX, 2.6, z, gateBlue(g.op) ? 0 : 1, 1);
-            puff(g.x, 1.6, g.z, gateBlue(g.op) ? 5 : 6, 10, 3.5, 0.4, 0.4);
-            if (squadN <= 0) {
-              prevZ = z;
-              doLose();
-              return;
-            }
+        // One banner per row. Any drag off centre takes the nearer panel.
+        // A dead-centre tie keeps the earlier gate, which is the left one,
+        // so both bonuses in the row cannot apply.
+        let i = 0;
+        while (i < gates.length) {
+          const g0 = gates[i];
+          if (!g0 || g0.passed || !(prevZ > g0.z && z <= g0.z && prevZ - g0.z < 20)) {
+            i++;
+            continue;
           }
+          const rowZ = g0.z;
+          let best = i;
+          let bestD = Math.abs(squadX - g0.x);
+          g0.passed = 1;
+          let j = i + 1;
+          while (j < gates.length) {
+            const g = gates[j];
+            if (!g || g.passed) { j++; continue; }
+            if (Math.abs(g.z - rowZ) > 0.5) break;
+            if (!(prevZ > g.z && z <= g.z && prevZ - g.z < 20)) { j++; continue; }
+            g.passed = 1;
+            const d = Math.abs(squadX - g.x);
+            if (d < bestD) {
+              bestD = d;
+              best = j;
+            }
+            j++;
+          }
+          const g = gates[best];
+          squadN = applyGate(squadN, g.op, g.k, g.tenths);
+          audio.gate();
+          word(g.label, squadX, 2.6, z, gateBlue(g.op) ? 0 : 1, 1);
+          puff(g.x, 1.6, g.z, gateBlue(g.op) ? 5 : 6, 10, 3.5, 0.4, 0.4);
+          if (squadN <= 0) {
+            prevZ = z;
+            doLose();
+            return;
+          }
+          i = j;
         }
       }
       let rammed = -1;
@@ -5175,6 +5215,7 @@ export function createPlay(scene, camera, audio) {
     gateWaitI = -1;
     gateSide = 1;
     bitePool = 8;
+    roadBiteCd = 0;
     lostSquad = 0;
     crossHits = 0;
     wrongGateHits = 0;
@@ -6688,6 +6729,40 @@ export function createPlay(scene, camera, audio) {
     prevZ = -dist;
     step(0.4);
     if (atSub < 0 || squadN !== wantSub) fails.push("live sub " + squadN);
+
+    reset();
+    running = true;
+    for (let i = 0; i < RENDER_CAP; i++) cds[i] = 9;
+    for (let i = 0; i < level.events.length; i++) if (level.events[i].kind === "wave") fired[i] = 1;
+    const addEv = gateAt("add");
+    const atAdd = addEv ? addEv.at : -1;
+    let rightAdd = null;
+    for (let i = 0; i < level.events.length; i++) {
+      const ev = level.events[i];
+      if (ev.kind === "gate" && ev.at === atAdd && ev.x > 0) rightAdd = ev;
+    }
+    squadN = 3;
+    squadX = 0;
+    targetX = 0;
+    dist = atAdd - 0.3;
+    prevZ = -dist;
+    step(0.4);
+    if (atAdd < 0 || squadN !== 7) fails.push("center gate " + squadN);
+    const passedBoth = gates.filter((g) => g && Math.abs(-g.z - atAdd) < 1 && g.passed).length;
+    if (passedBoth !== 2) fails.push("row passed " + passedBoth);
+
+    reset();
+    running = true;
+    for (let i = 0; i < RENDER_CAP; i++) cds[i] = 9;
+    for (let i = 0; i < level.events.length; i++) if (level.events[i].kind === "wave") fired[i] = 1;
+    squadN = 3;
+    squadX = rightAdd ? 0.4 : 0;
+    targetX = squadX;
+    dist = atAdd - 0.3;
+    prevZ = -dist;
+    step(0.4);
+    const wantRight = rightAdd ? applyGate(3, rightAdd.op, rightAdd.k, rightAdd.tenths) : -1;
+    if (!rightAdd || squadN !== wantRight) fails.push("near gate " + squadN);
 
     reset();
     running = true;
