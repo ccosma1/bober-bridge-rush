@@ -72,7 +72,7 @@ import {
   PINCH_BLOB,
   volleyPlan,
   LEVEL_IDS,
-} from "./rules.js?v=br22";
+} from "./rules.js?v=br23";
 import {
   animToon,
   attachOutline,
@@ -92,7 +92,7 @@ import {
   writeLog,
   writeQuat,
   writeTRS,
-} from "./mats.js?v=br22";
+} from "./mats.js?v=br23";
 import {
   arrowGeo,
   buildBaron,
@@ -121,7 +121,7 @@ import {
   sawDiscGeo,
   streakGeo,
   streamGeo,
-} from "./build.js?v=br22";
+} from "./build.js?v=br23";
 
 const STRIDE = 320;
 const CAPS = [320, 320, 320, 120, 120, 120, 120];
@@ -4354,10 +4354,10 @@ export function createPlay(scene, camera, audio) {
   function biteLine(h) {
     const blob = formationRadius(Math.max(squadN, 1), half);
     const line = contactZ();
-    const poolCap = squadN > 90 ? 24 : 8;
-    bitePool = Math.min(poolCap, bitePool + h * (squadN > 90 ? 5 : 2.5));
+    const poolCap = squadN > 90 ? 24 : squadN < 12 ? 2 : 8;
+    bitePool = Math.min(poolCap, bitePool + h * (squadN > 90 ? 5 : squadN < 12 ? 1.1 : 2.5));
     // A road pack used to spend the whole pool in one frame and erase a
-    // squad of 3 before the banner. One beaver, then 0.8 s. The arena
+    // squad of 3 before the banner. One beaver, then a pause. The arena
     // keeps its own bite rate.
     if (!arenaStarted) roadBiteCd = Math.max(0, roadBiteCd - h);
     for (let t = 0; t < TYPES; t++) {
@@ -4398,7 +4398,7 @@ export function createPlay(scene, camera, audio) {
             if (p.biteAcc[i] < 1) continue;
             p.biteAcc[i] -= 1;
           }
-          roadBiteCd = 0.8;
+          roadBiteCd = 1.35;
           hurtSquad(1);
           if (t !== 2) killEnemy(t, i, true);
           if (ended) return;
@@ -4910,8 +4910,10 @@ export function createPlay(scene, camera, audio) {
               formationOffsets(squadN, radius * (1 - pinch) + PINCH_BLOB * 0.5 * pinch, fx, fz);
               const zoned = soldiersInThird(zoneSide);
               const rank = bossRank();
-              const wrenchKill = Math.min(6 + (rank / 2 | 0), Math.max(zoned, 4 + (rank / 2 | 0)));
-              hurtSquad(wrenchKill > 0 ? wrenchKill : 4);
+              const wrenchKill = rank <= 2
+                ? Math.min(2, Math.max(1, zoned))
+                : Math.min(6 + (rank / 2 | 0), Math.max(zoned, 4 + (rank / 2 | 0)));
+              hurtSquad(wrenchKill);
               if (ended) return;
             }
           } else if (wrenchPhase === 2) {

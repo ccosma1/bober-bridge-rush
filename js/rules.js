@@ -2,7 +2,7 @@
 // br3 gun table. Lab may multiply a tier's DMG; the comment block at the
 // bottom of weaponMods records the numbers that passed the gun lab.
 
-export const BUILD = "br22";
+export const BUILD = "br23";
 export const SIM_CAP = 300;
 export const RENDER_CAP = 60;
 export const LIVE_CAP = 320;
@@ -76,10 +76,10 @@ export const WEAPONS = {
     color: "#F4E6C3", pellets: 3, spread: 4 * DEG, shove: 0, range: 16, len: 0.85, thick: 0.14, heavy: 0,
     line: "Three fast bites. The gun you start with.",
     tiers: [
-      { dmg: 2.2, rate: 8, range: 16, pellets: 3 },
-      { dmg: 2.8, rate: 9, range: 16, pellets: 3 },
-      { dmg: 3.4, rate: 9, range: 17, pellets: 3 },
-      { dmg: 4.2, rate: 10, range: 18, pellets: 4 },
+      { dmg: 3.4, rate: 8, range: 16, pellets: 3 },
+      { dmg: 4.2, rate: 9, range: 16, pellets: 3 },
+      { dmg: 5, rate: 9, range: 17, pellets: 3 },
+      { dmg: 6, rate: 10, range: 18, pellets: 4 },
     ],
   },
   saw: {
@@ -275,21 +275,21 @@ function waveMix(ch, st, kind) {
   const ev = { clog, spd };
   if (ch === 0 && st >= 3 && kind === "mid") ev.duck = 1;
   if (ch === 0 && st >= 6 && kind === "gate") ev.suds = 1;
-  if (ch === 1) {
-    ev.suds = st < 2 ? (kind === "open" ? 0 : 1) : (kind === "open" ? 1 : 2);
-    if (kind !== "open" && st >= 2) ev.spit = 1 + (st > 6 ? 1 : 0);
-    ev.clog = Math.max(6, clog - (st < 2 ? 0 : 2));
+  if (ch === 1 && st >= 2) {
+    ev.suds = kind === "open" ? 1 : 2;
+    if (kind !== "open") ev.spit = 1 + (st > 6 ? 1 : 0);
+    ev.clog = Math.max(6, clog - 2);
   }
   if (ch === 2) {
-    ev.duck = kind === "open" ? 1 : 2;
-    if (kind !== "open") ev.leaf = 1;
-    if (kind === "mid" && st >= 2) ev.hair = 1;
-    ev.clog = Math.max(6, clog - 3);
+    ev.duck = 1;
+    if (kind !== "open" && st >= 2) ev.leaf = 1;
+    if (kind === "mid" && st >= 4) ev.hair = 1;
+    if (st >= 2) ev.clog = Math.max(6, clog - 3);
   }
   if (ch === 3) {
-    ev.suds = 1 + (kind === "gate" ? 1 : 0);
-    if (st >= 2) ev.spit = 1;
-    if ((kind === "gate" || kind === "mid") && st >= 3) ev.hauler = 1;
+    if (st >= 1 && kind !== "open") ev.suds = 1 + (kind === "gate" ? 1 : 0);
+    if (st >= 3 && kind === "gate") ev.spit = 1;
+    if ((kind === "gate" || kind === "mid") && st >= 5) ev.hauler = 1;
     if (kind === "gate" && st >= 8) ev.hauler = 2;
   }
   return ev;
@@ -383,7 +383,7 @@ for (let i = 0; i < 40; i++) {
     starN: 18 + ch * 4,
     starSec: 28,
     boss,
-    bossHp: 640 + ch * 380 + st * 50,
+    bossHp: Math.round((640 + ch * 380 + st * 50) * 0.8),
     bossName: KEEPER_NAME[boss][ch],
     win: "SPAN HELD!",
     events,
@@ -862,7 +862,11 @@ export function waveMods(expect, rank) {
   const scale = e / 20;
   let nMul = Math.min(1.65, Math.pow(Math.max(1, scale), 0.34));
   let hpMul = Math.min(14, 1.35 + e * 0.04);
-  if ((rank | 0) <= 2 && e >= 12) {
+  // A squad that has not doubled yet meets half a pack. The road fills in after the tolls.
+  if (e < 14) {
+    nMul = 0.5;
+    hpMul = 1.05;
+  } else if ((rank | 0) <= 2) {
     nMul *= 0.7;
     hpMul *= 0.68;
   }
@@ -1036,7 +1040,7 @@ export function selfTestRules() {
   shootGate(div, 6 * 40);
   eq(div.k, 15, "div cap");
 
-  eq(weaponMods("burst", 1).dmg, 2.2, "t1 dmg");
+  eq(weaponMods("burst", 1).dmg, 3.4, "t1 dmg");
   eq(Math.round(weaponMods("burst", 1).rate * 10), 80, "t1 rate");
   eq(weaponMods("burst", 1).pattern, "burst", "burst bites");
   eq(weaponMods("dambust", 1).pattern, "fan", "bust fan");
